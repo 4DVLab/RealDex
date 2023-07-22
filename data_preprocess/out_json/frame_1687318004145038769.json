@@ -1,0 +1,724 @@
+{
+    "transforms": [
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "ra_upper_arm_link"
+            },
+            "child_frame_id": "ra_forearm_link",
+            "transform": {
+                "translation": {
+                    "x": -0.6122699596353224,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": 0.0005253642805396009,
+                    "y": 0.0001743634542763331,
+                    "z": 0.7421500098254337,
+                    "w": 0.6702335835407439
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "ra_shoulder_link"
+            },
+            "child_frame_id": "ra_upper_arm_link",
+            "transform": {
+                "translation": {
+                    "x": 2.971310608630752e-05,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": -0.48847221580859423,
+                    "y": -0.5110628596639655,
+                    "z": 0.5112754827775996,
+                    "w": -0.48867886036298347
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "ra_base_link_inertia"
+            },
+            "child_frame_id": "ra_shoulder_link",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.180799713106959
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": -0.07403614433603761,
+                    "w": 0.9972555586868661
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "ra_forearm_link"
+            },
+            "child_frame_id": "ra_wrist_1_link",
+            "transform": {
+                "translation": {
+                    "x": -0.5712235523145621,
+                    "y": -0.0008084706542084543,
+                    "z": 0.17396290265016
+                },
+                "rotation": {
+                    "x": 0.0023168767725263296,
+                    "y": 0.0003475798169870253,
+                    "z": -0.021009547548729173,
+                    "w": 0.9997765301216517
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "ra_wrist_1_link"
+            },
+            "child_frame_id": "ra_wrist_2_link",
+            "transform": {
+                "translation": {
+                    "x": -6.228072584678401e-05,
+                    "y": -0.1197351589322399,
+                    "z": 0.0001732019896383589
+                },
+                "rotation": {
+                    "x": 0.5359258107052346,
+                    "y": -0.4605000053787211,
+                    "z": 0.46116727233938,
+                    "w": 0.5367010502963366
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "ra_wrist_2_link"
+            },
+            "child_frame_id": "ra_wrist_3_link",
+            "transform": {
+                "translation": {
+                    "x": -5.615114057926111e-06,
+                    "y": 0.115498055324382,
+                    "z": 0.0001591452770727006
+                },
+                "rotation": {
+                    "x": -9.555934909677757e-05,
+                    "y": 0.7066194444884394,
+                    "z": 0.7075937693167516,
+                    "w": 9.572550359969582e-05
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_ffmiddle"
+            },
+            "child_frame_id": "rh_ffdistal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.025
+                },
+                "rotation": {
+                    "x": -0.006014274002116786,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9999819140905636
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_ffproximal"
+            },
+            "child_frame_id": "rh_ffmiddle",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.045
+                },
+                "rotation": {
+                    "x": 0.1519140361460509,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9883937098250962
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_ffknuckle"
+            },
+            "child_frame_id": "rh_ffproximal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": -0.016420248509970065,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9998651786310345
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_palm"
+            },
+            "child_frame_id": "rh_ffknuckle",
+            "transform": {
+                "translation": {
+                    "x": 0.033,
+                    "y": 0.0,
+                    "z": 0.095
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.07270384611406563,
+                    "z": 0.0,
+                    "w": 0.9973535735937492
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_lfmiddle"
+            },
+            "child_frame_id": "rh_lfdistal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.025
+                },
+                "rotation": {
+                    "x": 0.011805552580601845,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9999303120359271
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_lfproximal"
+            },
+            "child_frame_id": "rh_lfmiddle",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.045
+                },
+                "rotation": {
+                    "x": 0.2895166214804068,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9571729863961743
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_lfknuckle"
+            },
+            "child_frame_id": "rh_lfproximal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": -0.03473277604569531,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9993966351094842
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_lfmetacarpal"
+            },
+            "child_frame_id": "rh_lfknuckle",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.06579
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.0007614192951126537,
+                    "z": 0.0,
+                    "w": 0.9999997101202865
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_palm"
+            },
+            "child_frame_id": "rh_lfmetacarpal",
+            "transform": {
+                "translation": {
+                    "x": -0.033,
+                    "y": 0.0,
+                    "z": 0.02071
+                },
+                "rotation": {
+                    "x": 0.06815288567148478,
+                    "y": 0.0,
+                    "z": 0.09733240785068632,
+                    "w": 0.9929156996223986
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_mfmiddle"
+            },
+            "child_frame_id": "rh_mfdistal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.025
+                },
+                "rotation": {
+                    "x": 0.008014181183027703,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9999678859343262
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_mfproximal"
+            },
+            "child_frame_id": "rh_mfmiddle",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.045
+                },
+                "rotation": {
+                    "x": 0.14458795168355343,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9894919525837259
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_mfknuckle"
+            },
+            "child_frame_id": "rh_mfproximal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": -0.07757898580874129,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9969862090123851
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_palm"
+            },
+            "child_frame_id": "rh_mfknuckle",
+            "transform": {
+                "translation": {
+                    "x": 0.011,
+                    "y": 0.0,
+                    "z": 0.099
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": -0.03310988909671324,
+                    "z": 0.0,
+                    "w": 0.9994517173150502
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_rfmiddle"
+            },
+            "child_frame_id": "rh_rfdistal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.025
+                },
+                "rotation": {
+                    "x": 0.004183996273327863,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9999912470492854
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_rfproximal"
+            },
+            "child_frame_id": "rh_rfmiddle",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.045
+                },
+                "rotation": {
+                    "x": 0.11273870765790907,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9936246694781811
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_rfknuckle"
+            },
+            "child_frame_id": "rh_rfproximal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": -0.034465122370508736,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.999405901193297
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_palm"
+            },
+            "child_frame_id": "rh_rfknuckle",
+            "transform": {
+                "translation": {
+                    "x": -0.011,
+                    "y": 0.0,
+                    "z": 0.095
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": -0.013759211941392463,
+                    "z": 0.0,
+                    "w": 0.9999053375628874
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_thmiddle"
+            },
+            "child_frame_id": "rh_thdistal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.032
+                },
+                "rotation": {
+                    "x": 0.049570101652667155,
+                    "y": -0.04957010165266715,
+                    "z": -0.705367142006306,
+                    "w": 0.705367142006306
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_thhub"
+            },
+            "child_frame_id": "rh_thmiddle",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": 0.08930515183974477,
+                    "z": 0.0,
+                    "w": 0.9960043121668097
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_thproximal"
+            },
+            "child_frame_id": "rh_thhub",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.038
+                },
+                "rotation": {
+                    "x": -0.09048301578274272,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9958979987201803
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_thbase"
+            },
+            "child_frame_id": "rh_thproximal",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                },
+                "rotation": {
+                    "x": 0.19723139604029746,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9803569637718679
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_palm"
+            },
+            "child_frame_id": "rh_thbase",
+            "transform": {
+                "translation": {
+                    "x": 0.034,
+                    "y": -0.00858,
+                    "z": 0.029
+                },
+                "rotation": {
+                    "x": -0.023035724893269632,
+                    "y": 0.381989482558575,
+                    "z": -0.05561315945642706,
+                    "w": 0.9222041894767924
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_wrist"
+            },
+            "child_frame_id": "rh_palm",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.034
+                },
+                "rotation": {
+                    "x": -0.007480288630009148,
+                    "y": 0.0,
+                    "z": 0.0,
+                    "w": 0.9999720222496286
+                }
+            }
+        },
+        {
+            "header": {
+                "seq": 0,
+                "stamp": {
+                    "secs": 1687318004,
+                    "nsecs": 141579978
+                },
+                "frame_id": "rh_forearm"
+            },
+            "child_frame_id": "rh_wrist",
+            "transform": {
+                "translation": {
+                    "x": 0.0,
+                    "y": -0.01,
+                    "z": 0.21301
+                },
+                "rotation": {
+                    "x": 0.0,
+                    "y": -0.034086921283996666,
+                    "z": 0.0,
+                    "w": 0.9994188720438385
+                }
+            }
+        }
+    ]
+}

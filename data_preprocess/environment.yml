@@ -1,0 +1,13 @@
+
+name: ros-rosbag
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
+  - ros-rosbag
+  - rospkg
+  - catkin_pkg
+# variables:
+#   VAR1: valueA
+#   VAR2: valueB
