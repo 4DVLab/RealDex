@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from urdfpy import URDF
 
 def draw_skeleton(joints3D, link_table, ax=None, with_numbers=True):
     if ax is None:
@@ -30,13 +31,13 @@ def draw_skeleton(joints3D, link_table, ax=None, with_numbers=True):
     # ax.set_ylim(-1, 0)
     # ax.set_zlim(-1, 0)
 
-    max_range = np.array([pos_mat[:, 0].max()-pos_mat[:, 0].min(), 
+    max_range = np.linalg.norm(np.array([pos_mat[:, 0].max()-pos_mat[:, 0].min(), 
                           pos_mat[:, 1].max()-pos_mat[:, 1].min(),
-                          pos_mat[:, 2].max()-pos_mat[:, 2].min()]).max()
+                          pos_mat[:, 2].max()-pos_mat[:, 2].min()]))
     min_p = pos_mat.min(axis=0)
-    ax.set_xlim(min_p[0], min_p[0] + max_range)
-    ax.set_ylim(min_p[1], min_p[1] + max_range)
-    ax.set_zlim(min_p[2], min_p[2] + max_range)
+    ax.set_xlim(min_p[0] - max_range/2, min_p[0] + max_range)
+    ax.set_ylim(min_p[1]- max_range/2, min_p[1] + max_range)
+    ax.set_zlim(min_p[2]- max_range/2, min_p[2] + max_range)
     return ax
     # # For each 24 joint
     # for i in range(1, kintree_table.shape[1]):
@@ -50,4 +51,9 @@ def draw_skeleton(joints3D, link_table, ax=None, with_numbers=True):
     #         ax.text(joints3D[j2, 0], joints3D[j2, 1], joints3D[j2, 2], j2)
     # return ax
 
+def draw_robot():
+    robot = URDF.load('./data_preprocess/shadow_hand_ur.urdf.xacro')
+    for joint in robot.actuated_joints:
+        print(joint.name)
+    # robot.show(cfg={'shoulder_lift_joint': -2.0,'elbow_joint': 2.0})
 

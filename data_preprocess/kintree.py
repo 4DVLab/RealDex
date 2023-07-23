@@ -1,6 +1,32 @@
 import json
 import numpy as np
 from scipy.spatial.transform import Rotation
+from typing import Callable
+from functools import lru_cache, wraps
+
+def np_cache(function):
+    @lru_cache(maxsize=None)
+    def cached_wrapper(*args, **kwargs):
+
+        args = [np.array(a) if isinstance(a, tuple) else a for a in args]
+        kwargs = {
+            k: np.array(v) if isinstance(v, tuple) else v for k, v in kwargs.items()
+        }
+
+        return function(*args, **kwargs)
+
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        args = [tuple(a) if isinstance(a, np.ndarray) else a for a in args]
+        kwargs = {
+            k: tuple(v) if isinstance(v, np.ndarray) else v for k, v in kwargs.items()
+        }
+        return cached_wrapper(*args, **kwargs)
+
+    wrapper.cache_info = cached_wrapper.cache_info
+    wrapper.cache_clear = cached_wrapper.cache_clear
+
+    return wrapper
 
 
 class Node(object):
@@ -21,6 +47,13 @@ class Node(object):
     
     def __repr__(self):
         return '<tree node representation>'
+    
+    def set_tf(self, i, tf):
+        transl = [tf['translation'][d] for d in ["x", "y", "z"]]
+        orient_quat = [tf['rotation'][d] for d in ["x", "y", "z", "w"]]
+        self.transform["transl"][i] = transl
+        self.transform["orient_quat"][i] = orient_quat
+        
 
     def add_link(self, child, tf):
         self.children.append(child)
@@ -62,9 +95,25 @@ class Kintree(object):
             tf = link_data['transform']
             self.nodes[parent].add_link(self.nodes[child], tf)
             self.nodes[child].parent = self.nodes[parent]
-            
-            
 
+    def update_joints(self, file):
+        with open(file) as f:
+            kintree_data = json.load(f)['transforms'] # a list for each node
+        for link_data in kintree_data:
+            
+            tf = link_data['transform']
+            parent=link_data['header']['frame_id']
+            child = link_data['child_frame_id']
+
+            pnode = self.nodes[parent]
+            child_id = pnode.children.index(self.nodes[child])
+            pnode.set_tf(child_id, tf)
+            
+    # @lru_cache(maxsize=None)
+    # def forward_kinematic(self, node_name='rh_palm'):
+    #     node = self.nodes[node_name]
+    #     while len(node.children) > 0:
+    @np_cache
     def forward_kinematic(self, base_pos, base_frame, node_name='rh_forearm'):
         node:Node = self.nodes[node_name]
         node.value['position'] = base_pos
@@ -83,6 +132,7 @@ class Kintree(object):
             self.forward_kinematic(base_pos=child_coord_global, 
                                    base_frame=child_ori_global, 
                                    node_name=child.name)
+            del rel_rot, child_coord_local, child_coord_global, child_ori_global
         
 
 

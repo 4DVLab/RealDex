@@ -28,3 +28,6 @@ def rosbag2json():
     bag.close()
 
 
+if __name__ == "__main__":
+    rosbag2json()
+
