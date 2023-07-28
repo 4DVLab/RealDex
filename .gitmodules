@@ -1,0 +1,6 @@
+[submodule "calibration_ws/src/Azure_Kinect_ROS_Driver"]
+	path = calibration_ws/src/Azure_Kinect_ROS_Driver
+	url = https://github.com/microsoft/Azure_Kinect_ROS_Driver
+[submodule "calibration_ws/src/easy_handeye"]
+	path = calibration_ws/src/easy_handeye
+	url = https://github.com/IFL-CAMP/easy_handeye
