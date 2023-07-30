@@ -2,10 +2,24 @@
   <!-- (start your robot's MoveIt! stack, e.g. include its moveit_planning_execution.launch) -->
   <!-- (start your tracking system's ROS driver) -->
 
-  <include file="$(find easy_handeye)/launch/publish.launch">
-    <arg name="namespace_prefix" value="cam0_to_hand"/> <!-- use the same namespace that you used during calibration! -->
+<include file="$(find dobot_bringup)/launch/bringup.launch">
+    <arg name="robot_ip" value="192.168.33.11"/>
   </include>
-  <!-- <include file="$(find easy_handeye)/launch/publish.launch">
-    <arg name="namespace_prefix" value="my_eih_calib"/> <!-- use the same namespace that you used during calibration! -->
-  </include> -->
+
+  <include file="$(find dobot_moveit)/launch/moveit.launch"/>
+
+  <include file="$(find azure_kinect_ros_driver)/launch/driver.launch">
+    <arg name="overwrite_robot_description" value="false"/>
+  </include>
+
+
+  <include file="$(find easy_handeye)/launch/publish.launch">
+    <arg name="eye_on_hand" value="false"/>
+    <arg name="namespace_prefix" value="cam_to_hand"/> <!-- use the same namespace that you used during calibration! -->
+    <arg name="robot_base_frame" value="base_link"/>
+    <arg name="tracking_base_frame" value="camera_base"/>
+    <arg name="calibration_file" value="/home/yyxunn/.ros/easy_handeye/cam_to_hand_eye_on_base.yaml"/>
+  </include>
+
+
 </launch>
