@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from urdfpy import URDF
+# from urdfpy import URDF
 
 def draw_skeleton(joints3D, link_table, ax=None, with_numbers=True):
     if ax is None:
@@ -51,9 +51,9 @@ def draw_skeleton(joints3D, link_table, ax=None, with_numbers=True):
     #         ax.text(joints3D[j2, 0], joints3D[j2, 1], joints3D[j2, 2], j2)
     # return ax
 
-def draw_robot():
-    robot = URDF.load('./data_preprocess/shadow_hand_ur.urdf.xacro')
-    for joint in robot.actuated_joints:
-        print(joint.name)
+# def draw_robot():
+#     robot = URDF.load('./data_preprocess/shadow_hand_ur.urdf.xacro')
+#     for joint in robot.actuated_joints:
+#         print(joint.name)
     # robot.show(cfg={'shoulder_lift_joint': -2.0,'elbow_joint': 2.0})
 
