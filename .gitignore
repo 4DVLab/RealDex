@@ -1,8 +1,12 @@
 # added by yumeng
-/.DS_Store
+*/.DS_Store
 /__pycache__
 /out_json
 *.pyc
+*.obj
+models/mjcf/~$adow_hand_vis.xml
+models/mjcf/.DS_Store
+
 
 
 
