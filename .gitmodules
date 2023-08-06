@@ -4,3 +4,6 @@
 [submodule "calibration_ws/src/easy_handeye"]
 	path = calibration_ws/src/easy_handeye
 	url = https://github.com/IFL-CAMP/easy_handeye
+[submodule "calibration_ws/src/octomap_mapping"]
+	path = calibration_ws/src/octomap_mapping
+	url = https://github.com/OctoMap/octomap_mapping/

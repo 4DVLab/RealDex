@@ -1,0 +1,16 @@
+<launch>
+    <include file="$(find azure_kinect_ros_driver)/launch/driver.launch">
+        <arg name="overwrite_robot_description" value="false"/>
+        <!-- <arg name="color_resolution"  value="P"/> -->
+  </include>
+
+  <include file="$(find octomap_server)/launch/octomap_mapping.launch">
+    <arg name="resolution" default="0.001"/>
+	<arg name="frame_id" default="camera_base"/>
+	<arg name="max_range" default="0.5"/>
+	<arg name="cloud_in" default="points2"/>
+    <arg name="colored_map" default="true"/>
+  </include>
+
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find multicam)/rviz/octomap.rviz"/>
+</launch>
