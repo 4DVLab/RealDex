@@ -4,7 +4,7 @@
         <!-- <arg name="color_resolution"  value="P"/> -->
   </include>
 
-  <include file="$(find octomap_server)/launch/octomap_mapping.launch">
+  <include file="$(find multicam)/launch/octomap_mapping.launch">
     <arg name="resolution" default="0.001"/>
 	<arg name="frame_id" default="camera_base"/>
 	<arg name="max_range" default="0.5"/>
