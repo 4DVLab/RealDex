@@ -2,11 +2,8 @@
   <!-- (start your robot's MoveIt! stack, e.g. include its moveit_planning_execution.launch) -->
   <!-- (start your tracking system's ROS driver) -->
 
-<include file="$(find dobot_bringup)/launch/bringup.launch">
-    <arg name="robot_ip" value="192.168.33.11"/>
-  </include>
 
-  <include file="$(find dobot_moveit)/launch/moveit.launch"/>
+
 
   <include file="$(find azure_kinect_ros_driver)/launch/driver.launch">
     <arg name="overwrite_robot_description" value="false"/>
@@ -18,8 +15,8 @@
     <arg name="namespace_prefix" value="cam_to_hand"/> <!-- use the same namespace that you used during calibration! -->
     <arg name="robot_base_frame" value="base_link"/>
     <arg name="tracking_base_frame" value="camera_base"/>
-    <arg name="calibration_file" value="/home/yyxunn/.ros/easy_handeye/cam_to_hand_eye_on_base.yaml"/>
+    <arg name="calibration_file" value="/home/fetch/.ros/easy_handeye/cam_to_hand_eye_on_base.yaml"/>
   </include>
 
-
+<node type="rviz" pkg="rviz" name="rviz" args="-d $(find multicam)/rviz/handeye_calibration.rviz"/>
 </launch>
