@@ -1,8 +1,12 @@
 # added by yumeng
-/.DS_Store
+*/.DS_Store
 /__pycache__
 /out_json
 *.pyc
+*.obj
+models/mjcf/~$adow_hand_vis.xml
+models/mjcf/.DS_Store
+
 
 
 
@@ -167,3 +171,4 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+.DS_Store
