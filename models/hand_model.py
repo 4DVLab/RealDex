@@ -112,13 +112,14 @@ class ShadowHandModel():
 
 
 if __name__ == '__main__':
-    grasp_code = "mujoco-Ecoforms_Plant_Plate_S11Turquoise"
-    data_path = "/Users/yumeng/Working/Project2023/DexGraspNet-main/data/dataset/"
-    mesh_path = "/Users/yumeng/Working/Project2023/DexGraspNet-main/data/meshdata/"
+    grasp_code = "core-bottle-1a7ba1f4c892e2da30711cdbdbc73924"
+    data_path = "/Users/yumeng/Working/Project2023/data/dexgraspnet/"
+    mesh_path = "/Users/yumeng/Working/Project2023/data/meshdata/"
     grasp_data = np.load(os.path.join(data_path, grasp_code + ".npy"), allow_pickle=True)
     object_mesh_origin = trimesh.load(os.path.join(mesh_path, grasp_code, "coacd/decomposed.obj"))
 
-    index = random.randint(0, len(grasp_data) - 1)
+    # index = random.randint(0, len(grasp_data) - 1)
+    index = 101
     qpos = grasp_data[index]['qpos']
     rot = np.array(transforms3d.euler.euler2mat(
         *[qpos[name] for name in ShadowHandModel.rot_names]))
@@ -135,5 +136,7 @@ if __name__ == '__main__':
     hand_mesh = hand_model.get_trimesh_data(0)
     object_mesh = object_mesh_origin.copy().apply_scale(grasp_data[index]["scale"])
 
-    (hand_mesh+object_mesh).show()
+    # (hand_mesh+object_mesh).show()
+
+    (hand_mesh+object_mesh).export("/Users/yumeng/Working/Project2023/result/SynthesizedGraspPose/101_" + grasp_code + ".obj")
 
