@@ -26,6 +26,7 @@ class ShadowHandModel():
         self.chain = pk.build_chain_from_mjcf(open(mjcf_path).read()).to(dtype=torch.float, device=device)
         self.device = device
         self.mesh = {}
+        print(os.getcwd())
         self.build_mesh_recurse(self.chain._root)
 
     def load_link_visuals(self, link):
@@ -113,8 +114,8 @@ class ShadowHandModel():
 
 if __name__ == '__main__':
     grasp_code = "core-bottle-1a7ba1f4c892e2da30711cdbdbc73924"
-    data_path = "/Users/yumeng/Working/Project2023/data/dexgraspnet/"
-    mesh_path = "/Users/yumeng/Working/Project2023/data/meshdata/"
+    data_path = "/Users/yumeng/Working/Project2023/data/dexgraspnet/dataset/"
+    mesh_path = "/Users/yumeng/Working/Project2023/data/dexgraspnet/meshdata/"
     grasp_data = np.load(os.path.join(data_path, grasp_code + ".npy"), allow_pickle=True)
     object_mesh_origin = trimesh.load(os.path.join(mesh_path, grasp_code, "coacd/decomposed.obj"))
 
@@ -128,7 +129,8 @@ if __name__ == '__main__':
                             for name in ShadowHandModel.joint_names], dtype=torch.float, device="cpu").unsqueeze(0)
     
     use_visual_mesh = False
-    os.chdir('./models')
+    # os.chdir('./models')
+    # print(os.getcwd())
     hand_file = "./mjcf/shadow_hand_vis.xml" if use_visual_mesh else "./mjcf/shadow_hand_wrist_free.xml"
     hand_model = ShadowHandModel(hand_file,"./mjcf/meshes",device="cpu")
 
@@ -136,7 +138,7 @@ if __name__ == '__main__':
     hand_mesh = hand_model.get_trimesh_data(0)
     object_mesh = object_mesh_origin.copy().apply_scale(grasp_data[index]["scale"])
 
-    # (hand_mesh+object_mesh).show()
+    (hand_mesh+object_mesh).show()
 
-    (hand_mesh+object_mesh).export("/Users/yumeng/Working/Project2023/result/SynthesizedGraspPose/101_" + grasp_code + ".obj")
+    # (hand_mesh+object_mesh).export("/Users/yumeng/Working/Project2023/result/SynthesizedGraspPose/101_" + grasp_code + ".obj")
 
