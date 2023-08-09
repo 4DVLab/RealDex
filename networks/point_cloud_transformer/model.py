@@ -1,7 +1,8 @@
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from util import sample_and_group 
+from networks.point_cloud_transformer.util import sample_and_group
 
 class Local_op(nn.Module):
     def __init__(self, in_channels, out_channels):
