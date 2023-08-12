@@ -10,3 +10,6 @@
 [submodule "calibration_ws/src/octomap_mapping"]
 	path = calibration_ws/src/octomap_mapping
 	url = https://github.com/OctoMap/octomap_mapping/
+[submodule "calibration_ws/k4a-calibration"]
+	path = calibration_ws/k4a-calibration
+	url = git@github.com:stytim/k4a-calibration.git

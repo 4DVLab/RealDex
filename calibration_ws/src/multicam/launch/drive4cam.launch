@@ -10,7 +10,7 @@
   <arg name="depth_unit"              default="16UC1" />          <!-- Depth distance units. Options are: "32FC1" (32 bit float metre) or "16UC1" (16 bit integer millimetre) -->
   <arg name="color_enabled"           default="true" />           <!-- Enable or disable the color camera -->
   <arg name="color_format"            default="bgra" />           <!-- The format of RGB camera. Valid options: bgra, jpeg -->
-  <arg name="color_resolution"        default="1536P" />          <!-- Resolution at which to run the color camera. Valid options: 720P, 1080P, 1440P, 1536P, 2160P, 3072P -->
+  <arg name="color_resolution"        default="1080P" />          <!-- Resolution at which to run the color camera. Valid options: 720P, 1080P, 1440P, 1536P, 2160P, 3072P -->
   <arg name="fps"                     default="5" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
   <arg name="point_cloud"             default="true" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
   <arg name="rgb_point_cloud"         default="true" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
@@ -40,8 +40,8 @@
         <remap from="robot_description" to="azure_description" />
       </node>
 
-  <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver1" output="screen" required="$(arg required)" >
-      <param name="sensor_sn"         type="string" value="000200514512" />  
+  <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver1" output="screen" respawn="true" required="$(arg required)" >
+      <param name="sensor_sn"         type="string" value="000153514512" />  
       <param name="depth_enabled"     type="bool"   value="$(arg depth_enabled)" />
       <param name="depth_mode"        type="string" value="$(arg depth_mode)" />
       <param name="depth_unit"        type="string" value="$(arg depth_unit)" />
@@ -167,7 +167,7 @@
       </node>
   
     <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver0" output="screen" required="$(arg required)"  respawn="true" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' ">
-      <param name="sensor_sn"         type="string" value="000153514512" /> 
+      <param name="sensor_sn"         type="string" value="000200514512" /> 
       <param name="depth_enabled"     type="bool"   value="$(arg depth_enabled)" />
       <param name="depth_mode"        type="string" value="$(arg depth_mode)" />
       <param name="depth_unit"        type="string" value="$(arg depth_unit)" />
