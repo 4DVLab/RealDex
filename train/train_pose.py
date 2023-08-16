@@ -9,6 +9,8 @@ from models.hand_model import ShadowHandModel
 from datasets.dexgraspnet_dataset import DexGraspNetDataset
 import trimesh
 from trimesh.sample import sample_surface_even, sample_surface
+from pytorch3d.ops import sample_farthest_points
+
 
 # PyTorch TensorBoard support
 from torch.utils.tensorboard import SummaryWriter
@@ -18,12 +20,9 @@ class SingleObjTrainer:
     def __init__(self, geo_net_path, tensorboard_dir, pc_num=2048):
         data_dir = "/Users/yumeng/Working/Project2023/data/dexgraspnet"
         # hand_file = "./mjcf/shadow_hand_wrist_free.xml"
-        self.ds = DexGraspNetDataset(data_dir=data_dir)
-        self.object_mesh_origin = trimesh.load(ds.object_mesh_origin)
-
-        pc = sample_surface_even(self.object_mesh_origin, 2 * pc_num)
-        pc = sample_surface(pc, pc_num)
-        self.object_pts = pc
+        self.ds = DexGraspNetDataset(data_dir=data_dir, split_type='train')
+        self.pc_num = pc_num
+        
         
         # network models
         self.geo_encoder = GeoEncoder()
@@ -50,6 +49,20 @@ class SingleObjTrainer:
         self.log_per_epoch = 5
         self.num_batch_for_log = len(self.training_set) // self.log_per_epoch
 
+    def load_pts(self, mesh_path, pc_num):
+        parent_dir = mesh_path.split("/")[0]
+        if os.path.exists(parent_dir + "/points.obj"):
+            pc = trimesh.load(parent_dir + "/points.obj")
+        else:
+            mesh_origin = trimesh.load(mesh_path)
+            
+            pc = sample_surface_even(mesh_origin, 3 * pc_num)
+            # pc = torch.tensor(pc.vertices)
+            # pc = sample_farthest_points(pc, K=pc_num)
+            pc.export(parent_dir + "/points.obj")
+        return pc
+
+
     def train(self):
         for epoch in range(self.max_epoch_num):
             print(f'EPOCH {epoch}:')
@@ -75,9 +88,9 @@ class SingleObjTrainer:
 
         with torch.no_grad():
             for i, item in enumerate(self.validation_set):
-                hand_pose, transl, rot, obj_scale = item
-                object_mesh = self.object_mesh_origin.copy().apply_scale(obj_scale)
-                geo_condition = self.geo_encoder(self.object_pts * obj_scale)
+                hand_pose, transl, rot, obj_path, obj_scale = item
+                obj_pts = self.load_pts(obj_path, pc_num=self.pc_num)
+                geo_condition = self.geo_encoder(obj_pts * obj_scale)
                 global_pose_condition = torch.cat([transl, rot], dim=1)
                 pred_pose, transl_offset, global_ori_offset = self.grasp_pose_net( geo_condition, global_pose_condition, hand_pose)
 
@@ -126,7 +139,7 @@ class SingleObjTrainer:
             # clear the gradients in last step
             self.optimizer.zero_grad()
 
-            hand_pose, transl, rot, obj_scale = item
+            hand_pose, transl, rot, obj_path, obj_scale = item
             object_mesh = self.object_mesh_origin.copy().apply_scale(obj_scale)
             geo_condition = self.geo_encoder(self.object_pts * obj_scale)
             global_pose_condition = torch.cat([transl, rot], dim=1)
