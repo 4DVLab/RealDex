@@ -10,28 +10,29 @@ from datasets.dexgraspnet_dataset import DexGraspNetDataset
 import trimesh
 from trimesh.sample import sample_surface_even, sample_surface
 from pytorch3d.ops import sample_farthest_points
+from pytorch3d.io import load_objs_as_meshes
 
 
 # PyTorch TensorBoard support
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 
-class SingleObjTrainer:
-    def __init__(self, geo_net_path, tensorboard_dir, pc_num=2048):
-        data_dir = "/Users/yumeng/Working/Project2023/data/dexgraspnet"
+class Trainer:
+    def __init__(self, data_dir, geo_encoder_path, tensorboard_dir, pc_num=2048):
         # hand_file = "./mjcf/shadow_hand_wrist_free.xml"
-        self.ds = DexGraspNetDataset(data_dir=data_dir, split_type='train')
+        self.train_ds = DexGraspNetDataset(data_dir=data_dir, split_type='train')
+        self.obj_mesh_path = self.train_ds.obj_mesh_path
         self.pc_num = pc_num
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         
         # network models
-        self.geo_encoder = GeoEncoder()
-        self.geo_encoder.load_state_dict(geo_net_path)
+        self.geo_encoder = GeoEncoder(geo_encoder_path, device=self.device)
         self.grasp_pose_net = GraspPoseNet()
 
         # data
-        self.training_set = DataLoader(ds, batch_size=4, shuffle=True)
-        print('Training set has {} instances'.format(len(self.training_set)))
+        self.train_ds = DataLoader(self.train_ds, batch_size=4, shuffle=True).to(self.device)
+        print('Training set has {} instances'.format(len(self.train_ds)))
 
         # loss definition and weights for loss
         self.L2Loss = torch.nn.SmoothL1Loss()
@@ -47,20 +48,13 @@ class SingleObjTrainer:
         time_stamp = "{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
         self.tb_writer = SummaryWriter(os.path.join(tensorboard_dir, time_stamp))
         self.log_per_epoch = 5
-        self.num_batch_for_log = len(self.training_set) // self.log_per_epoch
+        self.num_batch_for_log = len(self.train_ds) // self.log_per_epoch
 
-    def load_pts(self, mesh_path, pc_num):
-        parent_dir = mesh_path.split("/")[0]
-        if os.path.exists(parent_dir + "/points.obj"):
-            pc = trimesh.load(parent_dir + "/points.obj")
-        else:
-            mesh_origin = trimesh.load(mesh_path)
-            
-            pc = sample_surface_even(mesh_origin, 3 * pc_num)
-            # pc = torch.tensor(pc.vertices)
-            # pc = sample_farthest_points(pc, K=pc_num)
-            pc.export(parent_dir + "/points.obj")
+    def load_pts(self, obj_path_list):
+        path_list = []
+        pc = load_objs_as_meshes(obj_path_list, device=self.device)
         return pc
+        
 
 
     def train(self):
@@ -89,8 +83,8 @@ class SingleObjTrainer:
         with torch.no_grad():
             for i, item in enumerate(self.validation_set):
                 hand_pose, transl, rot, obj_path, obj_scale = item
-                obj_pts = self.load_pts(obj_path, pc_num=self.pc_num)
-                geo_condition = self.geo_encoder(obj_pts * obj_scale)
+                obj_pts = self.load_pts(obj_path)
+                geo_condition = self.geo_encoder(obj_pts)
                 global_pose_condition = torch.cat([transl, rot], dim=1)
                 pred_pose, transl_offset, global_ori_offset = self.grasp_pose_net( geo_condition, global_pose_condition, hand_pose)
 
@@ -129,19 +123,21 @@ class SingleObjTrainer:
         running_loss = 0
         last_loss = 0
         running_loss_dict = {key:0 for key in self.loss_weights}
+        running_loss_dict["total_loss"] = 0
 
         self.geo_encoder.eval()
         self.grasp_pose_net.train()
 
         
-        for i, item in enumerate(self.training_set):
+        for i, item in enumerate(self.train_ds):
 
             # clear the gradients in last step
             self.optimizer.zero_grad()
 
             hand_pose, transl, rot, obj_path, obj_scale = item
-            object_mesh = self.object_mesh_origin.copy().apply_scale(obj_scale)
-            geo_condition = self.geo_encoder(self.object_pts * obj_scale)
+            obj_pts = self.load_pts(obj_path)
+
+            geo_condition = self.geo_encoder(obj_pts)
             global_pose_condition = torch.cat([transl, rot], dim=1)
             pred_pose, transl_offset, global_ori_offset = self.grasp_pose_net( geo_condition, global_pose_condition, hand_pose)
 
@@ -150,8 +146,17 @@ class SingleObjTrainer:
             rot_reg_loss = torch.norm(global_ori_offset)
             transl_reg_loss = torch.norm(transl_offset)
 
+            loss_dict = {
+                    "rec_loss": self.L2Loss(pred_pose, hand_pose),
+                    "rot_reg_loss": torch.norm(global_ori_offset),
+                    "transl_reg_loss": torch.norm(transl_offset)
+                } 
+
+            loss = 0
+            for key in self.loss_weights:
+                loss += self.loss_weights[key] * loss_dict[key] 
+
             
-            loss = rec_loss + rot_reg_loss + transl_reg_loss
 
             # compute gradient
             loss.backward()
@@ -161,15 +166,13 @@ class SingleObjTrainer:
 
             # Gather data and report
             running_loss += loss.item()
+            running_loss_dict = {key: running_loss_dict[key] + loss_dict[key].item() for key in loss_dict}
             running_loss_dict["total_loss"] += loss.item()
-            running_loss_dict["rec_loss"] += rec_loss.item()
-            running_loss_dict["rot_reg_loss"] += rot_reg_loss.item()
-            running_loss_dict["transl_reg_loss"] += transl_reg_loss.item()
             if i % self.num_batch_for_log == self.num_batch_for_log - 1:
                 last_loss = running_loss / self.num_batch_for_log # average loss
                 last_loss_dict = {key: running_loss_dict[key]/self.num_batch_for_log for key in running_loss_dict}  # average loss
                 print('  batch {} loss: {}'.format(i + 1, last_loss))
-                tb_x = self.epoch_index * len(self.training_set) + i + 1
+                tb_x = self.epoch_index * len(self.train_ds) + i + 1
                 self.tb_writer.add_scalars('Loss/Train', last_loss_dict, tb_x)
                 running_loss_dict = dict.fromkeys(running_loss_dict.keys(), 0)
 
@@ -179,14 +182,16 @@ class SingleObjTrainer:
 
 
 if __name__ == '__main__':
+    # data_dir = "/Users/yumeng/Working/Project2023/data/dexgraspnet"
+    # hand_file = "./mjcf/shadow_hand_wrist_free.xml"
+    # ds = DexGraspNetDataset(data_dir=data_dir)
+    # obj_mesh = trimesh.load(ds.object_mesh_origin)
+    # object_mesh = obj_mesh.copy().apply_scale(ds.object_scale)
+    # object_mesh.export("/Users/yumeng/Working/Project2023/result/SynthesizedGraspPose/test.obj")
+
     data_dir = "/Users/yumeng/Working/Project2023/data/dexgraspnet"
-    hand_file = "./mjcf/shadow_hand_wrist_free.xml"
-    ds = DexGraspNetDataset(data_dir=data_dir)
-    obj_mesh = trimesh.load(ds.object_mesh_origin)
-    object_mesh = obj_mesh.copy().apply_scale(ds.object_scale)
-    object_mesh.export("/Users/yumeng/Working/Project2023/result/SynthesizedGraspPose/test.obj")
-
-
-    # train()
+    pct_best_model = "/Users/yumeng/Working/Project2023/3rdparty/PCT_Pytorch-main/checkpoints/best/models/model.t7"
+    trainer = Trainer(data_dir=data_dir, geo_encoder_path=pct_best_model, tensorboard_dir="./output/log")
+    trainer.train()
 
     
