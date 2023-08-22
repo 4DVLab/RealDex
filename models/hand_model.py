@@ -127,7 +127,7 @@ if __name__ == '__main__':
     hand_pose = torch.tensor([qpos[name] for name in ShadowHandModel.translation_names] + rot + [qpos[name]+np.random.random()*0
                             for name in ShadowHandModel.joint_names], dtype=torch.float, device="cpu").unsqueeze(0)
     
-    use_visual_mesh = False
+    use_visual_mesh = True
     # os.chdir('./models')
     # print(os.getcwd())
     hand_file = "./mjcf/shadow_hand_vis.xml" if use_visual_mesh else "./mjcf/shadow_hand_wrist_free.xml"
