@@ -1,8 +1,5 @@
-import roslib
-import rospy
 import rosbag
 import os
-import transforms3d
 import json
 import yaml
 
