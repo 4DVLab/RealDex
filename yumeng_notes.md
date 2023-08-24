@@ -14,3 +14,5 @@ Meet libGL error:  failed to load driver: swrast
 ```
 export LIBGL_ALWAYS_INDIRECT=1
 ```
+
+使用nvidia docker加速rviz: [rocker](https://github.com/osrf/rocker)

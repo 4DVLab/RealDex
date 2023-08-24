@@ -85,16 +85,20 @@ class ResBlock(nn.Module):
         return Xout
 
 class GeoEncoder(nn.Module):
-    def __init__(self, args):
+    def __init__(self, model_path, device):
         """
         Pretrained Geometric Encoder
         """
         super(GeoEncoder).__init__()
-        self.device = torch.device("cuda" if args.cuda else "cpu")
-        pct_model = Pct(args).to(self.device)
-        self.pct_model = nn.DataParallel(pct_model) 
+        self.device = device
+        pct_model = Pct().to(self.device)
+        if device=='cuda':
+            self.pct_model = nn.DataParallel(pct_model) 
+            self.pct_model.load_state_dict(torch.load(model_path))
+        else:
+            pct_model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+            self.pct_model = pct_model
         
-        self.pct_model.load_state_dict(torch.load(args.model_path))
         self.pct_model = self.pct_model.eval()
 
     def forward(self, pc_data):
@@ -103,7 +107,7 @@ class GeoEncoder(nn.Module):
 
 class GraspPoseNet(nn.Module):
     def __init__(self, n_neurons = 64, latentD = 16, geo_dim = 256, global_pose_dim = 3+6, hand_pose_dim = 22):
-        # Todo: 写一个自编码器,输入机械手的pose（不包括global）和condition，输出机械手的pose。condition是物体的点云，机械手global pose
+        # 一个自编码器,输入机械手的pose（不包括global）和condition，输出机械手的pose。condition是物体的点云，机械手global pose
 
         super(GraspPoseNet).__init__()
         self.latentD = latentD
