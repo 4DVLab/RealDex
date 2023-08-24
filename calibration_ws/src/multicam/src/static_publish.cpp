@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "static_publish");
     ros::NodeHandle nh;
-    std::string calibration_1 = "/home/lab4dv/intelligentHand/IntelligentHand/calibration_ws/src/multicam/config/calibration.json";
+    std::string calibration_1 = "/home/lab4dv/intelligentHand/IntelligentHand/calibration_ws/k4a-calibration/output/cali01.json";
 
      
     std::ifstream calibration_1_file(calibration_1);

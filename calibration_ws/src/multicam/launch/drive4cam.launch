@@ -10,7 +10,7 @@
   <arg name="depth_unit"              default="16UC1" />          <!-- Depth distance units. Options are: "32FC1" (32 bit float metre) or "16UC1" (16 bit integer millimetre) -->
   <arg name="color_enabled"           default="true" />           <!-- Enable or disable the color camera -->
   <arg name="color_format"            default="bgra" />           <!-- The format of RGB camera. Valid options: bgra, jpeg -->
-  <arg name="color_resolution"        default="1080P" />          <!-- Resolution at which to run the color camera. Valid options: 720P, 1080P, 1440P, 1536P, 2160P, 3072P -->
+  <arg name="color_resolution"        default="720P" />          <!-- Resolution at which to run the color camera. Valid options: 720P, 1080P, 1440P, 1536P, 2160P, 3072P -->
   <arg name="fps"                     default="5" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
   <arg name="point_cloud"             default="true" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
   <arg name="rgb_point_cloud"         default="true" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
@@ -195,7 +195,7 @@
   <!-- publish the extren calibration of two cameras -->
   
    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="my_static_transform_publisher" args="0.01954306662082672 -0.0040450203232467178 -0.060048624873161319 -0.034377213567495349 0.2134985327720642 -0.07246364653110504 0.9736455082893372 cam0_camera_base cam1_camera_base" /> -->
-  <node name="static_publish" pkg="multicam" type="static_publish" output="screen"  launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " />
+  <node name="static_publish" pkg="multicam" type="static_publish" output="screen"  respawn="true" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " />
 
-   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find multicam)/rviz/calibration.rviz"/>
+   <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration.rviz"/>
 </launch>

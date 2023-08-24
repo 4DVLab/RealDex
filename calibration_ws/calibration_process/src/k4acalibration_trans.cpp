@@ -12,8 +12,8 @@ namespace fs = std::experimental::filesystem;
 
 int main()
 {
-    std::ifstream i1("/home/yyxunn/intelligent_hand/IntelligentHand/k4a-calibration/vedios/cn01.json");
-    std::ifstream i2("/home/yyxunn/intelligent_hand/IntelligentHand/k4a-calibration/vedios/cn02.json");
+    std::ifstream i1("/home/lab4dv/intelligentHand/IntelligentHand/calibration_ws/k4a-calibration/input/cn01.json");
+    std::ifstream i2("/home/lab4dv/intelligentHand/IntelligentHand/calibration_ws/k4a-calibration/input/cn02.json");
 
     if(!i1.is_open() || !i2.is_open())
     {
@@ -41,25 +41,25 @@ int main()
 
     std::cout << T.matrix() << std::endl;
 
-    // Eigen::Quaterniond q(T.rotation());
-    // Eigen::Vector3d t(T.translation());
-    // json j3;
-    // j3["value0"]["rotation"]["x"] = q.x();
-    // j3["value0"]["rotation"]["y"] = q.y();
-    // j3["value0"]["rotation"]["z"] = q.z();
-    // j3["value0"]["rotation"]["w"] = q.w();
-    // j3["value0"]["translation"]["x"] = t.x();
-    // j3["value0"]["translation"]["y"] = t.y();
-    // j3["value0"]["translation"]["z"] = t.z();
-    // std::cout << j3.dump(4) << std::endl;
+    Eigen::Quaterniond q(T.rotation());
+    Eigen::Vector3d t(T.translation());
+    json j3;
+    j3["value0"]["rotation"]["x"] = q.x();
+    j3["value0"]["rotation"]["y"] = q.y();
+    j3["value0"]["rotation"]["z"] = q.z();
+    j3["value0"]["rotation"]["w"] = q.w();
+    j3["value0"]["translation"]["x"] = t.x();
+    j3["value0"]["translation"]["y"] = t.y();
+    j3["value0"]["translation"]["z"] = t.z();
+    std::cout << j3.dump(4) << std::endl;
 
-     // Save JSON file
-    // std::ofstream file("/home/yyxunn/intelligent_hand/k4a-calibration/output/cali01.json");
+    //  Save JSON file
+    std::ofstream file("/home/lab4dv/intelligentHand/IntelligentHand/calibration_ws/k4a-calibration/output/cali01.json");
    
-    // file<< j3.dump(4);
+    file<< j3.dump(4);
 
-    // file.flush();
-    // file.close();
+    file.flush();
+    file.close();
 
     return 0;
 }
