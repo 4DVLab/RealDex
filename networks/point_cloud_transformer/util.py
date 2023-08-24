@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from pointnet2_ops import pointnet2_utils
+# from pointnet2_ops import pointnet2_utils
 
 def cal_loss(pred, gold, smoothing=True):
     ''' Calculate cross entropy loss, apply label smoothing if needed. '''
