@@ -1,20 +1,17 @@
 <launch>
   <arg name="tf_prefix_0" default="cam0_"/>
-  <arg name="tf_prefix_1" default="cam1_"/>
-  <arg name="tf_prefix_2" default="cam2_"/>
-  <arg name="tf_prefix_3" default="cam3_"/>
   <arg name="overwrite_robot_description" default="false" />         <!-- Flag to publish a standalone azure_description instead of the default robot_descrition parameter-->
 
   <arg name="depth_enabled"           default="true" />           <!-- Enable or disable the depth camera -->
-  <arg name="depth_mode"              default="WFOV_UNBINNED" />  <!-- Set the depth camera mode, which affects FOV, depth range, and camera resolution. See Azure Kinect documentation for full details. Valid options: NFOV_UNBINNED, NFOV_2X2BINNED, WFOV_UNBINNED, WFOV_2X2BINNED, and PASSIVE_IR -->
-  <arg name="depth_unit"              default="32FC1" />          <!-- Depth distance units. Options are: "32FC1" (32 bit float metre) or "16UC1" (16 bit integer millimetre) -->
+  <arg name="depth_mode"              default="NFOV_UNBINNED" />  <!-- Set the depth camera mode, which affects FOV, depth range, and camera resolution. See Azure Kinect documentation for full details. Valid options: NFOV_UNBINNED, NFOV_2X2BINNED, WFOV_UNBINNED, WFOV_2X2BINNED, and PASSIVE_IR -->
+  <arg name="depth_unit"              default="16UC1" />          <!-- Depth distance units. Options are: "32FC1" (32 bit float metre) or "16UC1" (16 bit integer millimetre) -->      
   <arg name="color_enabled"           default="true" />           <!-- Enable or disable the color camera -->
   <arg name="color_format"            default="bgra" />           <!-- The format of RGB camera. Valid options: bgra, jpeg -->
-  <arg name="color_resolution"        default="3072P"/>          <!-- Resolution at which to run the color camera. Valid options: 720P, 1080P, 1440P, 1536P, 2160P, 3072P -->
+  <arg name="color_resolution"        default="1536P"/>          <!-- Resolution at which to run the color camera. Valid options: 720P, 1080P, 1440P, 1536P, 2160P, 3072P -->
   <arg name="fps"                     default="5" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
   <arg name="point_cloud"             default="true" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
   <arg name="rgb_point_cloud"         default="true" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
-  <arg name="point_cloud_in_depth_frame" default="false" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
+  <arg name="point_cloud_in_depth_frame" default="true" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
   <arg name="required"                default="false" />          <!-- Argument which specified if the entire launch file should terminate if the node dies -->
   <arg name="sensor_sn"               default="" />               <!-- Sensor serial number. If none provided, the first sensor will be selected -->
   <arg name="recording_file"          default="" />               <!-- Absolute path to a mkv recording file which will be used with the playback api instead of opening a device -->
@@ -27,19 +24,11 @@
   <arg name="node_start_delay" default="0" />     <!-- delay for second camera in seconds -->
 
 
-
-
-
-
-
   <!-- master camera -->
+  
 
   <group ns="cam0">
 
-    <rosparam param="disable_pub_plugins">
-      - 'image_transport/compressedDepth'
-      - 'image_transport/theora'
-    </rosparam>
 
       <param name="azure_description"
         command="xacro $(find azure_kinect_ros_driver)/urdf/azure_kinect.urdf.xacro tf_prefix:=$(arg tf_prefix_0)" />
@@ -75,6 +64,43 @@
     </node>
   </group>
 
+<group ns="cam0/rgb/image_raw">
+    <rosparam param="disable_pub_plugins">
+      - 'image_transport/compressed'
+      - 'image_transport/compressedDepth'
+      - 'image_transport/theora'
+    </rosparam>
+  </group>
+   <group ns="cam0/depth/image_raw">
+    <rosparam param="disable_pub_plugins">
+      - 'image_transport/compressed'
+      - 'image_transport/compressedDepth'
+      - 'image_transport/theora'
+    </rosparam>
+  </group>
+<group ns="cam0/rgb_to_depth/image_raw">
+    <rosparam param="disable_pub_plugins">
+      - 'image_transport/compressed'
+      - 'image_transport/compressedDepth'
+      - 'image_transport/theora'
+    </rosparam>
+  </group>
+
+  <group ns="cam0/depth_to_rgb/image_raw">
+    <rosparam param="disable_pub_plugins">
+      - 'image_transport/compressed'
+      - 'image_transport/compressedDepth'
+      - 'image_transport/theora'
+    </rosparam>
+  </group>
+
+  <group ns="cam0/ir/image_raw">
+    <rosparam param="disable_pub_plugins">
+      - 'image_transport/compressed'
+      - 'image_transport/compressedDepth'
+      - 'image_transport/theora'
+    </rosparam>
+  </group>
 
  
 </launch>
