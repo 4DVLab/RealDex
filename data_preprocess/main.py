@@ -33,8 +33,8 @@ def draw_skeleton(joints3D, link_table, ax=None, with_numbers=True):
         
     # Fix aspect ratio
     max_range = np.linalg.norm(np.array([pos_mat[:, 0].max()-pos_mat[:, 0].min(), 
-                          pos_mat[:, 1].max()-pos_mat[:, 1].min(),
-                          pos_mat[:, 2].max()-pos_mat[:, 2].min()]))
+                        pos_mat[:, 1].max()-pos_mat[:, 1].min(),
+                        pos_mat[:, 2].max()-pos_mat[:, 2].min()]))
     min_p = pos_mat.min(axis=0)
     ax.set_xlim(min_p[0] - max_range/2, min_p[0] + max_range)
     ax.set_ylim(min_p[1]- max_range/2, min_p[1] + max_range)
@@ -113,7 +113,7 @@ def test_animation(ax, time):
         j0 = joints3D[parent]
         j1 = joints3D[child]
         skeleton, = ax.plot([j0[0], j1[0]], [j0[1], j1[1]],[j0[2], j1[2]], 
-                           linestyle='-', linewidth=2, marker='o', color='b',markersize=5)
+                        linestyle='-', linewidth=2, marker='o', color='b',markersize=5)
         skeleton_list.append(skeleton)
 
     def init_func():

@@ -27,7 +27,9 @@ class ShadowHandModel():
         self.device = device
         self.mesh = {}
         print(os.getcwd())
-        self.build_mesh_recurse(self.chain._root)
+        # self.build_mesh_recurse(self.chain._root)
+        self.build_mesh(self.chain._root)
+        
 
     def load_link_visuals(self, link):
         mesh = {}
@@ -64,6 +66,20 @@ class ShadowHandModel():
             'faces': link_faces,
         }
         return mesh
+    
+    def build_mesh(self, body):
+        curr_body = body
+        body_stack = [curr_body]
+        while len(body_stack) > 0:
+            curr_body = body_stack.pop()
+            if len(curr_body.link.visuals) > 0:
+                mesh = self.load_link_visuals(curr_body.link)
+                self.mesh.update(mesh)
+            else:
+                body_stack += curr_body.children
+                
+            
+            
 
     def build_mesh_recurse(self, body):
         if(len(body.link.visuals) > 0):
