@@ -146,10 +146,6 @@ def test_animation(ax, time):
         time.set_text(str(num))
 
     
-    
-    
-
-    
     ani = animation.FuncAnimation(fig, update, N, init_func, interval=5000/N, blit=False)
     # plt.show()
     return ani

@@ -5,7 +5,10 @@ import trimesh
 import os
 import torch
 import pytorch_kinematics as pk
+# os.chdir("/remote-home/liuym/Project/IntelligentHand")
+
 from utils.rot6d import robust_ortho6d_to_rot_mat
+
 import numpy as np
 import random
 import transforms3d
@@ -27,8 +30,8 @@ class ShadowHandModel():
         self.device = device
         self.mesh = {}
         print(os.getcwd())
-        # self.build_mesh_recurse(self.chain._root)
-        self.build_mesh(self.chain._root)
+        self.build_mesh_recurse(self.chain._root)
+        # self.build_mesh(self.chain._root)
         
 
     def load_link_visuals(self, link):
@@ -75,8 +78,7 @@ class ShadowHandModel():
             if len(curr_body.link.visuals) > 0:
                 mesh = self.load_link_visuals(curr_body.link)
                 self.mesh.update(mesh)
-            else:
-                body_stack += curr_body.children
+            body_stack += curr_body.children
                 
             
             
