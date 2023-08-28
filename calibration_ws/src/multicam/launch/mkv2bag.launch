@@ -1,0 +1,7 @@
+<launch>
+    <include file="$(find multicam)/launch/driveCamera/drive1cam.launch">
+        <arg name="recording_file" value="/home/lab4dv/output.mkv"/>
+        <arg name="recording_loop_enabled"  value="false" /> 
+    </include>
+    <!-- <node pkg="rviz" type="rviz" name="rviz" arg="-d $(find multicam)/rviz/mkv2bag.rviz" /> -->
+</launch>
