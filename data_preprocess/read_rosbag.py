@@ -4,9 +4,9 @@ import json
 import yaml
 
 def msg2json(msg):
-   ''' Convert a ROS message to JSON format'''
-   y = yaml.safe_load(str(msg))
-   return y
+    ''' Convert a ROS message to JSON format'''
+    y = yaml.safe_load(str(msg))
+    return y
 
 def rosbag2json():
     bag_path = "/Users/yumeng/Working/data/CollectedDataset/IntelligentHand/ros_bag_test/"

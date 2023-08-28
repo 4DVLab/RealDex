@@ -130,8 +130,8 @@ class Kintree(object):
             child_coord_global = base_pos + (base_frame.inv() * rel_rot * base_frame).as_matrix() @ child_coord_local
             child_ori_global = rel_rot * base_frame
             self.forward_kinematic(base_pos=child_coord_global, 
-                                   base_frame=child_ori_global, 
-                                   node_name=child.name)
+                                base_frame=child_ori_global, 
+                                node_name=child.name)
             del rel_rot, child_coord_local, child_coord_global, child_ori_global
         
 
