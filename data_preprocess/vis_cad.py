@@ -11,7 +11,7 @@ import numpy as np
 
 import json
 import torch
-from robot_descriptions.loaders.mujoco import load_robot_description
+# from robot_descriptions.loaders.mujoco import load_robot_description
 
 
 
@@ -81,7 +81,7 @@ def vis_cad():
     use_visual_mesh = False
     # os.chdir('./models')
     # print(os.getcwd())
-    hand_file = "./mjcf/shadow_hand_vis.xml" if use_visual_mesh else "./mjcf/shadow_hand_wrist_free.xml"
+    hand_file = "./mjcf/shadow_hand/shadow_hand_vis.xml" if use_visual_mesh else "./mjcf/shadow_hand_wrist_free.xml"
     hand_model = ShadowHandModel(hand_file,"./mjcf/meshes",device="cpu")
     
     global_ori, global_trans, poses = load_pose()
