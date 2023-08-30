@@ -1,5 +1,5 @@
 <mujoco model="MuJoCo Model">
-    <compiler angle="radian" meshdir="./mjcf/meshes/" texturedir="./mjcf/textures/" />
+    <compiler angle="radian" meshdir="./mjcf/shadow_hand/meshes/" texturedir="./mjcf/shadow_hand/textures/" />
     <option apirate="200" iterations="20" />
     <size njmax="500" nconmax="100" nstack="600000" nuser_jnt="1" nuser_site="1" nuser_tendon="1" nuser_actuator="16" nuser_sensor="1" />
     <visual>

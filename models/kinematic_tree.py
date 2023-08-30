@@ -12,7 +12,42 @@ from utils.rot6d import robust_ortho6d_to_rot_mat
 import numpy as np
 import random
 import transforms3d
+# from urdfpy import URDF
 
+
+class LinkNode():
+    def __init__(self):
+        """_summary_
+
+        Args:
+            time_stamp_list (list): This is a list of the exact times 
+            when the ROS message was recorded. 
+        """
+        self.link_name = None
+        # self.time_stamp_list = []
+        self.tf_list = []
+        
+    def add(self, new_time, new_tf):
+        # self.time_stamp_list.append(new_time)
+        self.tf_list.append({'time': new_time, 'transform': new_tf})
+        self.tf_list = sorted(self.tf_list, key=lambda x: x['time'])
+        
+        
+    def query_time(self, query):
+        if len(self.tf_list) == 0:
+            return -1
+        left = 0
+        right = len(self.tf_list)
+        while left < right:
+            mid = int((left + right) / 2)
+            if self.tf_list[mid]['time'] < query:
+                left = mid + 1
+            elif self.tf_list[mid]['time'] >= query:
+                right = mid
+                
+        # select the nearest time that is earlier than the query in the time stamp list.
+        return left
+                    
 class KinematicTree():
     def __init__(self, mjcf_path, mesh_path, device):
         self.mesh_path = mesh_path
@@ -22,78 +57,20 @@ class KinematicTree():
         print(os.getcwd())
         # self.build_mesh_recurse(self.chain._root)
         self.build_mesh(self.chain._root)
+        self.link_nodes = {}
         
         
-    class TimeNode():
-        def __init__(self, l=None, r=None):
-            self.l_time = l
-            self.r_time = r
-            self.parent = None
-            self.is_leaf = False
-            self.value = None
+    def update_node(self, tf_data):
+        for link in tf_data:
+            child_frame_id = link['child_frame_id']
+            time_stamp = link['header']['stamp']['secs']
+            transform = link['transform']
+            if child_frame_id not in self.link_nodes:
+                self.link_nodes[child_frame_id] = LinkNode()
+            else:
+                self.link_nodes[child_frame_id].add(time_stamp, transform)
             
-        
-    class KLink():
-        def __init__(self, time_stamp_list):
-            self.time_stamp_list = time_stamp_list
-            self.leaf_num = len(time_stamp_list)
-            # allocate memories
-            self.bi_tree = [KinematicTree.TimeNode()] * 4 * self.leaf_num
-            self.build_tree_for_query()
-            
-        def build_tree_for_query(self):
-            # insert leaf node in tree
-            for i, time in enumerate(self.time_stamp_list):
-                self.bi_tree[self.leaf_num + i] = KinematicTree.TimeNode(l=time, r=time)
-                self.bi_tree[self.leaf_num + i].is_leaf = True
-                
-            # build the tree by calculate parents
-            for i in range(self.leaf_num - 1, 0, -1):
-                lchild = i << 1
-                rchild = i << 1 | 1
-                
-                # get the interval from its children
-                self.bi_tree[i] = KinematicTree.TimeNode(l=self.bi_tree[lchild].l_time,r=self.bi_tree[rchild].r_time)
-                
-                self.bi_tree[lchild].parent = self.bi_tree[i]
-                self.bi_tree[rchild].parent = self.bi_tree[i]
-                
-        def query(self, node_id, q_time):
-            node = self.bi_tree[node_id]
-            if node.is_leaf:
-                return node.value
-            if q_time <= node.l_time:
-                lchild = node_id << 1
-                self.query(lchild, q_time)
-            if q_time >= node.r_time:
-                rchild = node_id << 1 | 1
-                self.query(rchild, q_time)
-            
-            
-            
-            
-                
-        # # function to query on interval [l, r)
-        # def query(self, l, r): 
-        #     res = 0
-        #     # loop to find the sum in the range
-        #     while l < r and l >>= 1 and r >>= 1:
-        #         l += n
-        #         r += n
-        #         if (l&1): 
-        #             res += tree[l++]
-            
-        #         if (r&1): 
-        #             res += tree[--r]
-            
-            # return res
-            
-            
-        def insert(self, time):
-            pass
-        
-        
-        
+                    
     def build_mesh(self, body):
         curr_body = body
         body_stack = [curr_body]
@@ -141,5 +118,10 @@ class KinematicTree():
         }
         return mesh
     
-    def update(self, time, qpos):
-        
+if __name__ == '__main__':
+    arm_file = "./mjcf/ur10e_mujoco/ur10e.xml"
+    mesh_file = "./mjcf/ur10e_mujoco/assets"
+    # arm_file = "./mjcf/shadow_hand/shadow_hand_wrist_free.xml"
+    # mesh_file = "./mjcf/shadow_hand/meshes"
+    
+    robot_model = KinematicTree(arm_file, mesh_file,device="cpu")
