@@ -9,6 +9,12 @@ JOINT_TYPE_MAP = {'hinge': 'revolute', None: 'revolute'}
 def geoms_to_visuals(geom, base=tf.Transform3d()):
     visuals = []
     for g in geom:
+        
+        # if g['class'] is not None:
+        #     print(g['class'].type)
+        # if g.getClass() is not None:
+        #     print(g)
+            
         if g.type == 'capsule':
             param = g.size
         elif g.type == 'sphere':
@@ -18,7 +24,8 @@ def geoms_to_visuals(geom, base=tf.Transform3d()):
         elif g.type == 'mesh':
             param = (g.mesh.name, g.mesh.scale)
         else:
-            # print(g.name)
+            print(repr(g))
+            # print(repr(g.find('geom', 'class')))
             param = (g.mesh.name, g.mesh.scale)
             # raise ValueError('Invalid geometry type %s.' % g.type)
         visuals.append(frame.Visual(offset=base.compose(tf.Transform3d(rot=g.quat, pos=g.pos)),
