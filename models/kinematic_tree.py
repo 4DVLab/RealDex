@@ -12,6 +12,7 @@ import json
 import numpy as np
 import random
 import transforms3d
+from transforms3d.quaternions import quat2mat
 # from urdfpy import URDF
 
 
@@ -47,7 +48,7 @@ class LinkNode():
                 
         # select the nearest time that is earlier than the query in the time stamp list.
         tf = self.tf_list[left]['transform']
-        quat = torch.tensor([tf['rotation'][k] for k in ['w', 'x', 'y', 'z']])
+        # quat = torch.tensor([tf['rotation'][k] for k in ['w', 'x', 'y', 'z']])
         quat_w = torch.tensor(tf['rotation']['w'])
         joint_angle = torch.arccos(quat_w) * 2
         
@@ -70,6 +71,44 @@ class KinematicTree():
                             'ra_wrist_1_link':"wrist_1_joint",
                             'ra_wrist_2_link':"wrist_2_joint",
                             'ra_wrist_3_link':"wrist_3_joint"}
+        
+    def load_world_frame(self, file_path):
+        with open(file_path, 'r') as f:
+            static_tf = json.load(f)['transforms']
+        for link in static_tf:
+            if link['header']['frame_id'] == "world":
+                world = link['transform']
+                transl = world['translation']
+                quat = world['rotation']
+                quat = np.array([quat[k] for k in ['w', 'x', 'y', 'z']])
+                rot_mat = quat2mat(quat)
+                self.world_translation = np.array([transl[k] for k in ['x', 'y', 'z']])
+                self.world_rotation = np.array(rot_mat)
+                break
+                
+    def load_base_link(self, file_path):
+        with open(file_path, 'r') as f:
+            base_tf = json.load(f)['transforms']
+        for link in base_tf:
+            if link['header']['frame_id']=="ra_base":
+                base = link['transform']
+                transl = base['translation']
+                quat = base['rotation']
+                quat = np.array([quat[k] for k in ['w', 'x', 'y', 'z']])
+                rot_mat = quat2mat(quat)
+                
+                base_translation = torch.tensor([transl[k] for k in ['x', 'y', 'z']]).float()
+                base_rot = rot_mat
+                
+                world_trans = transforms3d.affines.compose(T=self.world_translation, R=self.world_rotation, Z=np.ones(3))
+                base_trans = transforms3d.affines.compose(T=base_translation, R=base_rot, Z=np.ones(3))
+                
+                base_to_world = base_trans @ world_trans
+                
+                self.global_translation = torch.tensor(base_to_world[:3, -1]).float()
+                self.global_rotation = torch.tensor(base_to_world[:3, :3]).unsqueeze(0).float()
+                break
+                
     
     def load_tf_file(self, file_path):
         with open(file_path, 'r') as f:
@@ -212,7 +251,11 @@ if __name__ == '__main__':
     ur_model = KinematicTree(arm_file, mesh_file,device="cpu")
     
     tf_file_path = "/remote-home/liuym/data/0721/out_tf_json/frame_1687317998456300066.json"
+    world_file_path = "/remote-home/liuym/data/0721/tf_static/frame_1687317997982037854.json"
+    base_file_path = "/remote-home/liuym/data/0721/out_tf_json/frame_1687317998454985545.json"
     ur_model.load_tf_file(tf_file_path)
+    # ur_model.load_world_frame(world_file_path)
+    # ur_model.load_base_link(base_file_path)
     print(ur_model.chain.get_joint_parameter_names())
     ur_model.set_arm_parameters(time=0)
     
