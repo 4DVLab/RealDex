@@ -7,38 +7,57 @@
 
 using json = nlohmann::json;
 namespace fs = std::experimental::filesystem;
-
+using namespace std;
 
 
 int main()
 {
-    std::ifstream i1("/home/lab4dv/intelligentHand/IntelligentHand/calibration_ws/k4a-calibration/input/cn01.json");
-    std::ifstream i2("/home/lab4dv/intelligentHand/IntelligentHand/calibration_ws/k4a-calibration/input/cn02.json");
 
-    if(!i1.is_open() || !i2.is_open())
-    {
+    ifstream i1("/home/lab4dv/IntelligentHand/calibration_ws/k4a-calibration/input/cn00.json");
+   
+       if(!i1.is_open())
+        {
         std::cout << "open file failed" << std::endl;
         return -1;
-    }
+        }
+        else{
+            cout<<"open file cn00.json success"<<endl;
+        }
+    json j1 = json::parse(i1);
+     i1.close();
+    Eigen::Affine3d T1=Eigen::Affine3d::Identity();
+    T1.rotate( Eigen::Quaterniond( j1["value0"]["rotation"]["w"],  j1["value0"]["rotation"]["x"],  j1["value0"]["rotation"]["y"], j1["value0"]["rotation"]["z"]).toRotationMatrix());
+    T1.translation()<<j1["value0"]["translation"]["x"],  j1["value0"]["translation"]["y"], j1["value0"]["translation"]["z"];
+   
 
-    json j1 = json::parse(i1), j2 = json::parse(i2);
-    i1.close(); i2.close();
-    Eigen::Affine3d T1=Eigen::Affine3d::Identity(), T2 =Eigen::Affine3d::Identity();
+
+    for(int i=1; i<4; i++)
+    {
+        string str = "/home/lab4dv/IntelligentHand/calibration_ws/k4a-calibration/input/cn0"+ to_string(i)+ ".json";
+        ifstream i2(str);
+
+        if(!i2.is_open())
+        {
+        std::cout << "open file failed" << std::endl;
+        return -1;
+        }
+        else{
+            cout<<"open file cn0"+to_string(i)+".json success"<<endl;
+        }
+
+    json j2 = json::parse(i2);
+    i2.close();
+    Eigen::Affine3d T2 =Eigen::Affine3d::Identity();
     // T1.matrix() << ,  j1["value0"]["rotation"]["x"],  j1["value0"]["rotation"]["y"],  j1["value0"]["rotation"]["z"],  j1["value0"]["rotation"]["w"],  0,  0,  0,  1;
     // T2.matrix() << j2["value0"]["translation"]["x"],  j2["value0"]["translation"]["y"], j2["value0"]["translation"]["z"],  j2["value0"]["rotation"]["x"],  j2["value0"]["rotation"]["y"],  j2["value0"]["rotation"]["z"],  j2["value0"]["rotation"]["w"],  0,  0,  0,  1;
     
-    
 
-    T1.rotate( Eigen::Quaterniond( j1["value0"]["rotation"]["x"],  j1["value0"]["rotation"]["y"],  j1["value0"]["rotation"]["z"], j1["value0"]["rotation"]["w"]).toRotationMatrix());
-    T1.translation()<<j1["value0"]["translation"]["x"],  j1["value0"]["translation"]["y"], j1["value0"]["translation"]["z"];
-    
-    T2.rotate(Eigen::Quaterniond( j2["value0"]["rotation"]["x"],  j2["value0"]["rotation"]["y"],  j2["value0"]["rotation"]["z"], j2["value0"]["rotation"]["w"]).toRotationMatrix());
+   
+    T2.rotate(Eigen::Quaterniond( j2["value0"]["rotation"]["w"],  j2["value0"]["rotation"]["x"],  j2["value0"]["rotation"]["y"], j2["value0"]["rotation"]["z"]).toRotationMatrix());
     T2.translation()<<j2["value0"]["translation"]["x"],  j2["value0"]["translation"]["y"], j2["value0"]["translation"]["z"];
-    std::cout <<T1.matrix() << std::endl;
-    std::cout <<T2.matrix() << std::endl;
 
     Eigen::Affine3d T = T1.inverse() * T2;
-
+  
     std::cout << T.matrix() << std::endl;
 
     Eigen::Quaterniond q(T.rotation());
@@ -54,12 +73,15 @@ int main()
     std::cout << j3.dump(4) << std::endl;
 
     //  Save JSON file
-    std::ofstream file("/home/lab4dv/intelligentHand/IntelligentHand/calibration_ws/k4a-calibration/output/cali01.json");
+    std::ofstream file("/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data/cali0"+to_string(i)+".json");
    
     file<< j3.dump(4);
 
     file.flush();
     file.close();
+    }
+
+   
 
     return 0;
 }

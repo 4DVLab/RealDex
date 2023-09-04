@@ -1,0 +1,5 @@
+   <launch>
+   <arg name="file_path" default="$(find multicam)/records/records.bag"/>
+   <node name="record" pkg="rosbag" type="play" args="$(arg file_path)  -l"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find multicam)/rviz/calibration4cam.rviz "/>
+</launch>

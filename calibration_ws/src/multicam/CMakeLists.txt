@@ -138,7 +138,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(static_publish src/static_publish.cpp)
+add_executable(static_publish_4 src/static_publish_4.cpp)
+add_executable(static_publish_2 src/static_publish_2.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -151,7 +152,11 @@ add_executable(static_publish src/static_publish.cpp)
 # add_dependencies(static_publish ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(static_publish
+target_link_libraries(static_publish_4
+  ${catkin_LIBRARIES}
+  nlohmann_json::nlohmann_json
+)
+target_link_libraries(static_publish_2
   ${catkin_LIBRARIES}
   nlohmann_json::nlohmann_json
 )
