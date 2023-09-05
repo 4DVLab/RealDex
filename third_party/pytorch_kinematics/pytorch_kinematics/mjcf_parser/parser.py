@@ -50,7 +50,7 @@ def from_xml_string(xml_string, escape_separators=False,
     Returns:
       An `mjcf.RootElement`.
     """
-    xml_root = etree.fromstring(xml_string)
+    xml_root = etree.fromstring(xml_string)  
     return _parse(xml_root, escape_separators,
                   model_dir=model_dir,
                   resolve_references=resolve_references,
