@@ -336,14 +336,10 @@
 
 
   <!-- publish the extren calibration of two cameras -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="my_static_transform_publisher" args=" world cam0_camera_base" />
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="my_static_transform_publisher" args="-0.84732416  1.89968208  0.22593891 0.82304917 -0.03086784  0.07323488 -0.56238234 ra_base_link cam0_camera_base" /> x y z x y z w -->
     <node name="static_publish_4" pkg="multicam" type="static_publish_4" output="screen"  respawn="$(arg respawn)" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " />
 
    <!-- <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/> -->
    <!-- <node name="record" pkg="rosbag" type="record" args="-a -O $(find multicam)/records/records.bag \-\-duration $(arg record_duration) -b 4096"/> -->
 
-<!-- 0.991324841976 0.130304843187 -0.017191484571 -0.128121018410
-0.030977401882 -0.358750462532 -0.932919263840 -0.010605191812
--0.127731367946 0.924293696880 -0.359674811363 2.047075748444
-0.000000000000 0.000000000000 0.000000000000 1.000000000000 -->
 </launch>
