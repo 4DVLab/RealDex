@@ -53,18 +53,74 @@ class LinkNode():
         joint_angle = torch.arccos(quat_w) * 2
         
         return joint_angle
-                    
+    
 class KinematicTree():
     def __init__(self, mjcf_path, mesh_path, device):
         self.mesh_path = mesh_path
         self.chain = pk.build_chain_from_mjcf(open(mjcf_path).read()).to(dtype=torch.float, device=device)
         self.device = device
         self.mesh = {}
-        print(os.getcwd())
         self.build_mesh_recurse(self.chain._root)
         # self.build_mesh(self.chain._root)
         self.link_nodes = {}
         self.joints_name = self.chain.get_joint_parameter_names()
+        
+    def build_mesh_recurse(self, body):
+        if(len(body.link.visuals) > 0):
+            mesh = self.load_link_visuals(body.link)
+            self.mesh.update(mesh)
+            
+        for child in body.children:
+            self.build_mesh_recurse(child)
+            
+            
+    def load_link_visuals(self, link):
+        mesh = {}
+        link_name = link.name
+        link_vertices = []
+        link_faces = []
+        n_link_vertices = 0
+        for visual in link.visuals:
+            scale = torch.tensor([1, 1, 1]).float()
+            if visual.geom_type == "box":
+                # link_mesh = trimesh.primitives.Box(extents=2 * visual.geom_param)
+                link_mesh = trimesh.load_mesh(os.path.join(self.mesh_path, 'box.obj'), process=False)
+                link_mesh.vertices *= visual.geom_param.numpy()
+            elif visual.geom_type == "capsule":
+                continue
+                link_mesh = trimesh.primitives.Capsule(radius=visual.geom_param[0],
+                                                       height=visual.geom_param[1] * 2).apply_translation((0, 0, -visual.geom_param[1]))
+            elif visual.geom_type == "mesh":
+                mesh_name = visual.geom_param[0]
+                if len(mesh_name.split(":")) > 1:
+                    link_mesh = trimesh.load_mesh(os.path.join(self.mesh_path, mesh_name.split(":")[1]+".obj"), process=False)
+                else:
+                    link_mesh = trimesh.load_mesh(os.path.join(self.mesh_path, mesh_name + ".obj"), process=False)
+                    
+                if visual.geom_param[1] is not None:
+                    scale = torch.tensor(visual.geom_param[1])
+            vertices = torch.tensor(link_mesh.vertices).float()
+            faces = torch.tensor(link_mesh.faces).long()
+            pos = visual.offset
+            vertices = vertices * scale
+            vertices = pos.transform_points(vertices)
+            link_vertices.append(vertices)
+            link_faces.append(faces + n_link_vertices)
+            n_link_vertices += len(vertices)
+
+        link_vertices = torch.cat(link_vertices, dim=0)
+        link_faces = torch.cat(link_faces, dim=0)
+        mesh[link_name] = {
+            'vertices': link_vertices,
+            'faces': link_faces,
+        }
+        return mesh
+        
+                    
+class URModel(KinematicTree):
+    def __init__(self, mjcf_path, mesh_path, device):
+        super().__init__(mjcf_path, mesh_path, device)
+        print(self.joints_name)
         self.name_mapping = {'ra_shoulder_link':"shoulder_pan_joint", 
                             'ra_upper_arm_link':"shoulder_lift_joint",
                             'ra_forearm_link':"elbow_joint",
@@ -140,56 +196,7 @@ class KinematicTree():
                 self.mesh.update(mesh)
             body_stack += curr_body.children
             
-    def build_mesh_recurse(self, body):
-        if(len(body.link.visuals) > 0):
-            mesh = self.load_link_visuals(body.link)
-            self.mesh.update(mesh)
-            
-        for child in body.children:
-            self.build_mesh_recurse(child)
-            
-            
-    def load_link_visuals(self, link):
-        mesh = {}
-        link_name = link.name
-        link_vertices = []
-        link_faces = []
-        n_link_vertices = 0
-        for visual in link.visuals:
-            scale = torch.tensor([1, 1, 1]).float()
-            if visual.geom_type == "box":
-                # link_mesh = trimesh.primitives.Box(extents=2 * visual.geom_param)
-                link_mesh = trimesh.load_mesh(os.path.join(self.mesh_path, 'box.obj'), process=False)
-                link_mesh.vertices *= visual.geom_param.numpy()
-            elif visual.geom_type == "capsule":
-                continue
-                link_mesh = trimesh.primitives.Capsule(radius=visual.geom_param[0],
-                                                       height=visual.geom_param[1] * 2).apply_translation((0, 0, -visual.geom_param[1]))
-            elif visual.geom_type == "mesh":
-                mesh_name = visual.geom_param[0]
-                if len(mesh_name.split(":")) > 1:
-                    link_mesh = trimesh.load_mesh(os.path.join(self.mesh_path, mesh_name.split(":")[1]+".obj"), process=False)
-                else:
-                    link_mesh = trimesh.load_mesh(os.path.join(self.mesh_path, mesh_name + ".obj"), process=False)
-                    
-                if visual.geom_param[1] is not None:
-                    scale = torch.tensor(visual.geom_param[1])
-            vertices = torch.tensor(link_mesh.vertices).float()
-            faces = torch.tensor(link_mesh.faces).long()
-            pos = visual.offset
-            vertices = vertices * scale
-            vertices = pos.transform_points(vertices)
-            link_vertices.append(vertices)
-            link_faces.append(faces + n_link_vertices)
-            n_link_vertices += len(vertices)
-
-        link_vertices = torch.cat(link_vertices, dim=0)
-        link_faces = torch.cat(link_faces, dim=0)
-        mesh[link_name] = {
-            'vertices': link_vertices,
-            'faces': link_faces,
-        }
-        return mesh
+    
     
     def set_arm_parameters(self, time=0):
         arm_pose = {}
@@ -248,7 +255,7 @@ if __name__ == '__main__':
     # arm_file = "./mjcf/shadow_hand/shadow_hand_wrist_free.xml" 
     # mesh_file = "./mjcf/shadow_hand/meshes"
     
-    ur_model = KinematicTree(arm_file, mesh_file,device="cpu")
+    ur_model = URModel(arm_file, mesh_file,device="cpu")
     
     tf_file_path = "/remote-home/liuym/data/0721/out_tf_json/frame_1687317998456300066.json"
     world_file_path = "/remote-home/liuym/data/0721/tf_static/frame_1687317997982037854.json"
