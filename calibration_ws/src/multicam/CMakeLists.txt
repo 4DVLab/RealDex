@@ -139,7 +139,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(static_publish_4 src/static_publish_4.cpp)
-add_executable(static_publish_2 src/static_publish_2.cpp)
+# add_executable(static_publish_2 src/static_publish_2.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -156,10 +156,10 @@ target_link_libraries(static_publish_4
   ${catkin_LIBRARIES}
   nlohmann_json::nlohmann_json
 )
-target_link_libraries(static_publish_2
-  ${catkin_LIBRARIES}
-  nlohmann_json::nlohmann_json
-)
+# target_link_libraries(static_publish_2
+#   ${catkin_LIBRARIES}
+#   nlohmann_json::nlohmann_json
+# )
 
 #############
 ## Install ##
