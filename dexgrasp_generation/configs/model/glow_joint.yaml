@@ -1,0 +1,34 @@
+joint_training: True
+
+rotation_net:
+  type: ipdf
+  ckpt_path: runs/ipdf_train/ckpt/model_000301.pt
+
+contact_net:
+  type: cm_net
+  ckpt_path: runs/cm_net_train_gpu5/ckpt/model_000101.pt
+
+network:
+  type: pointnet
+
+flow:
+  points: 22
+  feature_dim: 1024
+  hidden_dim: 64
+  layer: 21
+  block: 2
+
+tta:
+  normalize_factor: 60
+  weight_cmap: 0.02
+  weight_dis: 0.0
+  weight_pen: 500
+  weight_spen: 10
+  weight_tpen: 50
+  thres_dis: 0.01
+
+sample_num: 8
+
+loss_weight:
+  nll: 1.0
+  cmap_loss: 1.0
