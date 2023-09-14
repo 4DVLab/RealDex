@@ -6,7 +6,7 @@
   <arg name="overwrite_robot_description" default="false" />         <!-- Flag to publish a standalone azure_description instead of the default robot_descrition parameter-->
 
   <arg name="depth_enabled"           default="true" />           <!-- Enable or disable the depth camera -->
-  <arg name="depth_mode"              default="WFOV_UNBINNED" />  <!-- Set the depth camera mode, which affects FOV, depth range, and camera resolution. See Azure Kinect documentation for full details. Valid options: NFOV_UNBINNED, NFOV_2X2BINNED, WFOV_UNBINNED, WFOV_2X2BINNED, and PASSIVE_IR -->
+  <arg name="depth_mode"              default="NFOV_UNBINNED" />  <!-- Set the depth camera mode, which affects FOV, depth range, and camera resolution. See Azure Kinect documentation for full details. Valid options: NFOV_UNBINNED, NFOV_2X2BINNED, WFOV_UNBINNED, WFOV_2X2BINNED, and PASSIVE_IR -->
   <arg name="depth_unit"              default="16UC1" />          <!-- Depth distance units. Options are: "32FC1" (32 bit float metre) or "16UC1" (16 bit integer millimetre) -->
   <arg name="color_enabled"           default="true" />           <!-- Enable or disable the color camera -->
   <arg name="color_format"            default="bgra" />           <!-- The format of RGB camera. Valid options: bgra, jpeg -->
@@ -14,7 +14,7 @@
   <arg name="fps"                     default="5" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
   <arg name="point_cloud"             default="true" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
   <arg name="rgb_point_cloud"         default="true" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
-  <arg name="point_cloud_in_depth_frame" default="false" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
+  <arg name="point_cloud_in_depth_frame" default="true" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
   <arg name="required"                default="false" />          <!-- Argument which specified if the entire launch file should terminate if the node dies -->
   <arg name="recording_file"          default="" />               <!-- Absolute path to a mkv recording file which will be used with the playback api instead of opening a device -->
   <arg name="recording_loop_enabled"  default="false" />          <!-- If set to true the recording file will rewind the beginning once end of file is reached -->
@@ -25,7 +25,7 @@
   <arg name="imu_rate_target" default="0"/>                       <!-- Desired output rate of IMU messages. Set to 0 (default) for full rate (1.6 kHz). --> 
   <arg name="node_start_delay" default="1.0" />     <!-- delay for second camera in seconds -->
   <arg name="record_duration" default="2"/>   <!-- bag recording time-->
-  <arg name="respawn" default="false"/>
+  <arg name="respawn" default="true"/>
 
 <!-- subordinate camera -->
 
@@ -61,7 +61,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="160"/>
+      <param name="subordinate_delay_off_master_usec" value="0"/>
     </node>
 
 </group> 
@@ -137,7 +137,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/>
-      <param name="subordinate_delay_off_master_usec" value="160"/>
+      <param name="subordinate_delay_off_master_usec" value="0"/>
     </node>
 
 </group>
@@ -213,7 +213,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="160"/>
+      <param name="subordinate_delay_off_master_usec" value="0"/>
     </node>
 
 </group> 
