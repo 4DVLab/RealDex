@@ -13,3 +13,6 @@
 [submodule "calibration_ws/k4a-calibration"]
 	path = calibration_ws/k4a-calibration
 	url = git@github.com:stytim/k4a-calibration.git
+[submodule "grabnet"]
+	path = grabnet
+	url = https://github.com/lym29/grabnet.git

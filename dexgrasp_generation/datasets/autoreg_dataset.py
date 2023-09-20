@@ -19,7 +19,7 @@ from data_tools.utils import OakInk_Transcoder
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 to_cpu = lambda tensor: tensor.detach().cpu().numpy()
 
-
+#todo: need to add the gt data of next frame in the dataset
 class AutoRegDataset(Dataset):
     def __init__(self, cfg, mode):
         super.__init__()
