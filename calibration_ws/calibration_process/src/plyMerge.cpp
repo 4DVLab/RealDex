@@ -32,6 +32,7 @@ int main(int argc, char** argv)
             
   
     rosbag::View view(bag, rosbag::TopicQuery(topics));
+    pcl::visualization::CloudViewer viewer("test_view");
 
      int num;
     while(true){

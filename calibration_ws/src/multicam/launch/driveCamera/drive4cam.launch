@@ -6,7 +6,7 @@
   <arg name="overwrite_robot_description" default="false" />         <!-- Flag to publish a standalone azure_description instead of the default robot_descrition parameter-->
 
   <arg name="depth_enabled"           default="true" />           <!-- Enable or disable the depth camera -->
-  <arg name="depth_mode"              default="NFOV_UNBINNED" />  <!-- Set the depth camera mode, which affects FOV, depth range, and camera resolution. See Azure Kinect documentation for full details. Valid options: NFOV_UNBINNED, NFOV_2X2BINNED, WFOV_UNBINNED, WFOV_2X2BINNED, and PASSIVE_IR -->
+  <arg name="depth_mode"              default="WFOV_UNBINNED" />  <!-- Set the depth camera mode, which affects FOV, depth range, and camera resolution. See Azure Kinect documentation for full details. Valid options: NFOV_UNBINNED, NFOV_2X2BINNED, WFOV_UNBINNED, WFOV_2X2BINNED, and PASSIVE_IR -->
   <arg name="depth_unit"              default="16UC1" />          <!-- Depth distance units. Options are: "32FC1" (32 bit float metre) or "16UC1" (16 bit integer millimetre) -->
   <arg name="color_enabled"           default="true" />           <!-- Enable or disable the color camera -->
   <arg name="color_format"            default="bgra" />           <!-- The format of RGB camera. Valid options: bgra, jpeg -->
@@ -61,7 +61,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="0"/>
+      <param name="subordinate_delay_off_master_usec" value="160"/>
     </node>
 
 </group> 
@@ -137,7 +137,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/>
-      <param name="subordinate_delay_off_master_usec" value="0"/>
+      <param name="subordinate_delay_off_master_usec" value="160"/>
     </node>
 
 </group>
@@ -213,7 +213,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="0"/>
+      <param name="subordinate_delay_off_master_usec" value="160"/>
     </node>
 
 </group> 
@@ -340,7 +340,7 @@
     <!-- x y z x y z w -->
     <node name="static_publish_4" pkg="multicam" type="static_publish_4" output="screen"  respawn="$(arg respawn)" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " />
 
-   <!-- <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/> -->
+   <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/>
    <!-- <node name="record" pkg="rosbag" type="record" args="-a -O $(find multicam)/records/records.bag \-\-duration $(arg record_duration) -b 4096"/> -->
 
 </launch>
