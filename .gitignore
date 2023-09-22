@@ -4,9 +4,11 @@
 /out_json
 *.pyc
 *.obj
+*.bag
+.mkv
 models/mjcf/~$adow_hand_vis.xml
 models/mjcf/.DS_Store
-
+.vscode
 
 
 
