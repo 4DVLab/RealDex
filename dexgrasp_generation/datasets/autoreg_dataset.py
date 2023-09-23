@@ -19,7 +19,7 @@ from data_tools.utils import OakInk_Transcoder
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 to_cpu = lambda tensor: tensor.detach().cpu().numpy()
 
-
+#todo: need to add the gt data of next frame in the dataset
 class AutoRegDataset(Dataset):
     def __init__(self, cfg, mode):
         super.__init__()
@@ -80,11 +80,26 @@ class AutoRegDataset(Dataset):
         data_torch = {k:torch.tensor(data[k]).float() for k in data.files}
         return data_torch
         
+    def __len__(self):
+        return len(self.frame_names)
         
-    def __getitem__(self, item):
-        
-        return 
-    
+    def __getitem__(self, idx):
+
+        data_out = {k: self.ds[k][idx] for k in self.ds.keys()}
+        if not self.only_params:
+            if not self.load_on_ram:
+                form_disk = self.load_disk(idx)
+                data_out.update(form_disk)
+        data_out['frame_id'] = torch.tensor(idx).int()
+
+        obj = self.frame_objs[idx].item()
+        obj_id = self.obj_label[obj]
+        data_out['obj_id'] = torch.tensor(obj_id).int()
+
+        # sbj_id = self.frame_sbjs[idx].item()
+        # data_out['hand_shape'] = torch.tensor(self.sbj_info[self.sbjs[sbj_id]]['rh_betas']).float()
+        return data_out
+
     
 
 
