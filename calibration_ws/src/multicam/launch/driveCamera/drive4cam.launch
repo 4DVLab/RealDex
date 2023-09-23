@@ -14,7 +14,7 @@
   <arg name="fps"                     default="5" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
   <arg name="point_cloud"             default="true" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
   <arg name="rgb_point_cloud"         default="true" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
-  <arg name="point_cloud_in_depth_frame" default="false" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
+  <arg name="point_cloud_in_depth_frame" default="true" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
   <arg name="required"                default="false" />          <!-- Argument which specified if the entire launch file should terminate if the node dies -->
   <arg name="recording_file"          default="" />               <!-- Absolute path to a mkv recording file which will be used with the playback api instead of opening a device -->
   <arg name="recording_loop_enabled"  default="false" />          <!-- If set to true the recording file will rewind the beginning once end of file is reached -->
@@ -336,10 +336,11 @@
 
 
   <!-- publish the extren calibration of two cameras -->
-    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="my_static_transform_publisher" args="-0.84732416  1.89968208  0.22593891 0.82304917 -0.03086784  0.07323488 -0.56238234 ra_base_link cam0_camera_base" /> x y z x y z w -->
+  
+    <!-- x y z x y z w -->
     <node name="static_publish_4" pkg="multicam" type="static_publish_4" output="screen"  respawn="$(arg respawn)" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " />
 
-   <!-- <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/> -->
+   <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/>
    <!-- <node name="record" pkg="rosbag" type="record" args="-a -O $(find multicam)/records/records.bag \-\-duration $(arg record_duration) -b 4096"/> -->
 
 </launch>

@@ -6,9 +6,11 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /PointCloud21
+        - /PointCloud22
         - /PointCloud24
       Splitter Ratio: 0.5
-    Tree Height: 1522
+    Tree Height: 496
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -26,7 +28,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: PointCloud2
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -64,7 +66,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -73,13 +75,13 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.004999999888241291
       Style: Flat Squares
       Topic: /cam0/points2
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -92,7 +94,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -101,13 +103,13 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.0010000000474974513
       Style: Flat Squares
       Topic: /cam1/points2
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -120,7 +122,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -129,13 +131,13 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.0010000000474974513
       Style: Flat Squares
       Topic: /cam2/points2
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -148,7 +150,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -157,224 +159,20 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.0010000000474974513
       Style: Flat Squares
       Topic: /cam3/points2
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Filter (blacklist): ""
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        cam0_camera_base:
-          Value: true
-        cam0_camera_body:
-          Value: true
-        cam0_camera_visor:
-          Value: true
-        cam0_depth_camera_link:
-          Value: true
-        cam0_imu_link:
-          Value: true
-        cam0_rgb_camera_link:
-          Value: true
-        cam1_camera_base:
-          Value: true
-        cam1_camera_body:
-          Value: true
-        cam1_camera_visor:
-          Value: true
-        cam1_depth_camera_link:
-          Value: true
-        cam1_imu_link:
-          Value: true
-        cam1_rgb_camera_link:
-          Value: true
-        cam2_camera_base:
-          Value: true
-        cam2_camera_body:
-          Value: true
-        cam2_camera_visor:
-          Value: true
-        cam2_depth_camera_link:
-          Value: true
-        cam2_imu_link:
-          Value: true
-        cam2_rgb_camera_link:
-          Value: true
-        cam3_camera_base:
-          Value: true
-        cam3_camera_body:
-          Value: true
-        cam3_camera_visor:
-          Value: true
-        cam3_depth_camera_link:
-          Value: true
-        cam3_imu_link:
-          Value: true
-        cam3_rgb_camera_link:
-          Value: true
-        hmd_0:
-          Value: true
-        lighthouse_0:
-          Value: true
-        lighthouse_1:
-          Value: true
-        lighthouse_2:
-          Value: true
-        lighthouse_3:
-          Value: true
-        polhemus_base_0:
-          Value: true
-        polhemus_station_0:
-          Value: true
-        polhemus_station_1:
-          Value: true
-        polhemus_station_2:
-          Value: true
-        polhemus_station_3:
-          Value: true
-        polhemus_station_4:
-          Value: true
-        polhemus_station_5:
-          Value: true
-        ra_base:
-          Value: true
-        ra_base_link:
-          Value: true
-        ra_base_link_inertia:
-          Value: true
-        ra_flange:
-          Value: true
-        ra_forearm_link:
-          Value: true
-        ra_shoulder_link:
-          Value: true
-        ra_tool0:
-          Value: true
-        ra_tool0_controller:
-          Value: true
-        ra_upper_arm_link:
-          Value: true
-        ra_wrist_1_link:
-          Value: true
-        ra_wrist_2_link:
-          Value: true
-        ra_wrist_3_link:
-          Value: true
-        rh_ff_palm_fixed:
-          Value: true
-        rh_ffdistal:
-          Value: true
-        rh_ffknuckle:
-          Value: true
-        rh_ffknuckle_fixed:
-          Value: true
-        rh_ffmiddle:
-          Value: true
-        rh_ffproximal:
-          Value: true
-        rh_fftip:
-          Value: true
-        rh_first_finger_tip_mocap:
-          Value: true
-        rh_forearm:
-          Value: true
-        rh_imu:
-          Value: true
-        rh_lf_palm_fixed:
-          Value: true
-        rh_lfdistal:
-          Value: true
-        rh_lfknuckle:
-          Value: true
-        rh_lfmetacarpal:
-          Value: true
-        rh_lfmetacarpal_fixed:
-          Value: true
-        rh_lfmiddle:
-          Value: true
-        rh_lfproximal:
-          Value: true
-        rh_lftip:
-          Value: true
-        rh_little_finger_tip_mocap:
-          Value: true
-        rh_manipulator:
-          Value: true
-        rh_mf_knuckle_glove:
-          Value: true
-        rh_mf_palm_fixed:
-          Value: true
-        rh_mfdistal:
-          Value: true
-        rh_mfknuckle:
-          Value: true
-        rh_mfknuckle_fixed:
-          Value: true
-        rh_mfmiddle:
-          Value: true
-        rh_mfproximal:
-          Value: true
-        rh_mftip:
-          Value: true
-        rh_middle_finger_tip_mocap:
-          Value: true
-        rh_palm:
-          Value: true
-        rh_rf_palm_fixed:
-          Value: true
-        rh_rfdistal:
-          Value: true
-        rh_rfknuckle:
-          Value: true
-        rh_rfknuckle_fixed:
-          Value: true
-        rh_rfmiddle:
-          Value: true
-        rh_rfproximal:
-          Value: true
-        rh_rftip:
-          Value: true
-        rh_ring_finger_tip_mocap:
-          Value: true
-        rh_thbase:
-          Value: true
-        rh_thbase_fixed:
-          Value: true
-        rh_thdistal:
-          Value: true
-        rh_thhub:
-          Value: true
-        rh_thmiddle:
-          Value: true
-        rh_thproximal:
-          Value: true
-        rh_thtip:
-          Value: true
-        rh_thumb_tip_mocap:
-          Value: true
-        rh_user_forearm:
-          Value: true
-        rh_wrist:
-          Value: true
-        right_user_forearm:
-          Value: true
-        right_user_palm:
-          Value: true
-        right_user_wrist:
-          Value: true
-        sr_vive_root:
-          Value: true
-        tracker_0:
-          Value: true
-        world:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -382,163 +180,14 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        right_user_wrist:
-          right_user_forearm:
-            {}
-        tracker_0:
-          right_user_palm:
-            {}
-        world:
-          ra_base_link:
-            cam0_camera_base:
-              cam0_camera_body:
-                {}
-              cam0_camera_visor:
-                {}
-              cam0_depth_camera_link:
-                cam0_imu_link:
-                  {}
-                cam0_rgb_camera_link:
-                  {}
-              cam1_camera_base:
-                cam1_camera_body:
-                  {}
-                cam1_camera_visor:
-                  {}
-                cam1_depth_camera_link:
-                  cam1_imu_link:
-                    {}
-                  cam1_rgb_camera_link:
-                    {}
-              cam2_camera_base:
-                cam2_camera_body:
-                  {}
-                cam2_camera_visor:
-                  {}
-                cam2_depth_camera_link:
-                  cam2_imu_link:
-                    {}
-                  cam2_rgb_camera_link:
-                    {}
-              cam3_camera_base:
-                cam3_camera_body:
-                  {}
-                cam3_camera_visor:
-                  {}
-                cam3_depth_camera_link:
-                  cam3_imu_link:
-                    {}
-                  cam3_rgb_camera_link:
-                    {}
-            ra_base:
-              ra_tool0_controller:
-                {}
-            ra_base_link_inertia:
-              ra_shoulder_link:
-                ra_upper_arm_link:
-                  ra_forearm_link:
-                    ra_wrist_1_link:
-                      ra_wrist_2_link:
-                        ra_wrist_3_link:
-                          ra_flange:
-                            ra_tool0:
-                              {}
-                            rh_forearm:
-                              rh_wrist:
-                                rh_palm:
-                                  rh_ff_palm_fixed:
-                                    {}
-                                  rh_ffknuckle:
-                                    rh_ffproximal:
-                                      rh_ffmiddle:
-                                        rh_ffdistal:
-                                          rh_fftip:
-                                            {}
-                                  rh_ffknuckle_fixed:
-                                    {}
-                                  rh_imu:
-                                    {}
-                                  rh_lf_palm_fixed:
-                                    {}
-                                  rh_lfmetacarpal:
-                                    rh_lfknuckle:
-                                      rh_lfproximal:
-                                        rh_lfmiddle:
-                                          rh_lfdistal:
-                                            rh_lftip:
-                                              {}
-                                  rh_lfmetacarpal_fixed:
-                                    {}
-                                  rh_manipulator:
-                                    {}
-                                  rh_mf_knuckle_glove:
-                                    polhemus_base_0:
-                                      polhemus_station_0:
-                                        rh_thumb_tip_mocap:
-                                          {}
-                                      polhemus_station_1:
-                                        rh_first_finger_tip_mocap:
-                                          {}
-                                      polhemus_station_2:
-                                        rh_middle_finger_tip_mocap:
-                                          {}
-                                      polhemus_station_3:
-                                        rh_ring_finger_tip_mocap:
-                                          {}
-                                      polhemus_station_4:
-                                        rh_little_finger_tip_mocap:
-                                          {}
-                                      polhemus_station_5:
-                                        {}
-                                      rh_user_forearm:
-                                        {}
-                                  rh_mf_palm_fixed:
-                                    {}
-                                  rh_mfknuckle:
-                                    rh_mfproximal:
-                                      rh_mfmiddle:
-                                        rh_mfdistal:
-                                          rh_mftip:
-                                            {}
-                                  rh_mfknuckle_fixed:
-                                    {}
-                                  rh_rf_palm_fixed:
-                                    {}
-                                  rh_rfknuckle:
-                                    rh_rfproximal:
-                                      rh_rfmiddle:
-                                        rh_rfdistal:
-                                          rh_rftip:
-                                            {}
-                                  rh_rfknuckle_fixed:
-                                    {}
-                                  rh_thbase:
-                                    rh_thproximal:
-                                      rh_thhub:
-                                        rh_thmiddle:
-                                          rh_thdistal:
-                                            rh_thtip:
-                                              {}
-                                  rh_thbase_fixed:
-                                    {}
-          sr_vive_root:
-            hmd_0:
-              {}
-            lighthouse_0:
-              {}
-            lighthouse_1:
-              {}
-            lighthouse_2:
-              {}
-            lighthouse_3:
-              {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: world
+    Fixed Frame: cam0_camera_base
     Frame Rate: 30
   Name: root
   Tools:
@@ -562,7 +211,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 12.932095527648926
+      Distance: 3.9805216789245605
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -570,25 +219,25 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 3.8103044033050537
+        Y: 0.48572838306427
+        Z: -0.4491376280784607
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2347974181175232
+      Pitch: 0.18479835987091064
       Target Frame: <Fixed Frame>
-      Yaw: 4.788599967956543
+      Yaw: 3.3017497062683105
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 2032
+  Height: 1006
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001f7000006eafc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b000fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000b0fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000006e000006ea0000018200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000015f000006eafc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000006e000006ea0000013200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e700000005efc0100000002fb0000000800540069006d0065010000000000000e70000006dc00fffffffb0000000800540069006d0065010000000000000450000000000000000000000b02000006ea00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001f7000002e8fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b000fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000b0fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000006e000002e80000018200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000015f000002e8fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000006e000002e80000013200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000005efc0100000002fb0000000800540069006d0065010000000000000780000006dc00fffffffb0000000800540069006d0065010000000000000450000000000000000000000412000002e800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -597,6 +246,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 3696
-  X: 144
-  Y: 54
+  Width: 1920
+  X: 0
+  Y: 0

@@ -4,11 +4,14 @@
 /out_json
 *.pyc
 *.obj
+*.bag
+.mkv
 models/mjcf/~$adow_hand_vis.xml
 models/mjcf/.DS_Store
 *.pt
 dexgrasp_generation/runs
-dexgrasp_generation/data
+dexgrasp_generation/data*.pt
+.vscode
 
 
 

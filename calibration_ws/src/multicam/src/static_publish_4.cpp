@@ -3,7 +3,6 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <tf/transform_broadcaster.h>
 
-#include <jsoncpp/json/json.h>
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
@@ -48,7 +47,7 @@ int main(int argc, char **argv)
         {
             for(int i=0;i<4;i++)
             {
-                listener.lookupTransform("/cam"+std::to_string(i)+"_camera_base", "/cam"+std::to_string(i)+"_rgb_camera_link", ros::Time(0), cam_transform[i]);
+                listener.lookupTransform("/cam"+std::to_string(i)+"_camera_base", "/cam"+std::to_string(i)+"_depth_camera_link", ros::Time(0), cam_transform[i]);
                 // ROS_INFO("%d,  %lf, %lf, %lf, %lf, %lf, %lf , %lf", i, cam_transform[i].getOrigin().getX() ,cam_transform[i].getOrigin().getY() , cam_transform[i].getOrigin().getZ(), cam_transform[i].getRotation().getW(), cam_transform[i].getRotation().getX(), cam_transform[i].getRotation().getY(), cam_transform[i].getRotation().getZ() );
             }     
 

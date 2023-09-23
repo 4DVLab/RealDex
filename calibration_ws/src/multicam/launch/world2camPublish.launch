@@ -1,0 +1,5 @@
+<launch>
+      <node pkg="tf2_ros" type="static_transform_publisher" name="my_static_transform_publisher" args="12.57256284 -12.88108878  -3.15385323 0.77196164 0.21100327 0.40926145 0.43824412 world cam0_camera_base" /> 
+
+      <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/>
+</launch>

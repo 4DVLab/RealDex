@@ -1,6 +1,8 @@
 <launch>
   <arg name="tf_prefix_0" default="cam0_"/>
   <arg name="tf_prefix_1" default="cam1_"/>
+  <arg name="tf_prefix_2" default="cam2_"/>
+  <arg name="tf_prefix_3" default="cam3_"/>
   <arg name="overwrite_robot_description" default="false" />         <!-- Flag to publish a standalone azure_description instead of the default robot_descrition parameter-->
 
   <arg name="depth_enabled"           default="true" />           <!-- Enable or disable the depth camera -->
@@ -12,9 +14,8 @@
   <arg name="fps"                     default="5" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
   <arg name="point_cloud"             default="true" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
   <arg name="rgb_point_cloud"         default="true" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
-  <arg name="point_cloud_in_depth_frame" default="true" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
+  <arg name="point_cloud_in_depth_frame" default="false" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
   <arg name="required"                default="false" />          <!-- Argument which specified if the entire launch file should terminate if the node dies -->
-  <arg name="sensor_sn"               default="" />               <!-- Sensor serial number. If none provided, the first sensor will be selected -->
   <arg name="recording_file"          default="" />               <!-- Absolute path to a mkv recording file which will be used with the playback api instead of opening a device -->
   <arg name="recording_loop_enabled"  default="false" />          <!-- If set to true the recording file will rewind the beginning once end of file is reached -->
   <arg name="body_tracking_enabled"           default="false" />  <!-- If set to true the joint positions will be published as marker arrays -->
@@ -22,15 +23,16 @@
   <arg name="rescale_ir_to_mono8"  default="false" />    <!-- Whether to rescale the IR image to an 8-bit monochrome image for visualization and further processing. A scaling factor (ir_mono8_scaling_factor) is applied. -->
   <arg name="ir_mono8_scaling_factor"  default="1.0" />    <!-- Scaling factor to apply when converting IR to mono8 (see rescale_ir_to_mono8). If using illumination, use the value 0.5-1. If using passive IR, use 10. -->
   <arg name="imu_rate_target" default="0"/>                       <!-- Desired output rate of IMU messages. Set to 0 (default) for full rate (1.6 kHz). --> 
-  <arg name="node_start_delay" default="2.0" />     <!-- delay for second camera in seconds -->
-
-
+  <arg name="node_start_delay" default="1.0" />     <!-- delay for second camera in seconds -->
+  <arg name="record_duration" default="2"/>   <!-- bag recording time-->
+  <arg name="respawn" default="true"/>
 
 <!-- subordinate camera -->
-<group ns="cam1">
+
+<group ns="cam3">
 
       <param name="azure_description"
-        command="xacro $(find azure_kinect_ros_driver)/urdf/azure_kinect.urdf.xacro tf_prefix:=$(arg tf_prefix_1)" />
+        command="xacro $(find azure_kinect_ros_driver)/urdf/azure_kinect.urdf.xacro tf_prefix:=$(arg tf_prefix_3)" />
       <node name="joint_state_publisher_azure" pkg="joint_state_publisher" type="joint_state_publisher">
         <remap from="robot_description" to="azure_description" />
       </node>  
@@ -38,8 +40,8 @@
         <remap from="robot_description" to="azure_description" />
       </node>
 
-  <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver1" output="screen" respawn="true" required="$(arg required)" >
-      <param name="sensor_sn"         type="string" value="000153514512" />  
+  <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver1" output="screen" respawn="$(arg respawn)">
+      <param name="sensor_sn"         type="string" value="000080614512" />  
       <param name="depth_enabled"     type="bool"   value="$(arg depth_enabled)" />
       <param name="depth_mode"        type="string" value="$(arg depth_mode)" />
       <param name="depth_unit"        type="string" value="$(arg depth_unit)" />
@@ -50,7 +52,7 @@
       <param name="point_cloud"       type="bool"   value="$(arg point_cloud)" />
       <param name="rgb_point_cloud"   type="bool"   value="$(arg rgb_point_cloud)" />
       <param name="point_cloud_in_depth_frame"   type="bool"   value="$(arg point_cloud_in_depth_frame)" />
-      <param name="tf_prefix"         type="string" value="$(arg tf_prefix_1)" />
+      <param name="tf_prefix"         type="string" value="$(arg tf_prefix_3)" />
       <param name="recording_file"          type="string" value="$(arg recording_file)" />
       <param name="recording_loop_enabled"  type="bool"   value="$(arg recording_loop_enabled)" />
       <param name="body_tracking_enabled"           type="bool"   value="$(arg body_tracking_enabled)" />
@@ -59,34 +61,26 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="0"/>
+      <param name="subordinate_delay_off_master_usec" value="160"/>
     </node>
 
-</group>
+</group> 
 
-<group ns="cam1/rgb/image_raw">
+  <group ns="cam3/rgb/image_raw">
     <rosparam param="disable_pub_plugins">
       - 'image_transport/compressed'
       - 'image_transport/compressedDepth'
       - 'image_transport/theora'
     </rosparam>
   </group>
-   <group ns="cam1/depth/image_raw">
+   <group ns="cam3/depth/image_raw">
     <rosparam param="disable_pub_plugins">
       - 'image_transport/compressed'
       - 'image_transport/compressedDepth'
       - 'image_transport/theora'
     </rosparam>
   </group>
-<group ns="cam1/rgb_to_depth/image_raw">
-    <rosparam param="disable_pub_plugins">
-      - 'image_transport/compressed'
-      - 'image_transport/compressedDepth'
-      - 'image_transport/theora'
-    </rosparam>
-  </group>
-
-  <group ns="cam1/depth_to_rgb/image_raw">
+<group ns="cam3/rgb_to_depth/image_raw">
     <rosparam param="disable_pub_plugins">
       - 'image_transport/compressed'
       - 'image_transport/compressedDepth'
@@ -94,7 +88,15 @@
     </rosparam>
   </group>
 
-  <group ns="cam1/ir/image_raw">
+  <group ns="cam3/depth_to_rgb/image_raw">
+    <rosparam param="disable_pub_plugins">
+      - 'image_transport/compressed'
+      - 'image_transport/compressedDepth'
+      - 'image_transport/theora'
+    </rosparam>
+  </group>
+
+  <group ns="cam3/ir/image_raw">
     <rosparam param="disable_pub_plugins">
       - 'image_transport/compressed'
       - 'image_transport/compressedDepth'
@@ -103,22 +105,19 @@
   </group>
 
 
-
-  <!-- master camera -->
-
-  <group ns="cam0">
+<group ns="cam2">
 
       <param name="azure_description"
-        command="xacro $(find azure_kinect_ros_driver)/urdf/azure_kinect.urdf.xacro tf_prefix:=$(arg tf_prefix_0)" />
+        command="xacro $(find azure_kinect_ros_driver)/urdf/azure_kinect.urdf.xacro tf_prefix:=$(arg tf_prefix_2)" />
       <node name="joint_state_publisher_azure" pkg="joint_state_publisher" type="joint_state_publisher">
         <remap from="robot_description" to="azure_description" />
       </node>  
       <node name="robot_state_publisher_azure" pkg="robot_state_publisher" type="robot_state_publisher">
         <remap from="robot_description" to="azure_description" />
       </node>
-  
-    <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver0" output="screen" required="$(arg required)"  respawn="true" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' ">
-      <param name="sensor_sn"         type="string" value="000200514512" /> 
+
+  <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver1" output="screen" respawn="$(arg respawn)"   launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' ">
+      <param name="sensor_sn"         type="string" value="000199214512" /> 
       <param name="depth_enabled"     type="bool"   value="$(arg depth_enabled)" />
       <param name="depth_mode"        type="string" value="$(arg depth_mode)" />
       <param name="depth_unit"        type="string" value="$(arg depth_unit)" />
@@ -129,7 +128,7 @@
       <param name="point_cloud"       type="bool"   value="$(arg point_cloud)" />
       <param name="rgb_point_cloud"   type="bool"   value="$(arg rgb_point_cloud)" />
       <param name="point_cloud_in_depth_frame"   type="bool"   value="$(arg point_cloud_in_depth_frame)" />
-      <param name="tf_prefix"         type="string" value="$(arg tf_prefix_0)" />
+      <param name="tf_prefix"         type="string" value="$(arg tf_prefix_2)" />
       <param name="recording_file"          type="string" value="$(arg recording_file)" />
       <param name="recording_loop_enabled"  type="bool"   value="$(arg recording_loop_enabled)" />
       <param name="body_tracking_enabled"           type="bool"   value="$(arg body_tracking_enabled)" />
@@ -137,34 +136,27 @@
       <param name="rescale_ir_to_mono8" type="bool" value="$(arg rescale_ir_to_mono8)" />
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
-      <param name="wired_sync_mode" value="1"/> 
-      <param name="subordinate_delay_off_master_usec" value="0"/>
+      <param name="wired_sync_mode" value="2"/>
+      <param name="subordinate_delay_off_master_usec" value="160"/>
     </node>
-  </group>
 
-  <group ns="cam0/rgb/image_raw">
-    <rosparam param="disable_pub_plugins">
-      - 'image_transport/compressed'
-      - 'image_transport/compressedDepth'
-      - 'image_transport/theora'
-    </rosparam>
-  </group>
-   <group ns="cam0/depth/image_raw">
-    <rosparam param="disable_pub_plugins">
-      - 'image_transport/compressed'
-      - 'image_transport/compressedDepth'
-      - 'image_transport/theora'
-    </rosparam>
-  </group>
-<group ns="cam0/rgb_to_depth/image_raw">
-    <rosparam param="disable_pub_plugins">
-      - 'image_transport/compressed'
-      - 'image_transport/compressedDepth'
-      - 'image_transport/theora'
-    </rosparam>
-  </group>
+</group>
 
-  <group ns="cam0/depth_to_rgb/image_raw">
+<group ns="cam2/rgb/image_raw">
+    <rosparam param="disable_pub_plugins">
+      - 'image_transport/compressed'
+      - 'image_transport/compressedDepth'
+      - 'image_transport/theora'
+    </rosparam>
+  </group>
+   <group ns="cam2/depth/image_raw">
+    <rosparam param="disable_pub_plugins">
+      - 'image_transport/compressed'
+      - 'image_transport/compressedDepth'
+      - 'image_transport/theora'
+    </rosparam>
+  </group>
+<group ns="cam2/rgb_to_depth/image_raw">
     <rosparam param="disable_pub_plugins">
       - 'image_transport/compressed'
       - 'image_transport/compressedDepth'
@@ -172,7 +164,15 @@
     </rosparam>
   </group>
 
-  <group ns="cam0/ir/image_raw">
+  <group ns="cam2/depth_to_rgb/image_raw">
+    <rosparam param="disable_pub_plugins">
+      - 'image_transport/compressed'
+      - 'image_transport/compressedDepth'
+      - 'image_transport/theora'
+    </rosparam>
+  </group>
+
+  <group ns="cam2/ir/image_raw">
     <rosparam param="disable_pub_plugins">
       - 'image_transport/compressed'
       - 'image_transport/compressedDepth'
@@ -184,8 +184,10 @@
 
   <!-- publish the extren calibration of two cameras -->
   
-   <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="my_static_transform_publisher" args="0.01954306662082672 -0.0040450203232467178 -0.060048624873161319 -0.034377213567495349 0.2134985327720642 -0.07246364653110504 0.9736455082893372 cam0_camera_base cam1_camera_base" /> -->
-  <node name="static_publish" pkg="multicam" type="static_publish" output="screen"  launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' "/>
+    <!-- x y z x y z w -->
+    <!-- <node name="static_publish_4" pkg="multicam" type="static_publish_4" output="screen"  respawn="$(arg respawn)" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " /> -->
 
-   <!-- <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration.rviz"/> -->
+   <!-- <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/> -->
+   <node name="record" pkg="rosbag" type="record" args="-a -O $(find multicam)/records/records.bag \-\-duration $(arg record_duration) -b 10240"/>
+
 </launch>
