@@ -16,3 +16,6 @@
 [submodule "grabnet"]
 	path = grabnet
 	url = https://github.com/lym29/grabnet.git
+[submodule "affordance-CVAE"]
+	path = affordance-CVAE
+	url = ./affordance-CVAE
