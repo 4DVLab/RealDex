@@ -9,25 +9,14 @@ import time
 from PIL import Image
 import json
 from datasets.utils import read_annotation
-
-
-#
-
-import numpy as np
-import torch
-from torch.utils import data
 from torch.utils.data._utils.collate import default_collate
-import os
-
 import time
-import numpy as np
-import torch
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 to_cpu = lambda tensor: tensor.detach().cpu().numpy()
 
 class GRABDataset(Dataset):
-    def __init__(self, baseDir, mode='train'):
+    def __init__(self, baseDir, mode='train', load_on_ram=True):
         seqName = None
         anno = read_annotation(baseDir, seqName, id, mode)
         
@@ -43,10 +32,6 @@ class GRABDataset(Dataset):
         self.obj_info = np.load(os.path.join(baseDir, 'obj_info.npy'), allow_pickle=True).item()
         self.sbj_info = np.load(os.path.join(baseDir, 'sbj_info.npy'), allow_pickle=True).item()
 
-        ## bps_torch data
-
-        bps_fname = os.path.join(baseDir, 'bps.npz')
-        self.bps = torch.from_numpy(np.load(bps_fname)['basis']).to(dtype)
         ## Hand vtemps and betas
 
         self.sbj_vtemp = torch.from_numpy(np.asarray([self.sbj_info[sbj]['rh_vtemp'] for sbj in self.sbjs]))
@@ -66,6 +51,7 @@ class GRABDataset(Dataset):
         data = np.load(ds_path, allow_pickle=True)
         data_torch = {k:torch.tensor(data[k]) for k in data.files}
         return data_torch
+    
     def load_disk(self,idx):
 
         if isinstance(idx, int):
