@@ -1,7 +1,5 @@
 network:
-  type: epn_net
-  equi_feat_mlps: [64, 64, 64]
-  # type: pn_rotation_net
+  type: pn_rotation_net
 
 number_fourier_components: 1
 mlp_layer_sizes: [256, 256, 256]

@@ -10,7 +10,7 @@ use_DFCData: True
 use_Shadow: True
 
 # dirs
-exp_dir: ./checkpoints/glow_table_nnn
+exp_dir: ./runs/glow_train
 
 # wandb
 wandb_offline: True

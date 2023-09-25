@@ -10,7 +10,7 @@ use_DFCData: True
 use_Shadow: True
 
 # dirs
-exp_dir: ./checkpoints/RotationNet/Dv3Rot
+exp_dir: ./runs/ipdf_train
 
 # wandb
 wandb_offline: True
@@ -48,7 +48,7 @@ cuda_id: 0
 
 # data loader
 num_workers: 8
-batch_size: 256
+batch_size: 32
 
 # hydra
 hydra:

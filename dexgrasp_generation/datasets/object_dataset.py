@@ -18,8 +18,6 @@ class Meshdata(Dataset):
         self.mode = mode
         self.data_root_path = os.path.join(cfg['dataset']['root_path'], 'DFCData', 'meshes')
         self.splits_path = os.path.join(cfg['dataset']['root_path'], 'DFCData', 'splits')
-        
-        # self.data_root_path = os.path.join(os.getcwd(), self.data_root_path)
 
         self.object_code_list = []
         for splits_file_name in os.listdir(self.splits_path):

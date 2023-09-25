@@ -1,7 +1,7 @@
 from hydra import compose, initialize
 import logging
 import torch
-# from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 from data.dataset import get_mesh_dataloader
 from trainer import Trainer
@@ -28,11 +28,9 @@ from pytorch3d import transforms as pttf
 
 def main(cfg):
     cfg = process_config(cfg)
-    print(cfg)
 
     """ Logging """
     log_dir = cfg["exp_dir"]
-    print(log_dir)
     os.makedirs(log_dir, exist_ok=True)
 
     logger = logging.getLogger("EvalModel")
@@ -46,7 +44,6 @@ def main(cfg):
 
 
     """ DataLoaders """
-    print("batch_size:", cfg["batch_size"])
     test_loader = get_mesh_dataloader(cfg, "test")
 
     """ Trainer """
@@ -65,17 +62,15 @@ def main(cfg):
         contact_cfg['device'] = cfg['device']
     contact_net = ContactMapNet(contact_cfg).to(cfg['device'])
     contact_net.eval()
-    tta_loss = AdditionalLoss(cfg['tta'],
+    tta_loss = AdditionalLoss(cfg['tta'], 
                               cfg['device'], 
                               cfg['dataset']['num_obj_points'], 
                               cfg['dataset']['num_hand_points'], contact_net)
-    print("trainers loaded")
 
     """ Test """
     result = None
     # sample
     for key, trainer in zip(cfg['models'].keys(), trainers):
-        print(key)
         loader = result_to_loader(result, cfg) if result else test_loader
         result = []
         for _, data in enumerate(tqdm(loader)):
@@ -83,9 +78,6 @@ def main(cfg):
                 pred_dict, _ = trainer.test(data)
                 data.update(pred_dict)
                 result.append({k: v.cpu() if type(v) == torch.Tensor else v for k, v in data.items()})
-            break
-                
-        torch.save(result, f"{log_dir}/{key}.pt")
     
     # tta
     loader = result_to_loader(result, cfg, cfg['tta']['batch_size'])
@@ -112,10 +104,14 @@ def main(cfg):
 
         data['tta_hand_pose'] = add_rotation_to_hand_pose(hand_pose.detach().cpu(), data['sampled_rotation'])
         result.append(data)
+        
+        if i % 100 == 0:
+            eval_result(cfg['q1'], {k: data[k] for k in data.keys()}, hand_model, object_model, cfg['device'])
+            logger.info(result)
+            logger.info([f"{key}: {result[key]}\n" for key in result])
+            logger.info("\n")
 
     result = flatten_result(result)
-    torch.save(result, f"{log_dir}/tta.pt")
-    
     
 
     hand_model = tta_loss.hand_model
@@ -134,10 +130,6 @@ def main(cfg):
 
     output_result(seen_result, 'seen')
     output_result(unseen_result, 'unseen')
-    
-    torch.save(seen_result, os.path.join(log_dir, "seen_result.pt"))
-    torch.save(unseen_result, os.path.join(log_dir, "unseen_result.pt"))
-    
 
 
 def divide(data):

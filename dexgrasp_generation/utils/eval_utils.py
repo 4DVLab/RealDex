@@ -197,7 +197,7 @@ def cal_q1(cfg, hand_model, object_model, object_code, scale, hand_pose, device)
 def cal_pen(hand_model, object_model, object_code, scale, hand_pose, device):
     # load data
     object_model.initialize([object_code])
-    object_model.object_scale_tensor = torch.tensor(1 / scale, dtype=torch.float, device=device).reshape(1, 1).clone().detach()
+    object_model.object_scale_tensor = torch.tensor(1 / scale, dtype=torch.float, device=device).reshape(1, 1)
     object_model.batch_size_each = 1
     # cal pen
     object_surface_points = object_model.surface_points_tensor * scale

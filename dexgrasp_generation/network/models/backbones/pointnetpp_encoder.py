@@ -92,8 +92,7 @@ class PointNetPPFeat(torch.nn.Module):
 
         self.lin1 = torch.nn.Linear(1024, 512)
         self.lin2 = torch.nn.Linear(512, 256)
-        # self.lin3 = torch.nn.Linear(256, 128)
-        self.lin3 = torch.nn.Linear(256, 64)
+        self.lin3 = torch.nn.Linear(256, 128)
 
         self.bn1 = torch.nn.BatchNorm1d(512)
         self.bn2 = torch.nn.BatchNorm1d(256)

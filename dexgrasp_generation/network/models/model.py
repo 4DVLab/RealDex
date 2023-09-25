@@ -69,7 +69,6 @@ class IPDFModel(BaseModel):
     def __init__(self, cfg):
         super(IPDFModel, self).__init__(cfg)
         self.net = IPDFFullNet(cfg).to(self.device)
-        print(cfg)
 
     def compute_loss(self):
         pred_dict = self.pred_dict
@@ -95,7 +94,7 @@ class IPDFModel(BaseModel):
         self.loss_dict = {}
         with torch.no_grad():
             self.pred_dict = self.net(self.feed_dict)
-            sampled_rotation = self.net.sample_rotations(self.feed_dict, sample_times=None)  # [B, 3, 3]
+            sampled_rotation = self.net.sample_rotations(self.feed_dict)  # [B, 3, 3]
             self.pred_dict["sampled_rotation"] = sampled_rotation  # [B, 3, 3]
 
             if not no_eval:

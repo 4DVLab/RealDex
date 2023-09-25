@@ -45,11 +45,11 @@ wandb_debug_mode: True  # and only program error will be reported
 resume_epoch: -1
 
 # device
-cuda_id: 1
+cuda_id: 2
 
 # data loader
 num_workers: 0
-batch_size: 2
+batch_size: 32
 n_samples: 100
 
 # hydra

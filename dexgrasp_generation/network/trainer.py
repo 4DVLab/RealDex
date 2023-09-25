@@ -164,7 +164,7 @@ class Trainer(nn.Module):
 
         self.model.load_state_dict(ckpt, strict=False)
 
-        # print(self.model)
+        print(self.model)
 
         return self.epoch
 
