@@ -8,7 +8,7 @@ from utils import utils
 import time
 from PIL import Image
 import json
-from datasets.utils import read_annotation
+
 from torch.utils.data._utils.collate import default_collate
 import time
 
@@ -73,48 +73,21 @@ class GRABDataset(Dataset):
             if not self.load_on_ram:
                 form_disk = self.load_disk(idx)
                 data_out.update(form_disk)
-        return data_out
+                
+        obj_name = self.frame_objs[idx]
+        obj_pc = data_out['object_data']['points'].float().T #[3, 3000]
+        obj_pc = torch.stack([obj_pc, torch.ones(1, obj_pc.shape[1])]) # [4, 3000]
         
-        
-
-class obman(Dataset):
-    def __init__(self, img_root='/hand-object-3/download/dataset/ObMan/obman',
-                 obj_root='/hand-object-3/download/dataset',
-                 mode="train", vis=False, batch_size=160):
-
-        self.mode = mode
-        self.obj_pc_path = '/hand-object-3/download/dataset/ObMan/obman/processed/obj_pc_{}.npy'.format(mode)
-        self.obj_cmap_path = '/hand-object-3/download/dataset/ObMan/obman/processed/obj_cmap_contactdb_{}.npy'.format(mode)
-        self.hand_param_path = '/hand-object-3/download/dataset/ObMan/obman/processed/hand_param_{}.npy'.format(mode)
-        self.__load_dataset__()
-
-        self.dataset_size = self.all_obj_pc.shape[0]
-
-        self.transform = transforms.ToTensor()
-        self.sample_nPoint = 3000
-        self.batch_size = batch_size
-
-    def __load_dataset__(self):
-        print('loading dataset start')
-        self.all_obj_pc = np.load(self.obj_pc_path)  # [S, 4, 3000]
-        self.all_obj_cmap = np.load(self.obj_cmap_path)  # [S, 3000, 10]
-        self.all_hand_param = np.load(self.hand_param_path)
-        print('loading dataset finish')
-
-
-    def __len__(self):
-        return self.dataset_size - (self.dataset_size % self.batch_size)  # in case of unmatched mano batch size
-
-    def __getitem__(self, idx):
-        # obj_pc
-        obj_pc = torch.tensor(self.all_obj_pc[idx], dtype=torch.float32)  # [4, 3000]
-
-        # obj cmap contactdb
-        obj_cmap = torch.tensor(self.all_obj_cmap[idx])  # [3000, 10]
+        obj_cmap = data_out['object_data']['contact'] # [3000, 10]
         obj_cmap = obj_cmap > 0
 
         # hand mano param
-        hand_param = torch.tensor(self.all_hand_param[idx], dtype=torch.float32)  # [61]
-
-        return (obj_pc, hand_param, obj_cmap)
-
+        rh_data = data_out['rhand_data']
+        hand_param = torch.cat([rh_data['transl'], rh_data['global_orient'], rh_data['fullpose']], dim=0).float() # [61]
+        
+        # next frame
+        nf_data = data_out['next_frame_data']
+        next_frame_hand = torch.cat([nf_data['transl'], nf_data['global_orient'], nf_data['fullpose']], dim=0).float() # [61]
+        
+        
+        return (obj_pc, hand_param, next_frame_hand, obj_cmap)
