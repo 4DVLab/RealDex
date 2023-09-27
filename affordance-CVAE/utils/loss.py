@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from pytorch3d.loss import chamfer_distance
-from emd import earth_mover_distance
+# from emd import earth_mover_distance
 from typing import Union
 import time
 import torch
@@ -11,6 +11,9 @@ from pytorch3d.ops.knn import knn_gather, knn_points
 from pytorch3d.structures.pointclouds import Pointclouds
 from pytorch3d.structures import Meshes
 from utils import utils_loss
+
+def earth_mover_distance(recon_x, x, transpose=True):
+      return 0
 
 def CVAE_loss(recon_x, x, mean, log_var, loss_type, l2_weight=1):
     '''

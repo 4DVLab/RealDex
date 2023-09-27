@@ -8,6 +8,9 @@ models/mjcf/~$adow_hand_vis.xml
 models/mjcf/.DS_Store
 *.pt
 *.pth
+affordance-CVAE/logs2
+affordance-CVAE/runs
+
 
 
 
