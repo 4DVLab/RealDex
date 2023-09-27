@@ -3,12 +3,12 @@
   <!-- (start your tracking system's ROS driver) -->
 
 
-  <include file="$(find azure_kinect_ros_driver)/launch/driver.launch">
+  <include file="$(find multicam)/launch/driveCamera/drive1cam.launch">
     <arg name="overwrite_robot_description" value="false"/>
   </include>
 
       <include file="$(find apriltag_ros)/launch/continuous_detection.launch">
-      <arg name="camera_name" value="/rgb"/>
+      <arg name="camera_name" value="/cam0/rgb"/>
       <arg name="image_topic" value="image_raw"/>   
     </include>
 
@@ -16,9 +16,9 @@
   <include file="$(find easy_handeye)/launch/calibrate.launch">
     <arg name="eye_on_hand" value="false"/>
     <arg name="namespace_prefix" value="cam_to_hand"/>
-    <arg name="robot_base_frame" value="base_link"/>
-    <arg name="robot_effector_frame" value="gripper_link"/>
-    <arg name="tracking_base_frame" value="camera_base"/>
+    <arg name="robot_base_frame" value="ra_base_link"/>
+    <arg name="robot_effector_frame" value="ra_flange"/>
+    <arg name="tracking_base_frame" value="cam0_camera_base"/>
     <arg name="tracking_marker_frame" value="tag_199"/>
     <arg name="freehand_robot_movement" value="true"/>
     <arg name="start_rviz" value="true"/>
@@ -27,6 +27,6 @@
   </include>
 
  <node name="dummy_handeye" pkg="tf" type="static_transform_publisher"
-            args="2 0 1 3.14 0 0 base_link camera_base 10" />
+            args="2 0 1 3.14 0 0 ra_base_link cam0_camera_base 10" />
     
 </launch>
