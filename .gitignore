@@ -13,6 +13,9 @@ models/mjcf/.DS_Store
 dexgrasp_generation/runs
 dexgrasp_generation/data*.pt
 .vscode
+affordance-CVAE/logs2
+affordance-CVAE/runs
+
 
 
 

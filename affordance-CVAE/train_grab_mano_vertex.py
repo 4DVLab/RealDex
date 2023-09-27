@@ -4,8 +4,10 @@ import torch
 import argparse
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+
 from collections import defaultdict
-from dataset.dataset_obman_mano2 import obman
+from dataset.dataset_grab import GRABDataset
 from network.affordanceNet_obman_mano_vertex import affordanceNet
 import numpy as np
 import random
@@ -14,35 +16,43 @@ from utils.loss import CVAE_loss_mano, CMap_loss, CMap_loss1, CMap_loss3, CMap_l
 from pytorch3d.loss import chamfer_distance
 import mano
 
-
+writer = SummaryWriter()
+tb_counter=0
 def train(args, epoch, model, train_loader, device, optimizer, log_root, rh_mano, rh_faces):
     since = time.time()
     logs = defaultdict(list)
     a, b, c, d, e = args.loss_weight
     model.train()
-    for batch_idx, (obj_pc, hand_param, obj_cmap) in enumerate(train_loader):
-        obj_pc, hand_param, obj_cmap = obj_pc.to(device), hand_param.to(device), obj_cmap.to(device)
-        gt_mano = rh_mano(betas=hand_param[:, :10], global_orient=hand_param[:, 10:13],
-                          hand_pose=hand_param[:, 13:58], transl=hand_param[:, 58:])
-        hand_xyz = gt_mano.vertices.to(device)  # [B,778,3]
+    
+    for batch_idx, (obj_pc, hand_param, next_frame_hand, obj_cmap) in enumerate(train_loader):
+        obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.to(device), hand_param.to(device), next_frame_hand.to(device), obj_cmap.to(device)
+        
+        input_mano = rh_mano(betas=hand_param[:, :10], transl=hand_param[:, 10:13], global_orient=hand_param[:, 13:16],
+                          hand_pose=hand_param[:, 16:])
+        gt_mano = rh_mano(betas=next_frame_hand[:, :10], transl=next_frame_hand[:, 10:13], global_orient=next_frame_hand[:, 13:16],
+                          hand_pose=next_frame_hand[:, 16:])
+        input_hand_xyz = input_mano.vertices.to(device)  # [B,778,3]
+        gt_hand_xyz = gt_mano.vertices.to(device)
+        
+        
         optimizer.zero_grad()
-        recon_param, mean, log_var, z = model(obj_pc, hand_xyz.permute(0,2,1))  # recon [B,61] mano params
-        recon_mano = rh_mano(betas=recon_param[:, :10], global_orient=recon_param[:, 10:13],
-                             hand_pose=recon_param[:, 13:58], transl=recon_param[:, 58:])
+        recon_param, mean, log_var, z = model(obj_pc, input_hand_xyz.permute(0,2,1))  # recon [B,61] mano params
+        recon_mano = rh_mano(betas=recon_param[:, :10], transl=recon_param[:, 10:13], global_orient=recon_param[:, 13:16],
+                          hand_pose=recon_param[:, 16:])
         recon_xyz = recon_mano.vertices.to(device)  # [B,778,3]
         # obj xyz NN dist and idx
-        obj_nn_dist_gt, obj_nn_idx_gt = utils_loss.get_NN(obj_pc.permute(0,2,1)[:,:,:3], hand_xyz)
+        obj_nn_dist_gt, obj_nn_idx_gt = utils_loss.get_NN(obj_pc.permute(0,2,1)[:,:,:3], gt_hand_xyz)
         obj_nn_dist_recon, obj_nn_idx_recon = utils_loss.get_NN(obj_pc.permute(0, 2, 1)[:, :, :3], recon_xyz)
 
         # mano param loss
-        param_loss = torch.nn.functional.mse_loss(recon_param, hand_param, reduction='none').sum() / recon_param.size(0)
+        param_loss = torch.nn.functional.mse_loss(recon_param, next_frame_hand, reduction='none').sum() / recon_param.size(0)
         # mano recon xyz loss, KLD loss
-        cvae_loss, recon_loss_num, KLD_loss_num = CVAE_loss_mano(recon_xyz, hand_xyz, mean, log_var, args.loss_type, 'train')
+        cvae_loss, recon_loss_num, KLD_loss_num = CVAE_loss_mano(recon_xyz, gt_hand_xyz, mean, log_var, args.loss_type, 'train')
         # cmap loss
         #cmap_loss = CMap_loss(obj_pc.permute(0,2,1)[:,:,:3], recon_xyz, obj_cmap)
         cmap_loss = CMap_loss3(obj_pc.permute(0,2,1)[:,:,:3], recon_xyz, obj_nn_dist_recon < 0.01**2)
         # cmap consistency loss
-        consistency_loss = CMap_consistency_loss(obj_pc.permute(0,2,1)[:,:,:3], recon_xyz, hand_xyz,
+        consistency_loss = CMap_consistency_loss(obj_pc.permute(0,2,1)[:,:,:3], recon_xyz, gt_hand_xyz,
                                                  obj_nn_dist_recon, obj_nn_dist_gt)
         # inter penetration loss
         penetr_loss = inter_penetr_loss(recon_xyz, rh_faces, obj_pc.permute(0,2,1)[:,:,:3],
@@ -64,6 +74,11 @@ def train(args, epoch, model, train_loader, device, optimizer, log_root, rh_mano
             print("Train Epoch {:02d}/{:02d}, Batch {:04d}/{:d}, Total Loss {:9.5f}, Mesh {:9.5f}, KLD {:9.5f}, Param {:9.5f}, CMap {:9.5f}, Consistency {:9.5f}, Penetration {:9.5f}".format(
                     epoch, args.epochs, batch_idx, len(train_loader) - 1, loss.item(),
                     recon_loss_num, KLD_loss_num, param_loss.item(), cmap_loss.item(), consistency_loss.item(), penetr_loss.item()))
+            for key in logs:
+                l = sum(logs[key]) / len(logs[key])
+                writer.add_scalar(f"TrainLoss/{key}", l, tb_counter)
+                tb_counter += 1
+            
 
     time_elapsed = time.time() - since
     out_str = "Epoch: {:02d}/{:02d}, train, time {:.0f}m, Mean Toal Loss {:9.5f}, Mesh {:9.5f}, KLD {:9.5f}, Param {:9.5f}, CMap {:9.5f}, Consistency {:9.5f}, Penetration {:9.5f}".format(
@@ -85,18 +100,24 @@ def val(args, epoch, model, val_loader, device, log_root, checkpoint_root, best_
     total_recon_loss, total_param_loss, total_cmap_loss = 0.0, 0.0, 0.0
     model.eval()
     with torch.no_grad():
-        for batch_idx, (obj_pc, hand_param, obj_cmap) in enumerate(val_loader):
-            obj_pc, hand_param, obj_cmap = obj_pc.to(device), hand_param.to(device), obj_cmap.to(device)
-            hand_xyz = rh_mano(betas=hand_param[:, :10], global_orient=hand_param[:, 10:13],
-                               hand_pose=hand_param[:, 13:58], transl=hand_param[:, 58:]).vertices.to(device)  # [B,778,3]
-            recon_param = model(obj_pc, hand_xyz.permute(0,2,1))
-            recon_xyz = rh_mano(betas=recon_param[:, :10], global_orient=recon_param[:, 10:13],
-                                hand_pose=recon_param[:, 13:58], transl=recon_param[:, 58:]).vertices.to(device)  # [B,778,3]
+        for batch_idx, (obj_pc, hand_param, next_frame_hand, obj_cmap) in enumerate(val_loader):
+            obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.to(device), hand_param.to(device), next_frame_hand.to(device), obj_cmap.to(device)
+            input_mano = rh_mano(betas=hand_param[:, :10], transl=hand_param[:, 10:13], global_orient=hand_param[:, 13:16],
+                          hand_pose=hand_param[:, 16:])
+            gt_mano = rh_mano(betas=next_frame_hand[:, :10], transl=next_frame_hand[:, 10:13], global_orient=next_frame_hand[:, 13:16],
+                            hand_pose=next_frame_hand[:, 16:])
+            input_hand_xyz = input_mano.vertices.to(device)  # [B,778,3]
+            gt_hand_xyz = gt_mano.vertices.to(device)
+            
+            
+            recon_param = model(obj_pc, input_hand_xyz.permute(0,2,1))
+            recon_xyz = rh_mano(betas=recon_param[:, :10], transl=recon_param[:, 10:13], global_orient=recon_param[:, 13:16],
+                          hand_pose=recon_param[:, 16:]).vertices.to(device)  # [B,778,3]
 
             # param loss
-            param_loss = torch.nn.functional.mse_loss(recon_param, hand_param, reduction='none').sum() / recon_param.size(0)
+            param_loss = torch.nn.functional.mse_loss(recon_param, next_frame_hand, reduction='none').sum() / recon_param.size(0)
             # mesh recon loss
-            recon_loss = CVAE_loss_mano(recon_xyz, hand_xyz, -1, -1, args.loss_type, mode)
+            recon_loss = CVAE_loss_mano(recon_xyz, gt_hand_xyz, -1, -1, args.loss_type, mode)
             # cmap loss
             #cmap_loss = CMap_loss(obj_pc.permute(0, 2, 1)[:,:,:3], hand_xyz, obj_cmap)
             total_recon_loss += recon_loss.item()
@@ -140,6 +161,16 @@ if __name__ == '__main__':
     parser.add_argument("--loss_weight", type=list, default=[1.0, 0.1, 1000.0, 10.0, 10.0])
     parser.add_argument("--use_contactmap", default='False', action='store_true')
     args = parser.parse_args()
+    
+    # device
+    use_cuda = args.use_cuda and torch.cuda.is_available()
+    # device = torch.device("cuda" if use_cuda else "cpu")
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+        
+    device = torch.cuda.current_device() if use_cuda else torch.device("cpu")
+    num_gpus = torch.cuda.device_count()
+    
+    print("using device", device)
 
     # log file
     local_time = time.localtime(time.time())
@@ -162,11 +193,7 @@ if __name__ == '__main__':
     np.random.seed(args.seed)
     random.seed(args.seed)
 
-    # device
-    use_cuda = args.use_cuda and torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
-    print("using device", device)
-    device_num = 1
+    
 
     # network
     model = affordanceNet(
@@ -177,27 +204,28 @@ if __name__ == '__main__':
         cvae_condition_size=args.condition_size).to(device)
 
     # multi-gpu
-    if device == torch.device("cuda"):
+    if use_cuda:
         torch.backends.cudnn.benchmark = True
-        device_ids = range(torch.cuda.device_count())
-        print("using {} cuda".format(len(device_ids)))
-        if len(device_ids) > 1:
+        # device_ids = range(torch.cuda.device_count())
+        print("using {} cuda".format(num_gpus))
+        if num_gpus > 1:
             model = torch.nn.DataParallel(model)
-            device_num = len(device_ids)
+    
 
     # dataset
+    grab_dir = "/home/liuym/results/GRAB_V00/"
     if 'Train' in args.train_mode:
-        train_dataset = obman(mode="train", batch_size=args.batch_size)
+        train_dataset = GRABDataset(baseDir=grab_dir, mode="train")
         train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True,
-                                  num_workers=args.dataloader_workers)
+                                  num_workers=args.dataloader_workers, drop_last=True)
     if 'Val' in args.train_mode:
-        val_dataset = obman(mode="val", batch_size=args.batch_size)
+        val_dataset = GRABDataset(baseDir=grab_dir, mode="val")
         val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False,
-                                  num_workers=args.dataloader_workers)
+                                  num_workers=args.dataloader_workers, drop_last=True)
     if 'Test' in args.train_mode:
-        eval_dataset = obman(mode="test", batch_size=args.batch_size)
+        eval_dataset = GRABDataset(baseDir=grab_dir, mode="test")
         eval_loader = DataLoader(dataset=eval_dataset, batch_size=args.batch_size, shuffle=False,
-                                  num_workers=args.dataloader_workers)
+                                  num_workers=args.dataloader_workers, drop_last=True)
 
     # optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
