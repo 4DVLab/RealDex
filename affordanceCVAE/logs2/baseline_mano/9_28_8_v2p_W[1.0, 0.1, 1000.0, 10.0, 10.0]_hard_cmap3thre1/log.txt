@@ -1,0 +1,202 @@
+Namespace(batch_size=600, condition_size=1024, dataloader_workers=16, decoder_layer_sizes=[1024, 256, 61], encoder_layer_sizes=[1024, 512, 256], epochs=100, figs='figs', latent_size=64, learning_rate=0.0001, loss_type='CD', loss_weight=[1.0, 0.1, 1000.0, 10.0, 10.0], model_type='baseline_mano', obj_inchannel=4, print_every=50, save_interval=5, seed=0, train_mode='TrainTest', use_contactmap='False', use_cuda=1)
+weights for cvae, param, cmap, penetr, consistency loss are [1.0, 0.1, 1000.0, 10.0, 10.0]
+Epoch: 01/100, train, time 11m, Mean Toal Loss  26.41394, Mesh  21.33584, KLD   0.25632, Param  14.31155, CMap       nan, Consistency  -0.14938, Penetration   0.48845
+Epoch: 01/100, test, Mean Mesh Recon Loss:   4.67795, Param loss  11.08609, Best Mesh Recon Loss:   4.67795
+Epoch: 02/100, train, time 10m, Mean Toal Loss   4.35912, Mesh   4.38484, KLD   0.00510, Param   9.65078, CMap   0.00082, Consistency  -0.17101, Penetration   0.07142
+Epoch: 02/100, test, Mean Mesh Recon Loss:   4.23508, Param loss   8.90551, Best Mesh Recon Loss:   4.23508
+Epoch: 03/100, train, time 10m, Mean Toal Loss   3.37629, Mesh   3.81500, KLD   0.00246, Param   8.59243, CMap   0.00077, Consistency  -0.19152, Penetration   0.06148
+Epoch: 03/100, test, Mean Mesh Recon Loss:   4.12683, Param loss   8.66820, Best Mesh Recon Loss:   4.12683
+Epoch: 04/100, train, time 10m, Mean Toal Loss   2.91071, Mesh   3.48363, KLD   0.00179, Param   8.36709, CMap   0.00073, Consistency  -0.19665, Penetration   0.05551
+Epoch: 04/100, test, Mean Mesh Recon Loss:   3.87002, Param loss   8.49777, Best Mesh Recon Loss:   3.87002
+Epoch: 05/100, train, time 10m, Mean Toal Loss   3.66192, Mesh   3.64469, KLD   0.00186, Param   8.66634, CMap   0.00062, Consistency  -0.19496, Penetration   0.04739
+Epoch: 05/100, test, Mean Mesh Recon Loss:   3.92102, Param loss   8.73584, Best Mesh Recon Loss:   3.87002
+Epoch: 06/100, train, time 10m, Mean Toal Loss   3.10052, Mesh   3.35143, KLD   0.00144, Param   8.53885, CMap   0.00058, Consistency  -0.21362, Penetration   0.04463
+Epoch: 06/100, test, Mean Mesh Recon Loss:   3.63645, Param loss   8.56345, Best Mesh Recon Loss:   3.63645
+Epoch: 07/100, train, time 10m, Mean Toal Loss   3.00564, Mesh   3.30678, KLD   0.00134, Param   8.47895, CMap   0.00057, Consistency  -0.21714, Penetration   0.04460
+Epoch: 07/100, test, Mean Mesh Recon Loss:   4.71947, Param loss   8.60725, Best Mesh Recon Loss:   3.63645
+Epoch: 08/100, train, time 10m, Mean Toal Loss   2.64229, Mesh   3.07618, KLD   0.00105, Param   8.30043, CMap   0.00055, Consistency  -0.22433, Penetration   0.04273
+Epoch: 08/100, test, Mean Mesh Recon Loss:   4.24398, Param loss   8.44975, Best Mesh Recon Loss:   3.63645
+Epoch: 09/100, train, time 10m, Mean Toal Loss   2.38598, Mesh   2.97091, KLD   0.00083, Param   8.15252, CMap   0.00053, Consistency  -0.23545, Penetration   0.04207
+Epoch: 09/100, test, Mean Mesh Recon Loss:   4.59067, Param loss   8.25727, Best Mesh Recon Loss:   3.63645
+Epoch: 10/100, train, time 10m, Mean Toal Loss   2.14780, Mesh   2.83813, KLD   0.00067, Param   8.02197, CMap   0.00052, Consistency  -0.24233, Penetration   0.04097
+Epoch: 10/100, test, Mean Mesh Recon Loss:   4.18427, Param loss   8.15433, Best Mesh Recon Loss:   3.63645
+Epoch: 11/100, train, time 10m, Mean Toal Loss   2.07016, Mesh   2.81161, KLD   0.00059, Param   7.88952, CMap   0.00052, Consistency  -0.24557, Penetration   0.04067
+Epoch: 11/100, test, Mean Mesh Recon Loss:   5.24825, Param loss   8.21846, Best Mesh Recon Loss:   3.63645
+Epoch: 12/100, train, time 10m, Mean Toal Loss   1.88163, Mesh   2.71183, KLD   0.00043, Param   7.77542, CMap   0.00051, Consistency  -0.25137, Penetration   0.03981
+Epoch: 12/100, test, Mean Mesh Recon Loss:   3.95350, Param loss   8.13279, Best Mesh Recon Loss:   3.63645
+Epoch: 13/100, train, time 10m, Mean Toal Loss   1.59796, Mesh   2.57439, KLD   0.00029, Param   7.64348, CMap   0.00049, Consistency  -0.26207, Penetration   0.03866
+Epoch: 13/100, test, Mean Mesh Recon Loss:   3.78339, Param loss   8.05164, Best Mesh Recon Loss:   3.63645
+Epoch: 14/100, train, time 10m, Mean Toal Loss   1.58854, Mesh   2.56903, KLD   0.00023, Param   7.54697, CMap   0.00049, Consistency  -0.26187, Penetration   0.03888
+Epoch: 14/100, test, Mean Mesh Recon Loss:   4.16792, Param loss   8.11319, Best Mesh Recon Loss:   3.63645
+Epoch: 15/100, train, time 10m, Mean Toal Loss   1.33278, Mesh   2.46689, KLD   0.00021, Param   7.42113, CMap   0.00048, Consistency  -0.27403, Penetration   0.03808
+Epoch: 15/100, test, Mean Mesh Recon Loss:   3.76013, Param loss   8.03381, Best Mesh Recon Loss:   3.63645
+Epoch: 16/100, train, time 10m, Mean Toal Loss   1.19870, Mesh   2.40250, KLD   0.00017, Param   7.31050, CMap   0.00048, Consistency  -0.27881, Penetration   0.03759
+Epoch: 16/100, test, Mean Mesh Recon Loss:   3.50651, Param loss   8.07003, Best Mesh Recon Loss:   3.50651
+Epoch: 17/100, train, time 10m, Mean Toal Loss   1.18787, Mesh   2.40376, KLD   0.00015, Param   7.24873, CMap   0.00048, Consistency  -0.27953, Penetration   0.03759
+Epoch: 17/100, test, Mean Mesh Recon Loss:   3.75570, Param loss   8.07416, Best Mesh Recon Loss:   3.50651
+Epoch: 18/100, train, time 10m, Mean Toal Loss   1.00454, Mesh   2.33457, KLD   0.00012, Param   7.13626, CMap   0.00047, Consistency  -0.28873, Penetration   0.03752
+Epoch: 18/100, test, Mean Mesh Recon Loss:   3.57950, Param loss   7.98556, Best Mesh Recon Loss:   3.50651
+Epoch: 19/100, train, time 10m, Mean Toal Loss   0.86244, Mesh   2.25747, KLD   0.00012, Param   7.03146, CMap   0.00046, Consistency  -0.29291, Penetration   0.03665
+Epoch: 19/100, test, Mean Mesh Recon Loss:   3.98176, Param loss   8.06341, Best Mesh Recon Loss:   3.50651
+Epoch: 20/100, train, time 10m, Mean Toal Loss   0.80668, Mesh   2.23593, KLD   0.00010, Param   6.96612, CMap   0.00046, Consistency  -0.29545, Penetration   0.03654
+Epoch: 20/100, test, Mean Mesh Recon Loss:   3.78199, Param loss   8.08479, Best Mesh Recon Loss:   3.50651
+Epoch: 21/100, train, time 10m, Mean Toal Loss   0.71227, Mesh   2.19464, KLD   0.00009, Param   6.87440, CMap   0.00046, Consistency  -0.29933, Penetration   0.03646
+Epoch: 21/100, test, Mean Mesh Recon Loss:   3.93942, Param loss   8.03348, Best Mesh Recon Loss:   3.50651
+Epoch: 22/100, train, time 10m, Mean Toal Loss   0.63401, Mesh   2.16261, KLD   0.00009, Param   6.80729, CMap   0.00046, Consistency  -0.30272, Penetration   0.03616
+Epoch: 22/100, test, Mean Mesh Recon Loss:   3.88662, Param loss   7.87758, Best Mesh Recon Loss:   3.50651
+Epoch: 23/100, train, time 10m, Mean Toal Loss   0.58586, Mesh   2.13681, KLD   0.00010, Param   6.72543, CMap   0.00045, Consistency  -0.30396, Penetration   0.03626
+Epoch: 23/100, test, Mean Mesh Recon Loss:   3.82495, Param loss   7.96758, Best Mesh Recon Loss:   3.50651
+Epoch: 24/100, train, time 10m, Mean Toal Loss   0.44570, Mesh   2.09691, KLD   0.00008, Param   6.64216, CMap   0.00045, Consistency  -0.31207, Penetration   0.03592
+Epoch: 24/100, test, Mean Mesh Recon Loss:   3.56882, Param loss   7.86035, Best Mesh Recon Loss:   3.50651
+Epoch: 25/100, train, time 10m, Mean Toal Loss   0.35375, Mesh   2.06607, KLD   0.00008, Param   6.55048, CMap   0.00044, Consistency  -0.31685, Penetration   0.03562
+Epoch: 25/100, test, Mean Mesh Recon Loss:   3.63153, Param loss   7.85171, Best Mesh Recon Loss:   3.50651
+Epoch: 26/100, train, time 10m, Mean Toal Loss   0.24330, Mesh   2.00759, KLD   0.00006, Param   6.47628, CMap   0.00044, Consistency  -0.32003, Penetration   0.03482
+Epoch: 26/100, test, Mean Mesh Recon Loss:   3.51221, Param loss   7.91125, Best Mesh Recon Loss:   3.50651
+Epoch: 27/100, train, time 10m, Mean Toal Loss   0.13942, Mesh   1.97756, KLD   0.00007, Param   6.39412, CMap   0.00044, Consistency  -0.32624, Penetration   0.03491
+Epoch: 27/100, test, Mean Mesh Recon Loss:   3.89876, Param loss   7.95433, Best Mesh Recon Loss:   3.50651
+Epoch: 28/100, train, time 10m, Mean Toal Loss   0.21549, Mesh   1.99911, KLD   0.00008, Param   6.36342, CMap   0.00044, Consistency  -0.32125, Penetration   0.03505
+Epoch: 28/100, test, Mean Mesh Recon Loss:   3.90557, Param loss   7.97295, Best Mesh Recon Loss:   3.50651
+Epoch: 29/100, train, time 10m, Mean Toal Loss   0.17829, Mesh   1.97902, KLD   0.00007, Param   6.30026, CMap   0.00044, Consistency  -0.32204, Penetration   0.03499
+Epoch: 29/100, test, Mean Mesh Recon Loss:   3.41894, Param loss   7.88824, Best Mesh Recon Loss:   3.41894
+Epoch: 30/100, train, time 10m, Mean Toal Loss  -0.00083, Mesh   1.91991, KLD   0.00006, Param   6.22673, CMap   0.00043, Consistency  -0.33191, Penetration   0.03440
+Epoch: 30/100, test, Mean Mesh Recon Loss:   3.56066, Param loss   8.11392, Best Mesh Recon Loss:   3.41894
+Epoch: 31/100, train, time 10m, Mean Toal Loss  -0.62893, Mesh   1.72155, KLD   0.00004, Param   6.02950, CMap   0.00040, Consistency  -0.36778, Penetration   0.03273
+Epoch: 31/100, test, Mean Mesh Recon Loss:   3.36706, Param loss   7.80161, Best Mesh Recon Loss:   3.36706
+Epoch: 32/100, train, time 10m, Mean Toal Loss  -0.71318, Mesh   1.69622, KLD   0.00003, Param   5.94795, CMap   0.00040, Consistency  -0.37281, Penetration   0.03276
+Epoch: 32/100, test, Mean Mesh Recon Loss:   3.56963, Param loss   7.77854, Best Mesh Recon Loss:   3.36706
+Epoch: 33/100, train, time 10m, Mean Toal Loss  -0.72013, Mesh   1.68933, KLD   0.00003, Param   5.89584, CMap   0.00040, Consistency  -0.37229, Penetration   0.03287
+Epoch: 33/100, test, Mean Mesh Recon Loss:   3.45232, Param loss   7.82968, Best Mesh Recon Loss:   3.36706
+Epoch: 34/100, train, time 10m, Mean Toal Loss  -0.69206, Mesh   1.68914, KLD   0.00004, Param   5.87901, CMap   0.00040, Consistency  -0.36943, Penetration   0.03279
+Epoch: 34/100, test, Mean Mesh Recon Loss:   3.37930, Param loss   7.80773, Best Mesh Recon Loss:   3.36706
+Epoch: 35/100, train, time 10m, Mean Toal Loss  -0.82869, Mesh   1.65107, KLD   0.00003, Param   5.81633, CMap   0.00039, Consistency  -0.37795, Penetration   0.03251
+Epoch: 35/100, test, Mean Mesh Recon Loss:   3.81702, Param loss   7.64949, Best Mesh Recon Loss:   3.36706
+Epoch: 36/100, train, time 10m, Mean Toal Loss  -0.86940, Mesh   1.64913, KLD   0.00003, Param   5.77482, CMap   0.00039, Consistency  -0.38161, Penetration   0.03262
+Epoch: 36/100, test, Mean Mesh Recon Loss:   3.73712, Param loss   7.81523, Best Mesh Recon Loss:   3.36706
+Epoch: 37/100, train, time 11m, Mean Toal Loss  -0.86810, Mesh   1.63440, KLD   0.00003, Param   5.74006, CMap   0.00039, Consistency  -0.37941, Penetration   0.03247
+Epoch: 37/100, test, Mean Mesh Recon Loss:   3.54279, Param loss   7.73196, Best Mesh Recon Loss:   3.36706
+Epoch: 38/100, train, time 10m, Mean Toal Loss  -0.94381, Mesh   1.62674, KLD   0.00003, Param   5.69913, CMap   0.00039, Consistency  -0.38576, Penetration   0.03259
+Epoch: 38/100, test, Mean Mesh Recon Loss:   3.47289, Param loss   7.85970, Best Mesh Recon Loss:   3.36706
+Epoch: 39/100, train, time 10m, Mean Toal Loss  -1.01535, Mesh   1.60212, KLD   0.00003, Param   5.66333, CMap   0.00039, Consistency  -0.38951, Penetration   0.03231
+Epoch: 39/100, test, Mean Mesh Recon Loss:   3.47144, Param loss   7.87009, Best Mesh Recon Loss:   3.36706
+Epoch: 40/100, train, time 10m, Mean Toal Loss  -1.04667, Mesh   1.59289, KLD   0.00003, Param   5.63119, CMap   0.00039, Consistency  -0.39139, Penetration   0.03239
+Epoch: 40/100, test, Mean Mesh Recon Loss:   3.62322, Param loss   7.77779, Best Mesh Recon Loss:   3.36706
+Epoch: 41/100, train, time 10m, Mean Toal Loss  -1.03514, Mesh   1.59049, KLD   0.00003, Param   5.59910, CMap   0.00039, Consistency  -0.38973, Penetration   0.03229
+Epoch: 41/100, test, Mean Mesh Recon Loss:   3.45876, Param loss   7.87135, Best Mesh Recon Loss:   3.36706
+Epoch: 42/100, train, time 11m, Mean Toal Loss  -1.12458, Mesh   1.57121, KLD   0.00002, Param   5.56499, CMap   0.00039, Consistency  -0.39595, Penetration   0.03221
+Epoch: 42/100, test, Mean Mesh Recon Loss:   3.25071, Param loss   7.90822, Best Mesh Recon Loss:   3.25071
+Epoch: 43/100, train, time 11m, Mean Toal Loss  -1.14353, Mesh   1.55437, KLD   0.00003, Param   5.53031, CMap   0.00038, Consistency  -0.39563, Penetration   0.03211
+Epoch: 43/100, test, Mean Mesh Recon Loss:   3.42907, Param loss   7.75302, Best Mesh Recon Loss:   3.25071
+Epoch: 44/100, train, time 10m, Mean Toal Loss  -1.14767, Mesh   1.55466, KLD   0.00003, Param   5.50343, CMap   0.00039, Consistency  -0.39586, Penetration   0.03200
+Epoch: 44/100, test, Mean Mesh Recon Loss:   3.96269, Param loss   7.80406, Best Mesh Recon Loss:   3.25071
+Epoch: 45/100, train, time 10m, Mean Toal Loss  -1.21457, Mesh   1.54265, KLD   0.00002, Param   5.47021, CMap   0.00038, Consistency  -0.40087, Penetration   0.03211
+Epoch: 45/100, test, Mean Mesh Recon Loss:   3.53937, Param loss   7.87152, Best Mesh Recon Loss:   3.25071
+Epoch: 46/100, train, time 11m, Mean Toal Loss  -1.24276, Mesh   1.53075, KLD   0.00003, Param   5.43539, CMap   0.00038, Consistency  -0.40188, Penetration   0.03176
+Epoch: 46/100, test, Mean Mesh Recon Loss:   4.13415, Param loss   7.85897, Best Mesh Recon Loss:   3.25071
+Epoch: 47/100, train, time 10m, Mean Toal Loss  -1.27607, Mesh   1.52368, KLD   0.00002, Param   5.41782, CMap   0.00038, Consistency  -0.40425, Penetration   0.03191
+Epoch: 47/100, test, Mean Mesh Recon Loss:   3.82189, Param loss   8.02955, Best Mesh Recon Loss:   3.25071
+Epoch: 48/100, train, time 10m, Mean Toal Loss  -1.30317, Mesh   1.51331, KLD   0.00003, Param   5.39094, CMap   0.00038, Consistency  -0.40555, Penetration   0.03179
+Epoch: 48/100, test, Mean Mesh Recon Loss:   3.62347, Param loss   7.87755, Best Mesh Recon Loss:   3.25071
+Epoch: 49/100, train, time 10m, Mean Toal Loss  -1.31599, Mesh   1.50424, KLD   0.00003, Param   5.35909, CMap   0.00038, Consistency  -0.40521, Penetration   0.03165
+Epoch: 49/100, test, Mean Mesh Recon Loss:   3.60888, Param loss   7.95600, Best Mesh Recon Loss:   3.25071
+Epoch: 50/100, train, time 10m, Mean Toal Loss  -1.35118, Mesh   1.49139, KLD   0.00002, Param   5.32931, CMap   0.00038, Consistency  -0.40703, Penetration   0.03168
+Epoch: 50/100, test, Mean Mesh Recon Loss:   3.42935, Param loss   7.84249, Best Mesh Recon Loss:   3.25071
+Epoch: 51/100, train, time 10m, Mean Toal Loss  -1.32024, Mesh   1.50017, KLD   0.00002, Param   5.31593, CMap   0.00038, Consistency  -0.40514, Penetration   0.03178
+Epoch: 51/100, test, Mean Mesh Recon Loss:   3.49948, Param loss   7.89295, Best Mesh Recon Loss:   3.25071
+Epoch: 52/100, train, time 10m, Mean Toal Loss  -1.44463, Mesh   1.46913, KLD   0.00002, Param   5.28175, CMap   0.00038, Consistency  -0.41329, Penetration   0.03150
+Epoch: 52/100, test, Mean Mesh Recon Loss:   3.67871, Param loss   7.92865, Best Mesh Recon Loss:   3.25071
+Epoch: 53/100, train, time 10m, Mean Toal Loss  -1.39896, Mesh   1.47265, KLD   0.00002, Param   5.26548, CMap   0.00038, Consistency  -0.40909, Penetration   0.03137
+Epoch: 53/100, test, Mean Mesh Recon Loss:   3.66088, Param loss   7.94681, Best Mesh Recon Loss:   3.25071
+Epoch: 54/100, train, time 10m, Mean Toal Loss  -1.48554, Mesh   1.46538, KLD   0.00002, Param   5.23847, CMap   0.00038, Consistency  -0.41707, Penetration   0.03181
+Epoch: 54/100, test, Mean Mesh Recon Loss:   3.65568, Param loss   7.84263, Best Mesh Recon Loss:   3.25071
+Epoch: 55/100, train, time 10m, Mean Toal Loss  -1.52028, Mesh   1.45136, KLD   0.00002, Param   5.20718, CMap   0.00038, Consistency  -0.41822, Penetration   0.03148
+Epoch: 55/100, test, Mean Mesh Recon Loss:   3.40017, Param loss   7.93711, Best Mesh Recon Loss:   3.25071
+Epoch: 56/100, train, time 10m, Mean Toal Loss  -1.54111, Mesh   1.44566, KLD   0.00002, Param   5.18030, CMap   0.00037, Consistency  -0.41944, Penetration   0.03149
+Epoch: 56/100, test, Mean Mesh Recon Loss:   4.02688, Param loss   7.97694, Best Mesh Recon Loss:   3.25071
+Epoch: 57/100, train, time 10m, Mean Toal Loss  -1.53425, Mesh   1.44105, KLD   0.00002, Param   5.16330, CMap   0.00038, Consistency  -0.41808, Penetration   0.03129
+Epoch: 57/100, test, Mean Mesh Recon Loss:   3.44519, Param loss   8.00755, Best Mesh Recon Loss:   3.25071
+Epoch: 58/100, train, time 10m, Mean Toal Loss  -1.55457, Mesh   1.43330, KLD   0.00002, Param   5.14566, CMap   0.00038, Consistency  -0.41927, Penetration   0.03145
+Epoch: 58/100, test, Mean Mesh Recon Loss:   3.66873, Param loss   7.94739, Best Mesh Recon Loss:   3.25071
+Epoch: 59/100, train, time 10m, Mean Toal Loss  -1.59274, Mesh   1.43220, KLD   0.00002, Param   5.12554, CMap   0.00037, Consistency  -0.42267, Penetration   0.03153
+Epoch: 59/100, test, Mean Mesh Recon Loss:   3.89562, Param loss   7.95512, Best Mesh Recon Loss:   3.25071
+Epoch: 60/100, train, time 10m, Mean Toal Loss  -1.65911, Mesh   1.41339, KLD   0.00002, Param   5.09393, CMap   0.00037, Consistency  -0.42677, Penetration   0.03123
+Epoch: 60/100, test, Mean Mesh Recon Loss:   3.75737, Param loss   7.98321, Best Mesh Recon Loss:   3.25071
+Epoch: 61/100, train, time 10m, Mean Toal Loss  -2.08845, Mesh   1.32758, KLD   0.00002, Param   5.00689, CMap   0.00035, Consistency  -0.45736, Penetration   0.03027
+Epoch: 61/100, test, Mean Mesh Recon Loss:   3.62149, Param loss   7.87883, Best Mesh Recon Loss:   3.25071
+Epoch: 62/100, train, time 10m, Mean Toal Loss  -2.12396, Mesh   1.32873, KLD   0.00002, Param   4.98069, CMap   0.00036, Consistency  -0.46108, Penetration   0.03048
+Epoch: 62/100, test, Mean Mesh Recon Loss:   3.86370, Param loss   8.04402, Best Mesh Recon Loss:   3.25071
+Epoch: 63/100, train, time 10m, Mean Toal Loss  -2.14331, Mesh   1.32334, KLD   0.00002, Param   4.96892, CMap   0.00035, Consistency  -0.46217, Penetration   0.03043
+Epoch: 63/100, test, Mean Mesh Recon Loss:   3.54919, Param loss   7.96511, Best Mesh Recon Loss:   3.25071
+Epoch: 64/100, train, time 10m, Mean Toal Loss  -2.16422, Mesh   1.31816, KLD   0.00002, Param   4.95408, CMap   0.00035, Consistency  -0.46361, Penetration   0.03036
+Epoch: 64/100, test, Mean Mesh Recon Loss:   3.67347, Param loss   7.89743, Best Mesh Recon Loss:   3.25071
+Epoch: 65/100, train, time 10m, Mean Toal Loss  -2.16294, Mesh   1.31141, KLD   0.00001, Param   4.93421, CMap   0.00035, Consistency  -0.46228, Penetration   0.03012
+Epoch: 65/100, test, Mean Mesh Recon Loss:   3.56325, Param loss   7.95932, Best Mesh Recon Loss:   3.25071
+Epoch: 66/100, train, time 10m, Mean Toal Loss  -2.20242, Mesh   1.30652, KLD   0.00002, Param   4.91914, CMap   0.00035, Consistency  -0.46587, Penetration   0.03043
+Epoch: 66/100, test, Mean Mesh Recon Loss:   3.59950, Param loss   7.87631, Best Mesh Recon Loss:   3.25071
+Epoch: 67/100, train, time 10m, Mean Toal Loss  -2.20001, Mesh   1.30374, KLD   0.00001, Param   4.90727, CMap   0.00035, Consistency  -0.46518, Penetration   0.03046
+Epoch: 67/100, test, Mean Mesh Recon Loss:   3.67712, Param loss   7.96954, Best Mesh Recon Loss:   3.25071
+Epoch: 68/100, train, time 10m, Mean Toal Loss  -2.21539, Mesh   1.30031, KLD   0.00001, Param   4.89333, CMap   0.00035, Consistency  -0.46615, Penetration   0.03031
+Epoch: 68/100, test, Mean Mesh Recon Loss:   3.75813, Param loss   8.01267, Best Mesh Recon Loss:   3.25071
+Epoch: 69/100, train, time 10m, Mean Toal Loss  -2.26690, Mesh   1.29613, KLD   0.00001, Param   4.88192, CMap   0.00035, Consistency  -0.47071, Penetration   0.03033
+Epoch: 69/100, test, Mean Mesh Recon Loss:   3.76457, Param loss   7.93690, Best Mesh Recon Loss:   3.25071
+Epoch: 70/100, train, time 10m, Mean Toal Loss  -2.27501, Mesh   1.28856, KLD   0.00001, Param   4.86793, CMap   0.00035, Consistency  -0.47042, Penetration   0.03019
+Epoch: 70/100, test, Mean Mesh Recon Loss:   3.72479, Param loss   7.94608, Best Mesh Recon Loss:   3.25071
+Epoch: 71/100, train, time 10m, Mean Toal Loss  -2.22759, Mesh   1.28850, KLD   0.00001, Param   4.85624, CMap   0.00035, Consistency  -0.46589, Penetration   0.03043
+Epoch: 71/100, test, Mean Mesh Recon Loss:   3.78570, Param loss   8.07194, Best Mesh Recon Loss:   3.25071
+Epoch: 72/100, train, time 10m, Mean Toal Loss  -2.28877, Mesh   1.28126, KLD   0.00001, Param   4.84453, CMap   0.00035, Consistency  -0.47082, Penetration   0.03031
+Epoch: 72/100, test, Mean Mesh Recon Loss:   3.62163, Param loss   7.98509, Best Mesh Recon Loss:   3.25071
+Epoch: 73/100, train, time 10m, Mean Toal Loss  -2.27263, Mesh   1.27899, KLD   0.00001, Param   4.83695, CMap   0.00035, Consistency  -0.46894, Penetration   0.03028
+Epoch: 73/100, test, Mean Mesh Recon Loss:   3.71109, Param loss   8.01869, Best Mesh Recon Loss:   3.25071
+Epoch: 74/100, train, time 10m, Mean Toal Loss  -2.30201, Mesh   1.27311, KLD   0.00001, Param   4.82422, CMap   0.00035, Consistency  -0.47096, Penetration   0.03021
+Epoch: 74/100, test, Mean Mesh Recon Loss:   3.87127, Param loss   8.02097, Best Mesh Recon Loss:   3.25071
+Epoch: 75/100, train, time 10m, Mean Toal Loss  -2.34504, Mesh   1.27282, KLD   0.00001, Param   4.81125, CMap   0.00035, Consistency  -0.47527, Penetration   0.03030
+Epoch: 75/100, test, Mean Mesh Recon Loss:   3.68764, Param loss   7.90524, Best Mesh Recon Loss:   3.25071
+Epoch: 76/100, train, time 10m, Mean Toal Loss  -2.36438, Mesh   1.27149, KLD   0.00001, Param   4.79918, CMap   0.00035, Consistency  -0.47695, Penetration   0.03031
+Epoch: 76/100, test, Mean Mesh Recon Loss:   3.78560, Param loss   7.94071, Best Mesh Recon Loss:   3.25071
+Epoch: 77/100, train, time 10m, Mean Toal Loss  -2.32964, Mesh   1.26835, KLD   0.00001, Param   4.79235, CMap   0.00035, Consistency  -0.47308, Penetration   0.03028
+Epoch: 77/100, test, Mean Mesh Recon Loss:   3.64264, Param loss   7.94608, Best Mesh Recon Loss:   3.25071
+Epoch: 78/100, train, time 10m, Mean Toal Loss  -2.36488, Mesh   1.26145, KLD   0.00001, Param   4.78338, CMap   0.00035, Consistency  -0.47556, Penetration   0.03007
+Epoch: 78/100, test, Mean Mesh Recon Loss:   4.01440, Param loss   7.98905, Best Mesh Recon Loss:   3.25071
+Epoch: 79/100, train, time 10m, Mean Toal Loss  -2.36079, Mesh   1.25856, KLD   0.00001, Param   4.76752, CMap   0.00035, Consistency  -0.47482, Penetration   0.03012
+Epoch: 79/100, test, Mean Mesh Recon Loss:   3.69186, Param loss   7.96377, Best Mesh Recon Loss:   3.25071
+Epoch: 80/100, train, time 10m, Mean Toal Loss  -2.38117, Mesh   1.25680, KLD   0.00001, Param   4.76607, CMap   0.00035, Consistency  -0.47644, Penetration   0.03003
+Epoch: 80/100, test, Mean Mesh Recon Loss:   3.92069, Param loss   8.03516, Best Mesh Recon Loss:   3.25071
+Epoch: 81/100, train, time 10m, Mean Toal Loss  -2.66601, Mesh   1.20886, KLD   0.00001, Param   4.71624, CMap   0.00034, Consistency  -0.49783, Penetration   0.02936
+Epoch: 81/100, test, Mean Mesh Recon Loss:   3.76062, Param loss   8.05589, Best Mesh Recon Loss:   3.25071
+Epoch: 82/100, train, time 10m, Mean Toal Loss  -2.65480, Mesh   1.20938, KLD   0.00001, Param   4.70659, CMap   0.00034, Consistency  -0.49698, Penetration   0.02941
+Epoch: 82/100, test, Mean Mesh Recon Loss:   3.62819, Param loss   7.99882, Best Mesh Recon Loss:   3.25071
+Epoch: 83/100, train, time 10m, Mean Toal Loss  -2.68314, Mesh   1.20788, KLD   0.00001, Param   4.69552, CMap   0.00034, Consistency  -0.49951, Penetration   0.02951
+Epoch: 83/100, test, Mean Mesh Recon Loss:   3.75504, Param loss   8.03148, Best Mesh Recon Loss:   3.25071
+Epoch: 84/100, train, time 10m, Mean Toal Loss  -2.70149, Mesh   1.20914, KLD   0.00001, Param   4.69283, CMap   0.00034, Consistency  -0.50129, Penetration   0.02939
+Epoch: 84/100, test, Mean Mesh Recon Loss:   3.72665, Param loss   7.95516, Best Mesh Recon Loss:   3.25071
+Epoch: 85/100, train, time 10m, Mean Toal Loss  -2.67768, Mesh   1.20784, KLD   0.00001, Param   4.68420, CMap   0.00034, Consistency  -0.49893, Penetration   0.02953
+Epoch: 85/100, test, Mean Mesh Recon Loss:   3.79714, Param loss   7.97155, Best Mesh Recon Loss:   3.25071
+Epoch: 86/100, train, time 10m, Mean Toal Loss  -2.72991, Mesh   1.20439, KLD   0.00001, Param   4.68011, CMap   0.00034, Consistency  -0.50358, Penetration   0.02948
+Epoch: 86/100, test, Mean Mesh Recon Loss:   3.66428, Param loss   7.98802, Best Mesh Recon Loss:   3.25071
+Epoch: 87/100, train, time 10m, Mean Toal Loss  -2.72764, Mesh   1.20245, KLD   0.00001, Param   4.67257, CMap   0.00034, Consistency  -0.50312, Penetration   0.02953
+Epoch: 87/100, test, Mean Mesh Recon Loss:   3.74394, Param loss   7.97650, Best Mesh Recon Loss:   3.25071
+Epoch: 88/100, train, time 10m, Mean Toal Loss  -2.76095, Mesh   1.19782, KLD   0.00001, Param   4.66864, CMap   0.00034, Consistency  -0.50591, Penetration   0.02941
+Epoch: 88/100, test, Mean Mesh Recon Loss:   3.71892, Param loss   7.97961, Best Mesh Recon Loss:   3.25071
+Epoch: 89/100, train, time 10m, Mean Toal Loss  -2.73912, Mesh   1.19895, KLD   0.00001, Param   4.66075, CMap   0.00034, Consistency  -0.50371, Penetration   0.02939
+Epoch: 89/100, test, Mean Mesh Recon Loss:   3.92049, Param loss   7.94906, Best Mesh Recon Loss:   3.25071
+Epoch: 90/100, train, time 10m, Mean Toal Loss  -2.78470, Mesh   1.19243, KLD   0.00001, Param   4.65174, CMap   0.00034, Consistency  -0.50734, Penetration   0.02940
+Epoch: 90/100, test, Mean Mesh Recon Loss:   3.89819, Param loss   8.00508, Best Mesh Recon Loss:   3.25071
+Epoch: 91/100, train, time 10m, Mean Toal Loss  -2.87994, Mesh   1.18040, KLD   0.00001, Param   4.63886, CMap   0.00034, Consistency  -0.51503, Penetration   0.02910
+Epoch: 91/100, test, Mean Mesh Recon Loss:   3.79797, Param loss   8.04411, Best Mesh Recon Loss:   3.25071
+Epoch: 92/100, train, time 10m, Mean Toal Loss  -2.88795, Mesh   1.17653, KLD   0.00001, Param   4.63229, CMap   0.00033, Consistency  -0.51520, Penetration   0.02896
+Epoch: 92/100, test, Mean Mesh Recon Loss:   3.92676, Param loss   8.02786, Best Mesh Recon Loss:   3.25071
+Epoch: 93/100, train, time 10m, Mean Toal Loss  -2.88784, Mesh   1.17597, KLD   0.00001, Param   4.62933, CMap   0.00033, Consistency  -0.51517, Penetration   0.02903
+Epoch: 93/100, test, Mean Mesh Recon Loss:   3.77416, Param loss   7.97272, Best Mesh Recon Loss:   3.25071
+Epoch: 94/100, train, time 11m, Mean Toal Loss  -2.91344, Mesh   1.17402, KLD   0.00001, Param   4.62332, CMap   0.00033, Consistency  -0.51725, Penetration   0.02893
+Epoch: 94/100, test, Mean Mesh Recon Loss:   3.85613, Param loss   8.01972, Best Mesh Recon Loss:   3.25071
+Epoch: 95/100, train, time 10m, Mean Toal Loss  -2.92896, Mesh   1.17485, KLD   0.00001, Param   4.62109, CMap   0.00033, Consistency  -0.51905, Penetration   0.02900
+Epoch: 95/100, test, Mean Mesh Recon Loss:   4.00203, Param loss   8.01538, Best Mesh Recon Loss:   3.25071
+Epoch: 96/100, train, time 10m, Mean Toal Loss  -2.92689, Mesh   1.17235, KLD   0.00001, Param   4.61730, CMap   0.00033, Consistency  -0.51832, Penetration   0.02881
+Epoch: 96/100, test, Mean Mesh Recon Loss:   3.82487, Param loss   7.99010, Best Mesh Recon Loss:   3.25071
+Epoch: 97/100, train, time 10m, Mean Toal Loss  -2.91732, Mesh   1.16993, KLD   0.00001, Param   4.61320, CMap   0.00033, Consistency  -0.51727, Penetration   0.02896
+Epoch: 97/100, test, Mean Mesh Recon Loss:   3.91704, Param loss   7.98356, Best Mesh Recon Loss:   3.25071
+Epoch: 98/100, train, time 10m, Mean Toal Loss  -2.90856, Mesh   1.17249, KLD   0.00001, Param   4.61055, CMap   0.00033, Consistency  -0.51656, Penetration   0.02888
+Epoch: 98/100, test, Mean Mesh Recon Loss:   3.82609, Param loss   8.00754, Best Mesh Recon Loss:   3.25071
+Epoch: 99/100, train, time 10m, Mean Toal Loss  -2.91892, Mesh   1.16997, KLD   0.00001, Param   4.60668, CMap   0.00033, Consistency  -0.51722, Penetration   0.02886
+Epoch: 99/100, test, Mean Mesh Recon Loss:   3.91519, Param loss   8.02156, Best Mesh Recon Loss:   3.25071
+Epoch: 100/100, train, time 10m, Mean Toal Loss  -2.96156, Mesh   1.16582, KLD   0.00001, Param   4.59922, CMap   0.00033, Consistency  -0.52107, Penetration   0.02895
+Epoch: 100/100, test, Mean Mesh Recon Loss:   3.91790, Param loss   8.03390, Best Mesh Recon Loss:   3.25071

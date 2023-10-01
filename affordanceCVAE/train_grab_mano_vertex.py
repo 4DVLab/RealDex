@@ -1,4 +1,6 @@
 import os
+# os.environ["CUDA_VISIBLE_DEVICES"] = "4,5,6"
+
 import time
 import torch
 import argparse
@@ -17,29 +19,32 @@ from pytorch3d.loss import chamfer_distance
 import mano
 
 writer = SummaryWriter()
-tb_counter=0
-def train(args, epoch, model, train_loader, device, optimizer, log_root, rh_mano, rh_faces):
+def train(args, epoch, model, train_loader, optimizer, log_root, rh_mano, rh_faces):
+    global tb_counter
+    
     since = time.time()
     logs = defaultdict(list)
     a, b, c, d, e = args.loss_weight
     model.train()
     
     for batch_idx, (obj_pc, hand_param, next_frame_hand, obj_cmap) in enumerate(train_loader):
-        obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.to(device), hand_param.to(device), next_frame_hand.to(device), obj_cmap.to(device)
+        # obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.to(device), hand_param.to(device), next_frame_hand.to(device), obj_cmap.to(device)
+        obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.cuda(), hand_param.cuda(), next_frame_hand.cuda(), obj_cmap.cuda()
+        
         
         input_mano = rh_mano(betas=hand_param[:, :10], transl=hand_param[:, 10:13], global_orient=hand_param[:, 13:16],
                           hand_pose=hand_param[:, 16:])
         gt_mano = rh_mano(betas=next_frame_hand[:, :10], transl=next_frame_hand[:, 10:13], global_orient=next_frame_hand[:, 13:16],
                           hand_pose=next_frame_hand[:, 16:])
-        input_hand_xyz = input_mano.vertices.to(device)  # [B,778,3]
-        gt_hand_xyz = gt_mano.vertices.to(device)
+        input_hand_xyz = input_mano.vertices.cuda()  # [B,778,3]
+        gt_hand_xyz = gt_mano.vertices.cuda()
         
         
         optimizer.zero_grad()
         recon_param, mean, log_var, z = model(obj_pc, input_hand_xyz.permute(0,2,1))  # recon [B,61] mano params
         recon_mano = rh_mano(betas=recon_param[:, :10], transl=recon_param[:, 10:13], global_orient=recon_param[:, 13:16],
                           hand_pose=recon_param[:, 16:])
-        recon_xyz = recon_mano.vertices.to(device)  # [B,778,3]
+        recon_xyz = recon_mano.vertices.cuda()  # [B,778,3]
         # obj xyz NN dist and idx
         obj_nn_dist_gt, obj_nn_idx_gt = utils_loss.get_NN(obj_pc.permute(0,2,1)[:,:,:3], gt_hand_xyz)
         obj_nn_dist_recon, obj_nn_idx_recon = utils_loss.get_NN(obj_pc.permute(0, 2, 1)[:, :, :3], recon_xyz)
@@ -95,24 +100,26 @@ def train(args, epoch, model, train_loader, device, optimizer, log_root, rh_mano
         f.write(out_str+'\n')
 
 
-def val(args, epoch, model, val_loader, device, log_root, checkpoint_root, best_val_loss, rh_mano, rh_faces, mode='val'):
+def val(args, epoch, model, val_loader, log_root, checkpoint_root, best_val_loss, rh_mano, rh_faces, mode='val'):
     # validation
     total_recon_loss, total_param_loss, total_cmap_loss = 0.0, 0.0, 0.0
     model.eval()
     with torch.no_grad():
         for batch_idx, (obj_pc, hand_param, next_frame_hand, obj_cmap) in enumerate(val_loader):
-            obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.to(device), hand_param.to(device), next_frame_hand.to(device), obj_cmap.to(device)
+            # obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.to(device), hand_param.to(device), next_frame_hand.to(device), obj_cmap.to(device)
+            obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.cuda(), hand_param.cuda(), next_frame_hand.cuda(), obj_cmap.cuda()
+            
             input_mano = rh_mano(betas=hand_param[:, :10], transl=hand_param[:, 10:13], global_orient=hand_param[:, 13:16],
                           hand_pose=hand_param[:, 16:])
             gt_mano = rh_mano(betas=next_frame_hand[:, :10], transl=next_frame_hand[:, 10:13], global_orient=next_frame_hand[:, 13:16],
                             hand_pose=next_frame_hand[:, 16:])
-            input_hand_xyz = input_mano.vertices.to(device)  # [B,778,3]
-            gt_hand_xyz = gt_mano.vertices.to(device)
+            input_hand_xyz = input_mano.vertices.cuda()  # [B,778,3]
+            gt_hand_xyz = gt_mano.vertices.cuda()
             
             
             recon_param = model(obj_pc, input_hand_xyz.permute(0,2,1))
             recon_xyz = rh_mano(betas=recon_param[:, :10], transl=recon_param[:, 10:13], global_orient=recon_param[:, 13:16],
-                          hand_pose=recon_param[:, 16:]).vertices.to(device)  # [B,778,3]
+                          hand_pose=recon_param[:, 16:]).vertices.cuda() # [B,778,3]
 
             # param loss
             param_loss = torch.nn.functional.mse_loss(recon_param, next_frame_hand, reduction='none').sum() / recon_param.size(0)
@@ -164,13 +171,12 @@ if __name__ == '__main__':
     
     # device
     use_cuda = args.use_cuda and torch.cuda.is_available()
-    # device = torch.device("cuda" if use_cuda else "cpu")
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
         
-    device = torch.cuda.current_device() if use_cuda else torch.device("cpu")
+    # device = torch.device("cuda" if use_cuda else "cpu")
+
     num_gpus = torch.cuda.device_count()
     
-    print("using device", device)
+    # print("using device", device)
 
     # log file
     local_time = time.localtime(time.time())
@@ -201,15 +207,16 @@ if __name__ == '__main__':
         cvae_encoder_sizes=args.encoder_layer_sizes,
         cvae_latent_size=args.latent_size,
         cvae_decoder_sizes=args.decoder_layer_sizes,
-        cvae_condition_size=args.condition_size).to(device)
-
+        cvae_condition_size=args.condition_size)
     # multi-gpu
     if use_cuda:
         torch.backends.cudnn.benchmark = True
-        # device_ids = range(torch.cuda.device_count())
+        device_ids = range(torch.cuda.device_count())
         print("using {} cuda".format(num_gpus))
         if num_gpus > 1:
             model = torch.nn.DataParallel(model)
+            
+    model = model.cuda()
     
 
     # dataset
@@ -220,11 +227,11 @@ if __name__ == '__main__':
                                   num_workers=args.dataloader_workers, drop_last=True)
     if 'Val' in args.train_mode:
         val_dataset = GRABDataset(baseDir=grab_dir, mode="val")
-        val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=False,
+        val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size/5, shuffle=False,
                                   num_workers=args.dataloader_workers, drop_last=True)
     if 'Test' in args.train_mode:
         eval_dataset = GRABDataset(baseDir=grab_dir, mode="test")
-        eval_loader = DataLoader(dataset=eval_dataset, batch_size=args.batch_size, shuffle=False,
+        eval_loader = DataLoader(dataset=eval_dataset, batch_size=args.batch_size/5, shuffle=False,
                                   num_workers=args.dataloader_workers, drop_last=True)
 
     # optimizer
@@ -238,18 +245,20 @@ if __name__ == '__main__':
                               use_pca=True,
                               num_pca_comps=45,
                               batch_size=args.batch_size,
-                              flat_hand_mean=True).to(device)
+                              flat_hand_mean=True).cuda()
     rh_faces = torch.from_numpy(rh_mano.faces.astype(np.int32)).view(1, -1, 3).contiguous() # [1, 1538, 3], face triangle indexes
-    rh_faces = rh_faces.repeat(args.batch_size, 1, 1).to(device) # [N, 1538, 3]
+    rh_faces = rh_faces.expand(args.batch_size, -1, -1).cuda() # [N, 1538, 3]
 
     best_val_loss = float('inf')
     best_eval_loss = float('inf')
+    global tb_counter
+    tb_counter = 0
     for epoch in range(1, args.epochs+1):
         if 'Train' in args.train_mode:
-            train(args, epoch, model, train_loader, device, optimizer, log_root, rh_mano, rh_faces)
+            train(args, epoch, model, train_loader, optimizer, log_root, rh_mano, rh_faces)
             scheduler.step()
         if 'Val' in args.train_mode:
-            best_val_loss = val(args, epoch, model, val_loader, device, log_root, save_root, best_val_loss, rh_mano, rh_faces, 'val')
+            best_val_loss = val(args, epoch, model, val_loader, log_root, save_root, best_val_loss, rh_mano, rh_faces, 'val')
         if 'Test' in args.train_mode:
-            best_eval_loss = val(args, epoch, model, eval_loader, device, log_root, save_root, best_eval_loss, rh_mano, rh_faces, 'test')
+            best_eval_loss = val(args, epoch, model, eval_loader, log_root, save_root, best_eval_loss, rh_mano, rh_faces, 'test')
 

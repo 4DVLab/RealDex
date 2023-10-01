@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=4,5,6 python train_grab_mano_vertex.py --batch_size 600

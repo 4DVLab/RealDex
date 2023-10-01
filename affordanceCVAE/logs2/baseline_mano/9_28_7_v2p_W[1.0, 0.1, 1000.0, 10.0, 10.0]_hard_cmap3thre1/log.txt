@@ -1,0 +1,5 @@
+Namespace(batch_size=800, condition_size=1024, dataloader_workers=16, decoder_layer_sizes=[1024, 256, 61], encoder_layer_sizes=[1024, 512, 256], epochs=100, figs='figs', latent_size=64, learning_rate=0.0001, loss_type='CD', loss_weight=[1.0, 0.1, 1000.0, 10.0, 10.0], model_type='baseline_mano', obj_inchannel=4, print_every=50, save_interval=5, seed=0, train_mode='TrainTest', use_contactmap='False', use_cuda=1)
+weights for cvae, param, cmap, penetr, consistency loss are [1.0, 0.1, 1000.0, 10.0, 10.0]
+Epoch: 02/100, train, time 14m, Mean Toal Loss   7.64023, Mesh   7.17300, KLD   0.02707, Param  10.23390, CMap   0.00120, Consistency  -0.16744, Penetration   0.10911
+Epoch: 02/100, test, Mean Mesh Recon Loss:   5.68813, Param loss   9.40308, Best Mesh Recon Loss:   5.68813
+Epoch: 03/100, train, time 14m, Mean Toal Loss   4.52691, Mesh   4.80649, KLD   0.00491, Param   8.84685, CMap   0.00098, Consistency  -0.19330, Penetration   0.07639

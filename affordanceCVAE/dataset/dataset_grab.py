@@ -1,3 +1,4 @@
+import sys
 from torch.utils.data import Dataset
 import torch
 import os
@@ -110,6 +111,5 @@ class GRABDataset(Dataset):
         # next frame
         nf_data = self.ds['next_frame_data']
         next_frame_hand = torch.cat([beta, nf_data['transl'][idx], nf_data['global_orient'][idx], nf_data['fullpose'][idx]], dim=0).float() # [61]
-        
         
         return (obj_pc, hand_param, next_frame_hand, obj_cmap)
