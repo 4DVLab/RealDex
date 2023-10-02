@@ -30,9 +30,7 @@ class GRABDataset(Dataset):
         self.ds = {}
         self.ds['rhand_data'] = torch.load(os.path.join(self.ds_path, 'rhand_data.pt'))
         self.ds['next_frame_data'] = torch.load(os.path.join(self.ds_path, 'next_frame_data.pt'))
-        self.__load_object_data__()
-        
-        
+        self.ds['object_data'] = torch.load(os.path.join(self.ds_path, 'object_data.pt'))
 
         self.sbjs = np.unique(self.frame_sbjs)
         self.obj_info = np.load(os.path.join(baseDir, 'obj_info.npy'), allow_pickle=True).item()
@@ -82,13 +80,6 @@ class GRABDataset(Dataset):
                     rh_betas = np.load(beta_path)
                     
                     self.sbj_info[sid] = {'rh_vtemp': rh_vtemp, 'rh_betas': rh_betas}
-                    
-    def __load_object_data__(self):
-        self.ds['object_data'] = torch.load(os.path.join(self.ds_path, 'object_data.pt'))
-        obj_pc = self.ds['object_data']['points'] #[B, 3000, 3]
-        B, N, _ = obj_pc.shape
-        obj_pc = obj_pc.transpose(1, 2) #[B, 3, 3000]
-        self.ds['object_data']['points'] = torch.cat((obj_pc, torch.ones(1, 1, 1).expand(B,-1,N)), dim=1) # [B, 4, 3000]
         
     def __len__(self):
         
@@ -96,7 +87,10 @@ class GRABDataset(Dataset):
 
     def __getitem__(self, idx):
                 
-        obj_pc = self.ds['object_data']['points'][idx] #[3000, 4]
+        obj_pc = self.ds['object_data']['points'][idx] #[3000, 3]
+        N, _ = obj_pc.shape
+        obj_pc = obj_pc.transpose(0, 1) #[3, 3000]
+        obj_pc = torch.cat((obj_pc, torch.ones(1, 1).expand(-1,N)), dim=1) # [B, 4, 3000]
         
         obj_cmap = self.ds['object_data']['contact'][idx] # [3000, 1]
         obj_cmap = obj_cmap > 0
@@ -113,3 +107,5 @@ class GRABDataset(Dataset):
         next_frame_hand = torch.cat([beta, nf_data['transl'][idx], nf_data['global_orient'][idx], nf_data['fullpose'][idx]], dim=0).float() # [61]
         
         return (obj_pc, hand_param, next_frame_hand, obj_cmap)
+    
+                
