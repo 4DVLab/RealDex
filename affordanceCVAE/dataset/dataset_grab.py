@@ -88,9 +88,6 @@ class GRABDataset(Dataset):
     def __getitem__(self, idx):
                 
         obj_pc = self.ds['object_data']['points'][idx] #[3000, 3]
-        N, _ = obj_pc.shape
-        obj_pc = obj_pc.transpose(0, 1) #[3, 3000]
-        obj_pc = torch.cat((obj_pc, torch.ones(1, 1).expand(-1,N)), dim=1) # [B, 4, 3000]
         
         obj_cmap = self.ds['object_data']['contact'][idx] # [3000, 1]
         obj_cmap = obj_cmap > 0
@@ -100,11 +97,11 @@ class GRABDataset(Dataset):
         
         # hand mano param
         rh_data = self.ds['rhand_data']
-        hand_param = torch.cat([beta, rh_data['transl'][idx], rh_data['global_orient'][idx], rh_data['fullpose'][idx]], dim=0).float() # [61]
+        hand_param = torch.cat([beta, rh_data['transl'][idx], rh_data['global_orient'][idx], rh_data['fullpose'][idx]], dim=-1).float() # [61]
         
         # next frame
         nf_data = self.ds['next_frame_data']
-        next_frame_hand = torch.cat([beta, nf_data['transl'][idx], nf_data['global_orient'][idx], nf_data['fullpose'][idx]], dim=0).float() # [61]
+        next_frame_hand = torch.cat([beta, nf_data['transl'][idx], nf_data['global_orient'][idx], nf_data['fullpose'][idx]], dim=-1).float() # [61]
         
         return (obj_pc, hand_param, next_frame_hand, obj_cmap)
     

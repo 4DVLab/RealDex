@@ -20,7 +20,7 @@ def vis_grab(model, dataloader, save_path, rh_mano):
     model.eval()
     vis_counter = 0
     with torch.no_grad():
-        for batch_idx, (obj_pc, hand_param, next_frame_hand, obj_cmap) in enumerate(data_loader):
+        for batch_idx, (obj_pc, hand_param, next_frame_hand, obj_cmap) in enumerate(dataloader):
             print("batch: ", batch_idx)
             # obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.to(device), hand_param.to(device), next_frame_hand.to(device), obj_cmap.to(device)
             obj_pc, hand_param, next_frame_hand, obj_cmap = obj_pc.cuda(), hand_param.cuda(), next_frame_hand.cuda(), obj_cmap.cuda()
