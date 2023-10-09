@@ -6,9 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /PointCloud21
-        - /PointCloud22
-        - /PointCloud24
+        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 496
   - Class: rviz/Selection
@@ -172,7 +170,7 @@ Visualization Manager:
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
-        All Enabled: true
+        All Enabled: false
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -211,7 +209,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.9805216789245605
+      Distance: 7.545920372009277
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -219,17 +217,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 3.8103044033050537
-        Y: 0.48572838306427
-        Z: -0.4491376280784607
+        X: 3.578850746154785
+        Y: 0.5691701173782349
+        Z: 1.1480681896209717
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.18479835987091064
+      Pitch: -0.4002011716365814
       Target Frame: <Fixed Frame>
-      Yaw: 3.3017497062683105
+      Yaw: 2.906761646270752
     Saved: ~
 Window Geometry:
   Displays:

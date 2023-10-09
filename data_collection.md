@@ -20,3 +20,12 @@
             total NoS： 1139
             total size: 523 G
 
+
+|object name|num of sequense|size(Gb)|compressed|uploaded|
+|---|---|---|---| ---|
+|    |   |  |   |   |
+
+
+
+
+

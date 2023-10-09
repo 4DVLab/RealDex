@@ -2,7 +2,7 @@
 
 workdir_local="~/data/bags/"
 workdir_ssd="~/data/ssd/"
-worddir_sda="~/data/sda_1/"
+worddir_sda="~/data/sda/"
 
 # compress bagfile and remove the original bag
 

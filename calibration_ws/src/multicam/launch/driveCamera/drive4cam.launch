@@ -61,7 +61,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="160"/>
+      <param name="subordinate_delay_off_master_usec" value="200"/>
     </node>
 
 </group> 
@@ -137,7 +137,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/>
-      <param name="subordinate_delay_off_master_usec" value="160"/>
+      <param name="subordinate_delay_off_master_usec" value="400"/>
     </node>
 
 </group>
@@ -213,7 +213,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="160"/>
+      <param name="subordinate_delay_off_master_usec" value="600"/>
     </node>
 
 </group> 
@@ -337,6 +337,15 @@
 
   <!-- publish the extren calibration of two cameras -->
   
+  <include file="$(find easy_handeye)/launch/publish.launch">
+    <arg name="eye_on_hand" value="false"/>
+    <arg name="namespace_prefix" value="cam_to_hand"/> <!-- use the same namespace that you used during calibration! -->
+    <arg name="robot_base_frame" value="ra_base_link"/>
+    <arg name="tracking_base_frame" value="cam0_camera_base"/>
+    <!-- Horaud , Park , Andreff -->
+    <arg name="calibration_file" value="$(find multicam)/config/Andreff_manaul.yaml"/>  
+  </include>
+
     <!-- x y z x y z w -->
     <node name="static_publish_4" pkg="multicam" type="static_publish_4" output="screen"  respawn="$(arg respawn)" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " />
 

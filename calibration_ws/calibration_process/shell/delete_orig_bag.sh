@@ -9,4 +9,4 @@ delete_origin()
 
 delete_origin ~/data/bags
 delete_origin ~/data/ssd
-delete_origin ~/data/sda_1
+delete_origin ~/data/sda

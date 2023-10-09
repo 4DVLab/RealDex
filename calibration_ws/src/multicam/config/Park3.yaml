@@ -1,0 +1,18 @@
+parameters:
+  eye_on_hand: false
+  freehand_robot_movement: true
+  move_group: manipulator
+  move_group_namespace: /
+  namespace: /cam_to_hand_eye_on_base/
+  robot_base_frame: ra_base_link
+  robot_effector_frame: ra_flange
+  tracking_base_frame: cam0_camera_base
+  tracking_marker_frame: tag_199
+transformation:
+  qw: 0.12073223875878461
+  qx: -0.3185484669037068
+  qy: 0.13465600318249094
+  qz: 0.9304936117806006
+  x: 1.9139752038634839
+  y: -0.11802253622397503
+  z: 0.527371602490862
