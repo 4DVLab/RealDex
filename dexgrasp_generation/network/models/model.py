@@ -17,6 +17,7 @@ from network.models.loss import discretize_gt_cm
 from network.models.graspipdf.ipdf_network import IPDFFullNet
 from network.models.graspglow.glow_network import DexGlowNet
 from network.models.contactnet.contact_network import ContactMapNet
+from network.models.approachnet.toch_network import TOCHSingleNet
 
 
 class BaseModel(nn.Module):
@@ -173,3 +174,8 @@ class ContactModel(BaseModel):
             self.pred_dict = self.net(self.feed_dict)
             if not no_eval:
                 self.compute_loss()
+                
+class ApproachModel(BaseModel):
+    def __init__(self, cfg):
+        super(ApproachModel, self).__init__(cfg)
+        self.net = TOCHSingleNet(cfg).to(self.device)

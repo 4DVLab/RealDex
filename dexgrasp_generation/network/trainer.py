@@ -15,7 +15,7 @@ base_dir = os.path.dirname(__file__)
 sys.path.append(pjoin(base_dir, '..'))
 sys.path.append(pjoin(base_dir, '..', '..'))
 
-from network.models.model import IPDFModel, GlowModel, ContactModel
+from network.models.model import IPDFModel, GlowModel, ContactModel, ApproachModel
 from utils.global_utils import update_dict
 
 
@@ -99,6 +99,8 @@ class Trainer(nn.Module):
             self.model = GlowModel(cfg)
         elif cfg["network_type"] == "cm_net":
             self.model = ContactModel(cfg)
+        elif cfg["network_type"] == "toch_single_pose":
+            self.model = TOCHSingleModel(cfg)
 
         self.optimizer = get_optimizer([p for p in self.model.parameters() if p.requires_grad], cfg)
         self.scheduler = get_scheduler(self.optimizer, cfg)
