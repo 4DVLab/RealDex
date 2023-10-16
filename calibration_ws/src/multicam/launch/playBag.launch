@@ -1,5 +1,5 @@
    <launch>
-   <arg name="file_path" default="$(find multicam)/records/records.bag"/>
+   <arg name="file_path" default="/home/lab4dv/data/bags/test/test_5_20231016.bag"/>
    <node name="record" pkg="rosbag" type="play" args="$(arg file_path)  -l"/>
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find multicam)/rviz/calibration4cam.rviz "/>
 </launch>

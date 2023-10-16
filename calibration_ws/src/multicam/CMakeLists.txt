@@ -7,6 +7,7 @@ project(multicam)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(PCL REQUIRED COMPONENTS )
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
@@ -123,8 +124,12 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+link_directories(${Eigen3_INCLUDE_DIRS})
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/multicam.cpp
@@ -139,6 +144,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(static_publish_4 src/static_publish_4.cpp)
+add_executable(play_pointcloud src/play_pointcloud.cpp)
+add_executable(record_ply src/record_ply.cpp)
 # add_executable(static_publish_2 src/static_publish_2.cpp)
 
 ## Rename C++ executable without prefix
@@ -155,6 +162,15 @@ add_executable(static_publish_4 src/static_publish_4.cpp)
 target_link_libraries(static_publish_4
   ${catkin_LIBRARIES}
   nlohmann_json::nlohmann_json
+)
+target_link_libraries(play_pointcloud
+  Eigen3::Eigen
+  ${PCL_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(record_ply
+  ${PCL_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 # target_link_libraries(static_publish_2
 #   ${catkin_LIBRARIES}
