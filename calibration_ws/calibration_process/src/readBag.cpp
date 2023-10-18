@@ -22,6 +22,7 @@
 #include<Eigen/Eigen>
 
 #include <boost/thread/thread.hpp>
+#include <fstream>
 #include <iostream>
 #include <string.h>
 #include <nlohmann/json.hpp>
@@ -117,14 +118,15 @@ int main(int argc, char** argv)
     outrem.setMinNeighborsInRadius (10);
     outrem.setKeepOrganized(true);
     
+
+    std::ofstream outfile;
+    outfile.open("/home/lab4dv/data/bags/test/timestamp.txt");
+
     while(it[0]!=view[0].end()&& it[1]!=view[1].end() &&it[2]!=view[2].end() &&it[3]!=view[3].end())
     {  
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr first_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_all(new pcl::PointCloud<pcl::PointXYZRGB>);
-
-
-
 
 
         pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
@@ -134,92 +136,121 @@ int main(int argc, char** argv)
         icp.setEuclideanFitnessEpsilon(1);
         ros::Time first_time;
 
+
+        std::cout<<std::endl;
+        outfile<<std::endl;
+
+        ros::Time ttime[4];
+        for(int i=0;i<4;i++)
+        {
+            auto m = *it[i];
+            ros::Time  ttime = m.getTime();
+
+            
+            if(!i)
+            {
+                first_time = ttime;
+                std::cout<<"first_time "<<first_time.toNSec()<<std::endl;
+                outfile<<"first_time "<<first_time.toNSec()<<std::endl;
+            }
+                
+            else
+            {
+                std::cout<<"time:"<<ttime.toNSec() <<" "<< int(ttime.toNSec() - first_time.toNSec())<<std::endl;
+                outfile<<"time:"<<ttime.toNSec() <<" "<<int(ttime.toNSec() - first_time.toNSec())<<std::endl;
+            }
+
+            //timestamp  align
+
+            
+
+        }
+
+
+
         for(int i=0; i<4 ;i++)
         {
             auto m = *it[i];
-            std::string topic   = m.getTopic();
-            std::cout<<"topic:"<<topic<<std::endl;
-            ros::Time  ttime = m.getTime();
-            std::cout<<"time:"<<ttime.sec<<":"<<ttime.nsec<<std::endl;
+            // std::string topic = m.getTopic();
+            // std::cout<<"topic:"<<topic<<std::endl;
+            // outfile<<"topic:"<<topic<<std::endl;
+            
+            
+            // sensor_msgs::PointCloud2::ConstPtr input = m.instantiate<sensor_msgs::PointCloud2>();
+            // if (input != NULL)
+            //     {
+            //         pcl::fromROSMsg(*input,*cloud);
 
+            //         std::vector<int> mapping;
+            //         pcl::removeNaNFromPointCloud(*cloud, *cloud,mapping);
 
-            if(!i)
-                first_time = ttime;
-            sensor_msgs::PointCloud2::ConstPtr input = m.instantiate<sensor_msgs::PointCloud2>();
-            if (input != NULL)
-                {
-                    pcl::fromROSMsg(*input,*cloud);
+            //         // vg.setInputCloud(cloud);
+            //         // vg.filter(*cloud);
 
-                    std::vector<int> mapping;
-                    pcl::removeNaNFromPointCloud(*cloud, *cloud,mapping);
-
-                    // vg.setInputCloud(cloud);
-                    // vg.filter(*cloud);
-
-                    // std::cout<<mapping.size()<<endl;
-                    if(!i)
-                    pcl::transformPointCloud(*cloud, *cloud, t_transform.inverse()); 
-                    if(i)
-                    {
-                        pcl::transformPointCloud(*cloud, *cloud, t_transform.inverse()*transform[i-1]);
-                    }
+            //         // std::cout<<mapping.size()<<endl;
+            //         if(!i)
+            //         pcl::transformPointCloud(*cloud, *cloud, t_transform.inverse()); 
+            //         if(i)
+            //         {
+            //             pcl::transformPointCloud(*cloud, *cloud, t_transform.inverse()*transform[i-1]);
+            //         }
                     
 
                    
 
-                    crop.setInputCloud(cloud);
-                    crop.filter(*cloud);
+            //         crop.setInputCloud(cloud);
+            //         crop.filter(*cloud);
                     
-                    sor.setInputCloud(cloud);
-                    // sor.setNegative(true);
-                    sor.filter(*cloud);
+            //         sor.setInputCloud(cloud);
+            //         // sor.setNegative(true);
+            //         sor.filter(*cloud);
 
-                    outrem.setInputCloud(cloud);
-                    outrem.filter(*first_cloud);
+            //         outrem.setInputCloud(cloud);
+            //         outrem.filter(*first_cloud);
 
-                    // viewer->removeAllPointClouds();
-                    // viewer->removeAllShapes();
-                    // viewer->setBackgroundColor(1, 1, 1);
-                    // viewer->addPointCloud(cloud, "cloud_tmp");
-                    // viewer->addArrow(pcl::PointXYZ(0, 0, 1), pcl::PointXYZ(0, 0, -1), 1, 0, 0, 1,  "x axis");
-                    // viewer->addArrow(pcl::PointXYZ(0, 1, 0), pcl::PointXYZ(0, -1, 0), 1, 1, 0, 1,  "y axis");
-                    // viewer->addArrow(pcl::PointXYZ(1, 0, 0), pcl::PointXYZ(-1, 0, 0), 1, 0, 1, 1,  "z axis");
-                    // viewer->spin();
+            //         // viewer->removeAllPointClouds();
+            //         // viewer->removeAllShapes();
+            //         // viewer->setBackgroundColor(1, 1, 1);
+            //         // viewer->addPointCloud(cloud, "cloud_tmp");
+            //         // viewer->addArrow(pcl::PointXYZ(0, 0, 1), pcl::PointXYZ(0, 0, -1), 1, 0, 0, 1,  "x axis");
+            //         // viewer->addArrow(pcl::PointXYZ(0, 1, 0), pcl::PointXYZ(0, -1, 0), 1, 1, 0, 1,  "y axis");
+            //         // viewer->addArrow(pcl::PointXYZ(1, 0, 0), pcl::PointXYZ(-1, 0, 0), 1, 0, 1, 1,  "z axis");
+            //         // viewer->spin();
 
 
-                    if(i)
-                       { 
+            //         if(i)
+            //            { 
 
-                        icp.setInputSource(cloud);
-                        icp.setInputTarget(first_cloud);
-                        icp.align(*cloud);
+            //             icp.setInputSource(cloud);
+            //             icp.setInputTarget(first_cloud);
+            //             icp.align(*cloud);
 
 
           
                 
-                       }
-                    else{
-                       (*first_cloud) = (*cloud);
+            //            }
+            //         else{
+            //            (*first_cloud) = (*cloud);
            
-                    }
+            //         }
                    
                     
-                    pcl::transformPointCloud(*cloud, *cloud, t_transform);
+            //         pcl::transformPointCloud(*cloud, *cloud, t_transform);
                     
-                    writer.write(dir+name+"/cam"+std::to_string(i)+"/"+std::to_string(first_time.toSec())+".ply", *cloud);
+            //         writer.write(dir+name+"/cam"+std::to_string(i)+"/"+std::to_string(first_time.toSec())+".ply", *cloud);
                     
-                    (*cloud_all) = (*cloud_all) + (*cloud);
+            //         (*cloud_all) = (*cloud_all) + (*cloud);
            
                 
                     
 
 
-                }
-            else 
-            {
-                cout<<"fail pointclouds";
-                break;
-            }
+            //     }
+            // else 
+            // {
+            //     cout<<"fail pointclouds";
+            //     break;
+            // }
             it[i]++;
 
           
@@ -227,12 +258,13 @@ int main(int argc, char** argv)
             
             
 
-            writer.write(dir+name+"/"+std::to_string(first_time.toSec())+".ply", *cloud_all);
+            // writer.write(dir+name+"/"+std::to_string(first_time.toSec())+".ply", *cloud_all);
            
             
 
     }
    
+   outfile.close();
 
 
     return 0;
