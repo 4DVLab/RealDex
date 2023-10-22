@@ -179,3 +179,10 @@ class ApproachModel(BaseModel):
     def __init__(self, cfg):
         super(ApproachModel, self).__init__(cfg)
         self.net = TOCHSingleNet(cfg).to(self.device)
+        
+    def compute_loss(self):
+        self.loss_dict = {}
+        
+        gt_toch_field = self.feed_dict['toch']
+        pred_toch_field = self.pred_dict['toch']
+        return super().compute_loss()

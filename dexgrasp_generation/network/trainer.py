@@ -100,7 +100,7 @@ class Trainer(nn.Module):
         elif cfg["network_type"] == "cm_net":
             self.model = ContactModel(cfg)
         elif cfg["network_type"] == "toch_single_pose":
-            self.model = TOCHSingleModel(cfg)
+            self.model = ApproachModel(cfg)
 
         self.optimizer = get_optimizer([p for p in self.model.parameters() if p.requires_grad], cfg)
         self.scheduler = get_scheduler(self.optimizer, cfg)
