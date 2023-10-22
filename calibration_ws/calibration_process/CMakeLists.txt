@@ -24,9 +24,9 @@ find_package(catkin REQUIRED COMPONENTS
   rosbag
 )
 
-set(LIB_VTK_FILTERS_GENERAL_DIR /usr/local/lib)
-add_library(libvtkFiltersGeneral SHARED IMPORTED)
-set_target_properties(libvtkFiltersGeneral PROPERTIES IMPORTED_LOCATION ${LIB_VTK_FILTERS_GENERAL_DIR}/libvtkFiltersGeneral-9.3.so.9.3)
+# set(LIB_VTK_FILTERS_GENERAL_DIR /usr/local/lib)
+# add_library(libvtkFiltersGeneral SHARED IMPORTED)
+# set_target_properties(libvtkFiltersGeneral PROPERTIES IMPORTED_LOCATION ${LIB_VTK_FILTERS_GENERAL_DIR}/libvtkFiltersGeneral-9.3.so.9.3)
 
 message(STATUS "Open3D : ${Open3D_LIBRARIES}")
 
@@ -58,11 +58,11 @@ nlohmann_json::nlohmann_json
 )
 
 target_link_libraries(read_bag
-libvtkFiltersGeneral
+# libvtkFiltersGeneral
 Eigen3::Eigen
 ${PCL_LIBRARIES}
 ${catkin_LIBRARIES}
-${Open3D_LIBRARIES}
+# ${Open3D_LIBRARIES}
 nlohmann_json::nlohmann_json
 )
 target_include_directories(read_bag PUBLIC include)

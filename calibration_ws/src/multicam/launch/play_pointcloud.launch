@@ -1,0 +1,8 @@
+   <launch>
+   <arg name="dir" default="/home/lab4dv/data/img_ply/test/test_1_20231013 "/>
+
+   <node name="play_pointcloud" pkg="multicam" type="play_pointcloud" output="screen">
+    <param name="dir" value="/home/lab4dv/data/img_ply/test/test_1_20231013"/>
+   </node>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find multicam)/rviz/playPLY.rviz "/>
+</launch>

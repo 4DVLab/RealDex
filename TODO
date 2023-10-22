@@ -1,12 +1,19 @@
 
 # data collection part
-- [] RGB based pcl
+- [-] RGB based pcl
     - downsample
     - better quality of pointclouds
     - better calibration
-- [] evaluate handeye calibration
-- [] cameras synchronization
+- [-] evaluate handeye calibration
+- [-] cameras synchronization
 - [] better fusion
+    - use fusion not align
+    - speed up
+    - better filter
+    - learning based fusion
+    - intrinct 
+
+
 
 # motion planning part 
 - [] survey

@@ -1,0 +1,10 @@
+ <launch>
+  <arg name="cloud" default="/cam2/points2"/>
+   <arg name="output" default="/home/lab4dv/data/img_ply/test/uncalibrated.ply"/>
+   
+   <node pkg="multicam" type="record_ply" name="record_ply" output="screen">
+      <param name="cloud" value="$(arg cloud)"/>
+      <param name="output" value="$(arg output)"/>
+   </node>
+
+</launch>
