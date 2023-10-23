@@ -4,7 +4,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from data.dataset import get_grab_dataloader
-from trainer import Trainer
+from trainer_grab import Trainer
 from utils.global_utils import log_loss_summary, add_dict
 from omegaconf import OmegaConf
 from omegaconf.omegaconf import open_dict

@@ -123,7 +123,7 @@ class DexGlowNet(nn.Module):
             ret_dict['translation'] = torch.einsum('na,nba->nb', sel_trans, dic['sampled_rotation'])
         else:
             ret_dict['translation'] = sel_trans
-        ret_dict['hand_qpos'] = sel_qpos
+        ret_dict['hand_pos'] = sel_qpos
         ret_dict['sampled_canon_translation'] = trans_samples
         if 'sampled_rotation' in dic.keys():
             ret_dict['sampled_translation'] = torch.einsum('nka,nba->nkb', trans_samples, dic['sampled_rotation'])
@@ -151,7 +151,7 @@ class DexGlowNet(nn.Module):
             
         raw_pc = dic['obj_pc']
         pc = dic['canon_obj_pc']
-        gt = (dic['canon_translation'], dic['hand_qpos'])
+        gt = (dic['canon_translation'], dic['hand_pos'])
 
         batch_size=pc.shape[0]
         pc_transformed = pc.transpose(1, 2).contiguous()  # [B, 3, N]
