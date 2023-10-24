@@ -117,7 +117,7 @@
       </node>
 
   <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver1" output="screen" respawn="$(arg respawn)"   launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' ">
-      <param name="sensor_sn"         type="string" value="000199214512" /> 
+      <param name="sensor_sn"         type="string" value="000426292412" /> 
       <param name="depth_enabled"     type="bool"   value="$(arg depth_enabled)" />
       <param name="depth_mode"        type="string" value="$(arg depth_mode)" />
       <param name="depth_unit"        type="string" value="$(arg depth_unit)" />

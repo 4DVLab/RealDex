@@ -6,23 +6,23 @@
   <arg name="overwrite_robot_description" default="false" />         <!-- Flag to publish a standalone azure_description instead of the default robot_descrition parameter-->
 
   <arg name="depth_enabled"           default="true" />           <!-- Enable or disable the depth camera -->
-  <arg name="depth_mode"              default="WFOV_UNBINNED" />  <!-- Set the depth camera mode, which affects FOV, depth range, and camera resolution. See Azure Kinect documentation for full details. Valid options: NFOV_UNBINNED, NFOV_2X2BINNED, WFOV_UNBINNED, WFOV_2X2BINNED, and PASSIVE_IR -->
+  <arg name="depth_mode"              default="NFOV_UNBINNED" />  <!-- Set the depth camera mode, which affects FOV, depth range, and camera resolution. See Azure Kinect documentation for full details. Valid options: NFOV_UNBINNED, NFOV_2X2BINNED, WFOV_UNBINNED, WFOV_2X2BINNED, and PASSIVE_IR -->
   <arg name="depth_unit"              default="16UC1" />          <!-- Depth distance units. Options are: "32FC1" (32 bit float metre) or "16UC1" (16 bit integer millimetre) -->
   <arg name="color_enabled"           default="true" />           <!-- Enable or disable the color camera -->
   <arg name="color_format"            default="bgra" />           <!-- The format of RGB camera. Valid options: bgra, jpeg -->
   <arg name="color_resolution"        default="1080P" />          <!-- Resolution at which to run the color camera. Valid options: 720P, 1080P, 1440P, 1536P, 2160P, 3072P -->
-  <arg name="fps"                     default="5" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
-  <arg name="point_cloud"             default="true" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
-  <arg name="rgb_point_cloud"         default="true" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
+  <arg name="fps"                     default="15" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
+  <arg name="point_cloud"             default="false" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
+  <arg name="rgb_point_cloud"         default="false" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
   <arg name="point_cloud_in_depth_frame" default="true" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
   <arg name="required"                default="false" />          <!-- Argument which specified if the entire launch file should terminate if the node dies -->
   <arg name="recording_file"          default="" />               <!-- Absolute path to a mkv recording file which will be used with the playback api instead of opening a device -->
   <arg name="recording_loop_enabled"  default="false" />          <!-- If set to true the recording file will rewind the beginning once end of file is reached -->
   <arg name="body_tracking_enabled"           default="false" />  <!-- If set to true the joint positions will be published as marker arrays -->
   <arg name="body_tracking_smoothing_factor"  default="0.0" />    <!-- Set between 0 for no smoothing and 1 for full smoothing -->
-  <arg name="rescale_ir_to_mono8"  default="false" />    <!-- Whether to rescale the IR image to an 8-bit monochrome image for visualization and further processing. A scaling factor (ir_mono8_scaling_factor) is applied. -->
+  <arg name="rescale_ir_to_mono8"  default="true" />    <!-- Whether to rescale the IR image to an 8-bit monochrome image for visualization and further processing. A scaling factor (ir_mono8_scaling_factor) is applied. -->
   <arg name="ir_mono8_scaling_factor"  default="1.0" />    <!-- Scaling factor to apply when converting IR to mono8 (see rescale_ir_to_mono8). If using illumination, use the value 0.5-1. If using passive IR, use 10. -->
-  <arg name="imu_rate_target" default="0"/>                       <!-- Desired output rate of IMU messages. Set to 0 (default) for full rate (1.6 kHz). --> 
+  <arg name="imu_rate_target" default="1"/>                       <!-- Desired output rate of IMU messages. Set to 0 (default) for full rate (1.6 kHz). --> 
   <arg name="node_start_delay" default="1.0" />     <!-- delay for second camera in seconds -->
   <arg name="record_duration" default="2"/>   <!-- bag recording time-->
   <arg name="respawn" default="true"/>
@@ -61,7 +61,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="200"/>
+      <param name="subordinate_delay_off_master_usec" value="6000"/>
     </node>
 
 </group> 
@@ -117,7 +117,7 @@
       </node>
 
   <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver1" output="screen" respawn="$(arg respawn)"   launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' ">
-      <param name="sensor_sn"         type="string" value="000199214512" /> 
+      <param name="sensor_sn"         type="string" value="000153514512" /> 
       <param name="depth_enabled"     type="bool"   value="$(arg depth_enabled)" />
       <param name="depth_mode"        type="string" value="$(arg depth_mode)" />
       <param name="depth_unit"        type="string" value="$(arg depth_unit)" />
@@ -137,7 +137,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/>
-      <param name="subordinate_delay_off_master_usec" value="400"/>
+      <param name="subordinate_delay_off_master_usec" value="4000"/>
     </node>
 
 </group>
@@ -193,7 +193,7 @@
       </node>
 
   <node pkg="azure_kinect_ros_driver" type="node" name="azure_kinect_ros_driver1" output="screen" respawn="$(arg respawn)"  launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " >
-      <param name="sensor_sn"         type="string" value="000153514512" />  
+      <param name="sensor_sn"         type="string" value="000426292412" />  
       <param name="depth_enabled"     type="bool"   value="$(arg depth_enabled)" />
       <param name="depth_mode"        type="string" value="$(arg depth_mode)" />
       <param name="depth_unit"        type="string" value="$(arg depth_unit)" />
@@ -213,7 +213,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="600"/>
+      <param name="subordinate_delay_off_master_usec" value="2000"/>
     </node>
 
 </group> 
@@ -350,6 +350,5 @@
     <node name="static_publish_4" pkg="multicam" type="static_publish_4" output="screen"  respawn="$(arg respawn)" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " />
 
    <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/>
-   <!-- <node name="record" pkg="rosbag" type="record" args="-a -O $(find multicam)/records/records.bag \-\-duration $(arg record_duration) -b 4096"/> -->
-
+  
 </launch>

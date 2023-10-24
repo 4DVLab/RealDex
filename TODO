@@ -11,11 +11,10 @@
     - speed up
     - better filter
     - learning based fusion
-    - intrinct 
+    - [-] intrinct 
+    - [] rectify
+    - [] nearest interprotion
+
+- [] rosbag spite
 
 
-
-# motion planning part 
-- [] survey
-
-# network part
