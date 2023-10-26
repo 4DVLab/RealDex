@@ -1,16 +1,16 @@
 defaults:
     - _self_
-    - model: glow
-    - dataset: glow_data
+    - model: ipdf
+    - dataset: ipdf_data
     - override hydra/hydra_logging: none
     - override hydra/job_logging: none
 
-network_type: glow
+network_type: ipdf
 use_DFCData: True
 use_Shadow: True
 
 # dirs
-exp_dir: ./runs/glow_train
+exp_dir: ./runs/ipdf_train
 
 # wandb
 wandb_offline: True
@@ -21,7 +21,7 @@ freq:
     step_epoch: 100
     save: 10000  # per iter
     plot: 100  # per iter
-    test: 50000 # per iter
+    test: 75000 # per iter
 
 # optimization options
 optimizer: Adam
@@ -44,10 +44,10 @@ total_epoch: 250
 resume_epoch: -1
 
 # device
-cuda_id: 4
+cuda_id: 0
 
 # data loader
-num_workers: 4
+num_workers: 8
 batch_size: 32
 
 # hydra
