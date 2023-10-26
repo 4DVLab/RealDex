@@ -1,4 +1,12 @@
 
+# Checklist
+
+- kill remote server
+- close rviz
+- use driver_withoutnodelet.launch
+- use remote ROS_MASTER
+
+
 
 you can use `ctrl` +`Alt`+`T` to active a new terminator and split windows in the new terminator
 
@@ -54,6 +62,7 @@ mkdir example
 cd example
 vim example.md
 ```
+
 5. calculate all number and write into `data_collection.md`
 
 

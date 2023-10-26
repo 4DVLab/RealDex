@@ -6,6 +6,7 @@
 *.obj
 *.bag
 .mkv
+*.mkv
 models/mjcf/~$adow_hand_vis.xml
 models/mjcf/.DS_Store
 *.pt
@@ -15,8 +16,10 @@ dexgrasp_generation/data*.pt
 .vscode
 affordance-CVAE/logs2
 affordance-CVAE/runs
-
-
+build/
+devel/
+*.ply
+*.pcd
 
 
 # Byte-compiled / optimized / DLL files
@@ -29,8 +32,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
-devel/
+
 develop-eggs/
 dist/
 downloads/
