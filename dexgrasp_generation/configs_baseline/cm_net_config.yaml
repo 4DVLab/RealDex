@@ -1,16 +1,16 @@
 defaults:
     - _self_
-    - model: glow
-    - dataset: glow_data
+    - model: cm_net
+    - dataset: cm_net_data
     - override hydra/hydra_logging: none
     - override hydra/job_logging: none
 
-network_type: glow
+network_type: cm_net
 use_DFCData: True
 use_Shadow: True
 
 # dirs
-exp_dir: ./runs/glow_train
+exp_dir: ./runs/cm_net_train
 
 # wandb
 wandb_offline: True
@@ -44,11 +44,11 @@ total_epoch: 250
 resume_epoch: -1
 
 # device
-cuda_id: 4
+cuda_id: 5
 
 # data loader
-num_workers: 4
-batch_size: 32
+num_workers: 8
+batch_size: 64
 
 # hydra
 hydra:
