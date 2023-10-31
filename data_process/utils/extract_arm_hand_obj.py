@@ -26,8 +26,9 @@ import copy,json
 class path_data_class:
     def __init__(self):
         self.bag_name = Path("banana")
+        self.root_path = Path("/home/lab4dv/bags")
         self.folder_path = Path("/home/tony/mine/Projects/ArmHandVis/HandVersion/HandArmFiles/ARM_HAND_URDF")
-        self.urdf_path = self.folder_path/ Path("urdf") / Path("bimanual_srhand_ur.urdf")
+        self.urdf_path = self.root_path/ Path("urdf") / Path("bimanual_srhand_ur.urdf")
         self.bag_path = self.folder_path / Path(self.bag_name) / Path(str(self.bag_name) + ".bag")
         self.output_folder = self.folder_path/ Path(self.bag_name)  / Path("output")
         self.ros_path_prefix = Path("/home/lab4dv/youzhuo_work_playground/hand_arm_mesh/")#如果搬运到另一台电脑上，要修改这个文件名
@@ -39,8 +40,9 @@ class path_data_class:
         self.baginfo_path = self.folder_path / Path(self.bag_name) / Path("bag_info.txt")
     
     def update_path(self):
+        self.root_path = Path(self.root_path) 
         self.folder_path = Path(self.folder_path)
-        self.urdf_path = self.folder_path / Path("urdf") / Path("bimanual_srhand_ur.urdf")
+        self.urdf_path = self.root_path / Path("urdf") / Path("bimanual_srhand_ur.urdf")
         self.bag_path = self.folder_path / Path(self.bag_name) / Path(str(self.bag_name) + ".bag")
         self.output_folder = self.folder_path/ Path(self.bag_name)  / Path("output")
         self.rgb_timestamp_path = self.folder_path / Path(self.bag_name) 
@@ -85,7 +87,7 @@ def mount_data2TFtree(TF_tree:dict,TF_path):
         TF_tree[key] = {item:[] for item in temp_set}
     folder = TF_path
     for filename in os.listdir(folder):
-        match = re.match(r"(.+) -> (.+)\.txt",filename)
+        match = re.match(r"(.+)-(.+)\.txt",filename)
         link1 = match.group(1)
         link2 = match.group(2)
         #print(link1," ",link2)
@@ -320,10 +322,11 @@ def get_rgbimage_timestamp(bag_data,path):
 
 
 
-def extract_arm_hand_obj(folder_path:str,bag_name:str):
+def extract_arm_hand_obj(folder_path:str,bag_name:str, root_path:str):
     path_data = path_data_class()
     path_data.bag_name = bag_name
     path_data.folder_path = folder_path
+    path_data.root_path = root_path
     path_data.update_path()
 
     param_collect = param_collect_class()
@@ -347,5 +350,5 @@ def extract_arm_hand_obj(folder_path:str,bag_name:str):
                   base_frame = 'world',
                   pinhole_camera_parameters_path = path_data.pinhole_camera_parameters_path,
                   gobal_position_folder = path_data.gobal_position_folder,
-                  output_jud = True)
+                  output_jud = False)
 
