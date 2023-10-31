@@ -97,7 +97,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="600"/>
+      <param name="subordinate_delay_off_master_usec" value="480"/>
  </node>
 </group>
 
@@ -133,7 +133,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="400"/>
+      <param name="subordinate_delay_off_master_usec" value="320"/>
  </node>
   </group>
 
@@ -169,7 +169,7 @@
       <param name="ir_mono8_scaling_factor" type="double" value="$(arg ir_mono8_scaling_factor)" />
       <param name="imu_rate_target" type="int" value="$(arg imu_rate_target)"/>
       <param name="wired_sync_mode" value="2"/> 
-      <param name="subordinate_delay_off_master_usec" value="200"/>
+      <param name="subordinate_delay_off_master_usec" value="160"/>
  </node>
   </group>
 

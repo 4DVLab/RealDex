@@ -10,10 +10,10 @@
   <arg name="depth_unit"              default="16UC1" />          <!-- Depth distance units. Options are: "32FC1" (32 bit float metre) or "16UC1" (16 bit integer millimetre) -->
   <arg name="color_enabled"           default="true" />           <!-- Enable or disable the color camera -->
   <arg name="color_format"            default="bgra" />           <!-- The format of RGB camera. Valid options: bgra, jpeg -->
-  <arg name="color_resolution"        default="1080P" />          <!-- Resolution at which to run the color camera. Valid options: 720P, 1080P, 1440P, 1536P, 2160P, 3072P -->
-  <arg name="fps"                     default="15" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
-  <arg name="point_cloud"             default="false" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
-  <arg name="rgb_point_cloud"         default="false" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
+  <arg name="color_resolution"        default="720P" />          <!-- Resolution at which to run the color camera. Valid options: 720P, 1080P, 1440P, 1536P, 2160P, 3072P -->
+  <arg name="fps"                     default="5" />              <!-- FPS to run both cameras at. Valid options are 5, 15, and 30 -->
+  <arg name="point_cloud"             default="true" />           <!-- Generate a point cloud from depth data. Requires depth_enabled -->
+  <arg name="rgb_point_cloud"         default="true" />           <!-- Colorize the point cloud using the RBG camera. Requires color_enabled and depth_enabled -->
   <arg name="point_cloud_in_depth_frame" default="true" />        <!-- Whether the RGB pointcloud is rendered in the depth frame (true) or RGB frame (false). Will either match the resolution of the depth camera (true) or the RGB camera (false). -->
   <arg name="required"                default="false" />          <!-- Argument which specified if the entire launch file should terminate if the node dies -->
   <arg name="recording_file"          default="" />               <!-- Absolute path to a mkv recording file which will be used with the playback api instead of opening a device -->
@@ -22,7 +22,7 @@
   <arg name="body_tracking_smoothing_factor"  default="0.0" />    <!-- Set between 0 for no smoothing and 1 for full smoothing -->
   <arg name="rescale_ir_to_mono8"  default="true" />    <!-- Whether to rescale the IR image to an 8-bit monochrome image for visualization and further processing. A scaling factor (ir_mono8_scaling_factor) is applied. -->
   <arg name="ir_mono8_scaling_factor"  default="1.0" />    <!-- Scaling factor to apply when converting IR to mono8 (see rescale_ir_to_mono8). If using illumination, use the value 0.5-1. If using passive IR, use 10. -->
-  <arg name="imu_rate_target" default="1"/>                       <!-- Desired output rate of IMU messages. Set to 0 (default) for full rate (1.6 kHz). --> 
+  <arg name="imu_rate_target" default="0"/>                       <!-- Desired output rate of IMU messages. Set to 0 (default) for full rate (1.6 kHz). --> 
   <arg name="node_start_delay" default="1.0" />     <!-- delay for second camera in seconds -->
   <arg name="record_duration" default="2"/>   <!-- bag recording time-->
   <arg name="respawn" default="true"/>

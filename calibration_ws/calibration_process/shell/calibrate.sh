@@ -1,9 +1,10 @@
 ## !/bin/zsh
 
-./record4mkv.sh
- sleep 20
+# ./record4mkv.sh
+#  sleep 20
 
  cd ../../k4a-calibration/build
+ make -j$(nproc)
  ./calib_k4a ../input/output-1.mkv ../input/output-2.mkv ../input/output-3.mkv ../input/output-4.mkv
 cd -
  sleep 20
@@ -14,4 +15,4 @@ cd -
 
 # cd ../..
 # source devel/setup.zsh
-# roslaunch multicam drive4cam.launch
+# roslaunch multicam drive1cam_withnodlet.launch

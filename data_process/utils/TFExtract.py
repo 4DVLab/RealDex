@@ -44,7 +44,7 @@ def extract_rosbag_tf(folder_path,bag_name):
                 chind_frame_id = transform.child_frame_id.replace('/','')
                 link_names.add(frame_id)
                 link_names.add(chind_frame_id)
-                dict_key = frame_id + ' -> ' + chind_frame_id
+                dict_key = frame_id + '-' + chind_frame_id
                 data_write[dict_key].append([            
                     t,
                     transform.transform.translation.x,

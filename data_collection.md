@@ -1,6 +1,22 @@
 # Data Collection List
 
 
+
+
+
+|object name|num of sequense|num of grasp|size(Gb)|pointcloud|uploaded|
+|---|---|---|---| ---|
+|  banana |4| 104 | 80 |   |   |
+| | | | |
+
+
+
+
+
+
+----------------------------------------------------
+
+-----------------------------------------
 |object name|num of sequense|size(Gb)|compressed|uploaded|
 |---|---|---|---| ---|
 |apple| 142| 50 | done|done|
@@ -18,13 +34,3 @@
             NoO:11
             total NoS： 1139
             total size: 523 G
-
-
-|object name|num of sequense|size(Gb)|compressed|uploaded|
-|---|---|---|---| ---|
-|    |   |  |   |   |
-
-
-
-
-

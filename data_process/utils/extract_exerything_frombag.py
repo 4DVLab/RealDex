@@ -11,7 +11,7 @@ import cv2
 import json
 from pathlib import Path
 import json
-
+from utils.genPC.genPC_use_o3d import gen_aligned_pc
 def camera_info2dict(msg):
     camera_info_dict = {
             'header': {
@@ -59,8 +59,8 @@ class path_data_class:
             '/cam2',
             '/cam3']
         self.bag_topics = [
-            '/depth/camera_info',
-            '/depth/image_raw',
+            # '/depth/camera_info',
+            # '/depth/image_raw',
             '/depth_to_rgb/camera_info',
             '/depth_to_rgb/image_raw',
             # '/points2',
@@ -229,7 +229,7 @@ def bag_data_extract(bag_path, cams, bag_topics, output_folder, cam_transform_da
 
                 else:
                     print("nothing")
-
+    gen_aligned_pc(output_folder)
 
 # folder是比专门的bag文件夹更高一级的
 def extract_everything_from_bag(folder_path: str, bag_name: str):
