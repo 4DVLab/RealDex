@@ -41,9 +41,11 @@ def log_tensorboard(writer, mode, loss_dict, cnt, epoch):
 
 
 def main(cfg):
+    print("process config")
     cfg = process_config(cfg)
 
     """ Logging """
+    print("process log file")
     log_dir = cfg["exp_dir"]
     os.makedirs(log_dir, exist_ok=True)
 
@@ -59,10 +61,12 @@ def main(cfg):
     writer = SummaryWriter(pjoin(log_dir, "tensorboard"))
 
     """ DataLoaders """
+    print("init dataloader")
     train_loader = get_grab_dataloader(cfg, "train")
     test_loader = get_grab_dataloader(cfg, "test")
 
     """ Trainer """
+    print("init trainer")
     trainer = Trainer(cfg, logger)
     start_epoch = trainer.resume()
 

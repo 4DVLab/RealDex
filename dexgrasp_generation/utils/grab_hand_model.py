@@ -18,13 +18,75 @@ import pickle
 from manotorch.manolayer import ManoLayer, MANOOutput
 
 class HandModel(nn.Module):
-    def __init__(self, mano_path):
+    def __init__(self):
         super().__init__()
         
-        self.mano_path = os.path.join(mano_path, 'MANO_RIGHT.pkl')
+        # self.mano_path = os.path.join(mano_path, 'MANO_RIGHT.pkl')
             
         self.mano_layer = ManoLayer(use_pca=False, flat_hand_mean=False)
         self.mano_faces = self.mano_layer.get_mano_closed_faces()
+        self.hand_beta = torch.zeros(1, 10)
+        
+    def forward(self, hand_pose, points, with_penetration=True, with_surface_points=True, with_contact_candidates=True, with_penetration_keypoints=True):
+        B,_ = hand_pose.shape
+        hand_beta = self.hand_beta.expand(B, -1).to(hand_pose.device)
+        rh_m:MANOOutput = self.mano_layer(hand_pose, hand_beta)
+        
+        batch_size = len(hand_pose)
+        global_translation = hand_pose[:, 0:3]
+        global_rotation = pytorch3d.transforms.axis_angle_to_matrix(hand_pose[:, 3:6])
+        current_status = self.chain.forward_kinematics(hand_pose[:, 6:])
+
+        hand = {}
+
+        if object_pc is not None:
+            distances = []
+            penetration = []
+            x = (object_pc - global_translation.unsqueeze(1)) @ global_rotation  # (batch_size, num_samples, 3)
+            for link_name in self.mesh:
+                if link_name in ['robot0:ffknuckle_child', 'robot0:mfknuckle_child', 'robot0:rfknuckle_child', 'robot0:lfknuckle_child', 'robot0:thbase_child', 'robot0:thhub_child']:
+                    continue
+                matrix = current_status[link_name].get_matrix()
+                x_local = (x - matrix[:, :3, 3].unsqueeze(1)) @ matrix[:, :3, :3]
+                x_local = x_local.reshape(-1, 3)  # (batch_size * num_samples, 3)
+                if 'geom_param' not in self.mesh[link_name]:
+                    face_verts = self.mesh[link_name]['face_verts']
+                    dis_local, _, dis_signs, _, _ = compute_sdf(x_local, face_verts)
+                    dis_local = dis_local * (-dis_signs)
+                    if with_penetration:
+                        penetration_local = dis_local
+                else:
+                    height = self.mesh[link_name]['geom_param'][1] * 2
+                    radius = self.mesh[link_name]['geom_param'][0]
+                    projected_point = x_local.detach().clone()
+                    projected_point[:, :2] = 0
+                    projected_point[:, 2] = torch.clamp(projected_point[:, 2], 0, height)
+                    direction = torch.nn.functional.normalize(x_local.detach() - projected_point)
+                    direction = torch.where(direction.norm(dim=1, keepdim=True) < 0.9, torch.tensor([1, 0, 0], dtype=torch.float, device=self.device), direction)
+                    nearest_point = projected_point + radius * direction
+                    dis_local = (x_local - nearest_point).square().sum(dim=1)  # (batch_size * num_samples)
+                    mask = (x_local.detach() - projected_point).norm(dim=1) < radius
+                    dis_local = torch.where(mask, dis_local, -dis_local)
+                    if with_penetration:
+                        if link_name not in ['robot0:thmiddle_child', 'robot0:thdistal_child', 'robot0:thproximal_child']:
+                            nearest_point = projected_point.clone()
+                            nearest_point[:, 1] = -radius
+                            penetration_local = (x_local - nearest_point).square().sum(dim=1)  # (batch_size * num_samples)
+                            penetration_local = torch.where(mask, penetration_local, -penetration_local)
+                        else:
+                            nearest_point = projected_point.clone()
+                            nearest_point[:, 0] = -radius
+                            penetration_local = (x_local - nearest_point).square().sum(dim=1)  # (batch_size * num_samples)
+                            penetration_local = torch.where(mask, penetration_local, -penetration_local)
+                            # penetration_local = dis_local
+                distances.append(dis_local.reshape(x.shape[0], x.shape[1]))  # (batch_size, num_samples)
+                if with_penetration:
+                    penetration.append(penetration_local.reshape(x.shape[0], x.shape[1]))
+            distances = torch.max(torch.stack(distances), dim=0)[0]
+            hand['distances'] = distances
+            if with_penetration:
+                penetration = torch.max(torch.stack(penetration), dim=0)[0]
+                hand['penetration'] = penetration
         
     
 
@@ -32,14 +94,15 @@ class AdditionalLoss(nn.Module):
     def __init__(self, tta_cfg, device, num_obj_points, num_hand_points, cmap_net):
         super().__init__()
         self.num_obj_points = num_obj_points
-        self.hand_model = HandModel(
-            mjcf_path='data/mjcf/shadow_hand.xml',
-            mesh_path='data/mjcf/meshes',
-            n_surface_points=num_hand_points,
-            contact_points_path='data/mjcf/contact_points.json',
-            penetration_points_path='data/mjcf/penetration_points.json',
-            device=device,
-        )
+        # self.hand_model = HandModel(
+        #     mjcf_path='data/mjcf/shadow_hand.xml',
+        #     mesh_path='data/mjcf/meshes',
+        #     n_surface_points=num_hand_points,
+        #     contact_points_path='data/mjcf/contact_points.json',
+        #     penetration_points_path='data/mjcf/penetration_points.json',
+        #     device=device,
+        # )
+        self.hand_model = HandModel()
         self.cmap_func = cmap_net.forward
         self.normalize_factor=tta_cfg['normalize_factor']
         self.weights = dict(

@@ -17,6 +17,8 @@ class Glow(nn.Module):
         hidden_features = cfg['model']['flow']['hidden_dim']
         num_layers = cfg['model']['flow']['layer']
         num_blocks_per_layer = cfg['model']['flow']['block']
+        self.pose_dim = cfg['model']['pose_dim']
+        
         self.flow = ConditionalGlow(features, hidden_features, num_layers, num_blocks_per_layer, context_features=context_features)
         self.register_buffer('initialized', torch.tensor(False))
     
@@ -33,8 +35,6 @@ class Glow(nn.Module):
         return log_prob
     
     def sample_and_log_prob(self, num_samples, context):
-        if not self.initialized:
-            raise NotImplementedError()
         samples, log_prob, _ = self.flow.sample_and_log_prob(num_samples, context=context)
         samples = self.from_flow(samples)
         return samples, log_prob
@@ -44,7 +44,7 @@ class Glow(nn.Module):
         return torch.cat([gt_trans, gt_qpos], dim=-1)
 
     def from_flow(self, batch):
-        gt_trans, gt_qpos = torch.split(batch, [3, 22], dim=-1)
+        gt_trans, gt_qpos = torch.split(batch, [3, self.pose_dim], dim=-1)
         return gt_trans, gt_qpos
 
 class DexGlowNet(nn.Module):
@@ -64,6 +64,7 @@ class DexGlowNet(nn.Module):
             raise NotImplementedError(f"backbone {cfg['model']['network']['type']} not implemented")
         
         self.sample_num = cfg["model"]["sample_num"]
+        self.pose_dim = cfg["model"]["pose_dim"]
 
         '''
         self.hand_model = HandModel(
@@ -88,7 +89,7 @@ class DexGlowNet(nn.Module):
         batch_size, N, _ = obj_pc.shape
         device = obj_pc.device
         pos = obj_pc.contiguous().view(batch_size * N, 3)
-        # assert pos.shape[1] == 3, f"pos.shape[1] should be 3, but got pos.shape: {pos.shape}"
+        assert pos.shape[1] == 3, f"pos.shape[1] should be 3, but got pos.shape: {pos.shape}"
 
         x = torch.ones((batch_size * N, 1), device=device, dtype=torch.float32)  # [B * N, 1]
         batch = torch.empty((batch_size, N), device=device, dtype=torch.long)  # [B, N]
@@ -105,6 +106,9 @@ class DexGlowNet(nn.Module):
 
         if not 'canon_obj_pc' in dic.keys():
             dic['canon_obj_pc'] = torch.einsum('nab,nbc->nac', dic['obj_pc'], dic['sampled_rotation'])
+            plane = dic['plane'].clone()
+            plane[:, :3] = torch.einsum('nb,nbc->nc',plane[:, :3], dic['sampled_rotation'])
+            ret_dict['canon_plane'] = plane
             
         pc = dic['canon_obj_pc']
         batch_size=pc.shape[0]
@@ -158,13 +162,15 @@ class DexGlowNet(nn.Module):
         feat, _, _ = self.encoder(pc_transformed)
 
         ret_dict = {}
-
+        
+        # print(dic['canon_translation'].shape, dic['hand_pos'].shape)
+        # print(feat.shape)
         ret_dict['nll'] = -self.flow.log_prob(gt, feat)
 
         if self.sample_func is not None:
             sr_rotation = self.sample_func({"obj_pc":raw_pc}).detach()
             sr_pc = torch.einsum('nab,nbc->nac',raw_pc, sr_rotation)
-
+            
             sr_pc_transformed = sr_pc.transpose(1, 2).contiguous()  # [B, 3, N]
             sr_feat, _, _ = self.encoder(sr_pc_transformed)
             sr_samples, sr_log_prob = self.flow.sample_and_log_prob(self.sample_num, sr_feat)
@@ -179,8 +185,7 @@ class DexGlowNet(nn.Module):
             ret_dict['sr_sampled_hand_qpos'] = sr_qpos_samples
             ret_dict['sr_sampled_translation'] = sr_trans_samples
             sr_pc = sr_pc.unsqueeze(1).repeat(1,self.sample_num,1,1).reshape(batch_size*self.sample_num,-1,3)
-            
-            cmap_loss, cmap_losses = self.cmap_func(sr_pc, sr_trans_samples.reshape(batch_size*self.sample_num, 3), sr_qpos_samples.reshape(batch_size*self.sample_num, 22))
+            cmap_loss, cmap_losses = self.cmap_func(sr_pc, sr_trans_samples.reshape(batch_size*self.sample_num, 3), sr_qpos_samples.reshape(batch_size*self.sample_num, self.pose_dim))
             ret_dict['cmap_loss']=cmap_loss.mean()#.reshape(batch_size,-1).mean(dim=-1)
             for key in cmap_losses.keys():
                 ret_dict[f'cmap_part_{key}']=cmap_losses[key]
