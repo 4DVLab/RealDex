@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # folder_path = args.folder_path
     # bag_name = args.bag_name
     # camera_param_path = args.camera_param_path
-    root_folder = "/home/lab4dv/data/bags"
+    root_folder = "/home/lab4dv/data/sda"
     for folder in os.listdir(root_folder):
         if "urdf" in folder or "config_data" in folder or "hand_arm_mesh" in folder :
             continue
@@ -45,7 +45,7 @@ if __name__ == "__main__":
             print(folder)
         middle_folder = Path(root_folder) / Path(folder)
         for file in os.listdir(middle_folder):
-            if file.endswith(".bag"):
+            if file.endswith("duck_5_20231024.bag") or file.endswith("duck_3_20231024.bag") or file.endswith("duck_1_20231024.bag"):
                 bag_name = file[:-4]
                 file_origin_path = middle_folder / Path(file)
                 folder_path = middle_folder / Path(bag_name)
@@ -59,6 +59,7 @@ if __name__ == "__main__":
                 extract_rosbag_tf(middle_folder,bag_name)
                 extract_arm_hand_obj(middle_folder,bag_name, root_folder)
                 extract_everything_from_bag(middle_folder,bag_name)
+                shutil.move(str(file_transfer_path), str(file_origin_path))
                 # os.remove(Path(file_transfer_path))
                
         # shutil.move(str(middle_folder), str(Path("/home/lab4dv/data/ssd") / Path(folder)))

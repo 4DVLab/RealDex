@@ -221,7 +221,7 @@
     <!-- x y z x y z w -->
     <node name="static_publish_4" pkg="multicam" type="static_publish_4" output="screen"  respawn="$(arg respawn)" launch-prefix="zsh -c 'sleep $(arg node_start_delay); $0 $@' " />
 
-   <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/>
+   <!-- <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find multicam)/rviz/calibration4cam.rviz"/> -->
 
 
      

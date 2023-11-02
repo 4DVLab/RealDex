@@ -2,15 +2,35 @@
 
 
 
+goody
 
+|object name|num of sequense|num of grasp|size(Gb)|read from bag|pointcloud|merged|split|uploaded|
+|---|---|---|---| ---| ---| ---| ---|---|
+|  banana |4| 104 | 80 |  done |   |
+|yangtao | 6|103 | |done| done|done| || 
+|yibu| 5|||done|
+|flower_bread||||done|
+|cream_cake||||done|
+|sprayer|8|97||done||
+|thunder_toy|4|97||done
+|croissant|4|||done||
+|lion|1||||||||
+|magnet|1|||||
+|mango|5|||||||||
+|pangding|1|||||||
+|purple_car|1||||||||||
+|shizi|1||||||||||
+|apple|1|||||||||||||
+--------------
 
-|object name|num of sequense|num of grasp|size(Gb)|pointcloud|uploaded|
-|---|---|---|---| ---|
-|  banana |4| 104 | 80 |   |   |
-| | | | |
+re-scan
+|firedraon|
+||
 
-
-
+NoO: 15
+NoS: ~75
+NoG: 1500
+done: 
 
 
 

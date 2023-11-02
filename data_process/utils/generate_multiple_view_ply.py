@@ -19,10 +19,15 @@ import copy
 
 class multiple_view_ply:
 
-    def __init__(self, root_path):
-        
-        self.root_path = Path(root_path)
+    def __init__(self, root_path, middle_path):
 
+
+       
+        self.middle_path = Path(middle_path)
+        self.root_path = Path(root_path) / Path(middle_path) 
+        self.merged_path = Path(self.root_path)/Path("merged_pcd_filter")
+        if not self.merged_path.exists():
+            os.mkdir(self.merged_path)
         self.cam_path_list = []
         self.time_stamp_txt = Path("info.txt")
 
@@ -37,7 +42,9 @@ class multiple_view_ply:
             # print(np.dot(np.linalg.inv(cam0_to_world),cam1_to_world))
 
         for i in range(4):
-            self.cam_path_list.append(root_path / Path("cam" + str(i) + "/points2"))
+   
+            self.cam_path_list.append(self.root_path / Path("cam" + str(i) + "/points2"))
+        
             # with correct calibration value, just read from one file
 
             self.cam_transform_list.append(np.array(data["cam"+str(i)+"_rgb_camera_link"]))
@@ -72,6 +79,7 @@ class multiple_view_ply:
 
     def read_single_view(self, cam , num):
         # read from file or from other function
+
         ply = o3d.io.read_point_cloud(str(self.cam_path_list[cam] / Path(str(num)+".ply")))
 
         # hide unvisitable points
@@ -93,9 +101,7 @@ class multiple_view_ply:
         # estimate normal
 
         # ply.estimate_normals(o3d.geometry.KDTreeSearchParamHybrid(radius=0.02, max_nn=30), True)
-
-        #temp write
-        o3d.io.write_point_cloud("/home/lab4dv/data/bags/cam"+str(cam)+"_"+str(num)+".ply", ply, write_ascii=False, compressed=False, print_progress=False)
+        
 
         return ply
        # o3d.visualization.draw_geometries([ply])
@@ -103,20 +109,22 @@ class multiple_view_ply:
     def read_multiple_view(self):
         
         # align timestamps from 4 different view
-        iteration = [180, 180, 180, 181]
+        # iteration = [180, 176, 181, 180]
+        iteration = [427, 427, 427, 426]
+        # iteration = [0, 0, 0, 0]
         good_merge_num = 0
         while(iteration[0] != len(self.timestamp_list[0])):
             
-            main_timestamp = self.timestamp_list[0][iteration[0]]
+            # main_timestamp = self.timestamp_list[0][iteration[0]]
             # print(main_timestamp)
             main_ply = self.read_single_view(0, iteration[0])
-            previous_ply = copy.deepcopy(main_ply)
+            # previous_ply = copy.deepcopy(main_ply)
             merge_ply = main_ply
             miss_view = []
             for i in range(1, 4):
-                # if iteration[i] >= len(self.timestamp_list[i]):
-                #     miss_view.append((i,iteration[i], "^"))
-                #     continue
+                if iteration[i] >= len(self.timestamp_list[i]):
+                    miss_view.append((i,iteration[i], "^"))
+                    break
                
                 # if iteration[i] - 1 >=0 and abs (self.timestamp_list[i][iteration[i] - 1 ] - main_timestamp) < abs( self.timestamp_list[i][iteration[i]]- main_timestamp)  :
                 #     miss_view.append((i, iteration[i], "-"))
@@ -125,46 +133,48 @@ class multiple_view_ply:
                 #         miss_view.append((i, iteration[i], "+"))
                 #         iteration[i] = iteration[i] + 1
                 # iteration[i] = common.find_time_closet(main_timestamp, self.timestamp_list[i])  
-                if abs(self.timestamp_list[i][iteration[i]] - main_timestamp) >  self.interval:
-                     miss_view.append(i, iteration[0],iteration[i])
-                     continue
+                # if abs(self.timestamp_list[i][iteration[i]] - main_timestamp) >  self.interval:
+                #      miss_view.append(i, iteration[0],iteration[i])
+                #      continue
                         
                 # print( self.timestamp_list[i][iteration[i]])
 
                 cam_ply = self.read_single_view(i, iteration[i])
 
                 # try some registration method
-                # color_icp = o3d.pipelines.registration.registration_colored_icp(cam_ply, merge_ply, 0.01, np.identity(4)
-                #                                                                 , o3d.pipelines.registration.TransformationEstimationForColoredICP(0.8),
-                #                                                                 o3d.pipelines.registration.ICPConvergenceCriteria(
-                #                                                                 relative_fitness=1e-4, relative_rmse=1e-4, max_iteration=50) )
+                # color_icp = o3d.pipelines.registration.registration_colored_icp(cam_ply, merge_ply, 0.005, np.identity(4)
+                                                                                # , o3d.pipelines.registration.TransformationEstimationForColoredICP(0.9),
+                                                                                # o3d.pipelines.registration.ICPConvergenceCriteria(
+                                                                                # relative_fitness=1e-4, relative_rmse=1e-4, max_iteration=5) )
              
-                # print(color_icp)
+                # print(type(color_icp))
+                # print(type(merge_ply))
                 # cam_ply.transform(color_icp.transformation)
                 merge_ply = merge_ply + cam_ply
 
                 merge_ply = merge_ply.remove_duplicated_points()
                 
                 
-                previous_ply = copy.deepcopy(cam_ply)
-                # iteration[i] = iteration[i] + 1
+                # previous_ply = copy.deepcopy(cam_ply)
+                iteration[i] = iteration[i] + 1
             if len(miss_view) != 0:
                print("miss view after", good_merge_num," good merge: ", miss_view)
             else:
                 print(iteration)
                 o3d.visualization.draw_geometries([merge_ply])
+                # o3d.io.write_point_cloud(str(self.merged_path/ Path(str(self.middle_path)+"_"+str(iteration[0])+".ply")), merge_ply, write_ascii=False, compressed=False, print_progress=True)
                 good_merge_num = good_merge_num + 1
             
             iteration[0] = iteration[0] + 1
         print(" there are", good_merge_num, "good merge\n")
 
 
-def generate_multiple_view_ply(root_path):
-    mvp = multiple_view_ply(root_path)
+def generate_multiple_view_ply(root_path, middle_path):
+    mvp = multiple_view_ply(root_path, middle_path)
     
     mvp.read_multiple_view()
 
-generate_multiple_view_ply("/home/lab4dv/data/bags/apple/apple_1_20231030")
+generate_multiple_view_ply("/home/lab4dv/data/sda/banana", "banana_2_20231024")
 
 
 

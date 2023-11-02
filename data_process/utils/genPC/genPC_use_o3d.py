@@ -135,4 +135,4 @@ def genPC():
 
 
 if __name__ == "__main__":
-    gen_aligned_pc("/home/lab4dv/data/sda/banana/banana_3_20231024/")
+    gen_aligned_pc("/home/lab4dv/data/sda/duck/duck_4_20231024/")
