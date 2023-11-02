@@ -20,6 +20,7 @@ from pytorch3d.structures import Meshes
 from network.models.loss import contact_map_of_m_to_n
 from utils.grab_hand_model import HandModel
 from manotorch.manolayer import ManoLayer, MANOOutput
+from tqdm import tqdm, trange
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -32,7 +33,7 @@ def transform_mat(ori, transl):
     
 
 class GRABDataset(Dataset):
-    def __init__(self, cfg, mode='train'):
+    def __init__(self, cfg, mode='train', need_process=False):
         
         self.cfg = cfg
         self.mode = mode
@@ -44,6 +45,7 @@ class GRABDataset(Dataset):
         baseDir = os.path.join(root_path, baseDir)
         self.ds_path = os.path.join(baseDir, mode)
         self.num_obj_points = dataset_cfg["num_obj_points"]
+        self.num_hand_points = dataset_cfg["num_hand_points"]
         
         
         # load frame name
@@ -55,7 +57,7 @@ class GRABDataset(Dataset):
         
         # get mano model
         self.mano_layer = ManoLayer(use_pca=False, flat_hand_mean=False)
-        self.mano_faces = self.mano_layer.get_mano_closed_faces()
+        self.mano_faces = self.mano_layer.get_mano_closed_faces().unsqueeze(0)
         
         # load data
         
@@ -64,7 +66,6 @@ class GRABDataset(Dataset):
         self.ds['object_data'] = torch.load(os.path.join(self.ds_path, 'object_data.pt'))
         self.ds['plane_data'] = torch.load(os.path.join(self.ds_path, 'plane_data.pt'))
         
-
         self.sbjs = np.unique(self.frame_sbjs)
         self.obj_info = np.load(os.path.join(baseDir, 'obj_info.npy'), allow_pickle=True).item()
         self.sbj_info = np.load(os.path.join(baseDir, 'sbj_info.npy'), allow_pickle=True).item()
@@ -81,22 +82,41 @@ class GRABDataset(Dataset):
 
         self.frame_sbjs=torch.from_numpy(self.frame_sbjs.astype(np.int8)).to(torch.long)
             
-    # def _np2torch(self,ds_path):
-    #     data = np.load(ds_path, allow_pickle=True)
-    #     data_torch = {k:torch.tensor(data[k]) for k in data.keys}
-    #     return data_torch
+        if need_process:
+            frame_num = len(self.frame_names)
+            batch_size = 8
+            self.ds['rhand_data']['points'] = torch.zeros(frame_num, self.num_hand_points, 3)
+            # self.ds['rhand_data']['observed_hand_pc'] = torch.zeros(frame_num, self.num_hand_points, 3)
+            
+            for i in trange(frame_num // batch_size):
+                start_id = i * batch_size
+                end_id = (i+1) * batch_size
+                end_id = frame_num if end_id > frame_num else end_id
+                batch_id = list(range(start_id, end_id))
+                self.__process_hand_data__(batched_idx=batch_id)
+            torch.save( self.ds['rhand_data'], os.path.join(self.ds_path, 'rhand_data.pt'))
     
-    # def load_disk(self,idx):
-
-    #     if isinstance(idx, int):
-    #         return self._np2torch(self.frame_names[idx])
-
-    #     frame_names = self.frame_names[idx]
-    #     from_disk = []
-    #     for f in frame_names:
-    #         from_disk.append(self._np2torch(f))
-    #     from_disk = default_collate(from_disk)
-    #     return from_disk
+    def __process_hand_data__(self, batched_idx):
+        # sample points on rhand
+        rhand_verts = self.ds['rhand_data']['verts'][batched_idx].cuda()
+        rhand_faces = self.mano_faces.expand(len(batched_idx), -1, -1).cuda()
+        gt_hand_mesh = Meshes(verts=rhand_verts, faces=rhand_faces)
+        gt_hand_pc = sample_points_from_meshes(
+            gt_hand_mesh,
+            num_samples=self.num_hand_points
+        ).type(torch.float32) # torch.tensor: [NH, 3]
+        self.ds['rhand_data']['points'][batched_idx] = gt_hand_pc.cpu()
+        
+        # pert data
+        # hand_pose = self.ds['rhand_data']['fullpose'][batched_idx]
+        # hand_beta = [self.sbj_betas[self.frame_sbjs[id]] for id in batched_idx]
+        # hand_beta = torch.stack(hand_beta, dim=0)
+        # pert_pose = hand_pose + torch.randn(hand_pose.size()) * 0.01
+        # print(pert_pose.shape, hand_beta.shape)
+        
+        # pert_hand_model: MANOOutput = self.mano_layer(pert_pose, hand_beta)
+        # self.ds['rhand_data']['observed_hand_pc'][batched_idx] = pert_hand_model.verts
+        
     
     def __load_tools__(self):
         sub_path = os.path.join(self.tools_path, 'subject_meshes')
@@ -169,14 +189,8 @@ class GRABDataset(Dataset):
             obj_pc = obj_pc @ global_rotation_mat
             hand_rotation_mat = np.eye(3)
             hand_translation = global_translation @ global_rotation_mat
-
-            gt_hand_mesh = Meshes(verts=rh_data['verts'], faces=self.mano_faces)
-            gt_hand_pc = sample_points_from_meshes(
-                gt_hand_mesh,
-                num_samples=self.num_hand_points
-            ).type(torch.float32).squeeze()  # torch.tensor: [NH, 3]
-            
-            gt_hand_pc = rh_data['verts'][idx]
+    
+            gt_hand_pc = rh_data['points'][idx] + hand_translation
             contact_map = contact_map_of_m_to_n(obj_pc, gt_hand_pc)  # [NO]
 
             ret_dict = {
@@ -187,12 +201,10 @@ class GRABDataset(Dataset):
             }
 
             if self.dataset_cfg["perturb"]:
-                pert_hand_translation = hand_translation + np.random.randn(3) * 0.03
-                pert_pos = hand_pose + np.random.randn(len(hand_pose)) * 0.1
+                # pert_hand_translation = hand_translation + torch.randn(3) * 0.03
+                pert_pc = gt_hand_pc + torch.randn(gt_hand_pc.size()) * 0.03
                 
-                pert_hand_model: MANOOutput = self.mano_layer(pert_pos, hand_beta)
-                
-                ret_dict["observed_hand_pc"] = pert_hand_model.verts
+                ret_dict["observed_hand_pc"] = pert_pc
         else:
             print("WARNING: entered undefined dataset type!")
             ret_dict = {
@@ -204,4 +216,9 @@ class GRABDataset(Dataset):
         ret_dict["obj_scale"] = 1
         return ret_dict
     
-                
+
+# if __name__ == '__main__':
+#     cfg = {
+        
+#     }
+#     dataset = GRABDataset()
