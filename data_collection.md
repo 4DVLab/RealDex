@@ -21,11 +21,19 @@ goody
 |purple_car|1||||||||||
 |shizi|1||||||||||
 |apple|1|||||||||||||
+|dinosaur|
+|horse|
+|huimian
+|lamian
+|milk
+|mouse
+|niuroumian
+|panda
+|pink_beer
+|xbox
 --------------
 
-re-scan
-|firedraon|
-||
+
 
 NoO: 15
 NoS: ~75
