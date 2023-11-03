@@ -11,8 +11,10 @@ import cv2
 import json
 from pathlib import Path
 import json
-from common import common
 import copy
+from genPC import genPC_use_o3d
+from common import common
+
 
 
 # %%
@@ -21,7 +23,7 @@ class multiple_view_ply:
 
     def __init__(self, root_path, middle_path):
 
-
+        self.read_from_ply = False
        
         self.middle_path = Path(middle_path)
         self.root_path = Path(root_path) / Path(middle_path) 
@@ -40,32 +42,49 @@ class multiple_view_ply:
             cam1_to_world = np.array(data["cam"+str(1)+"_rgb_camera_link"])
 
             # print(np.dot(np.linalg.inv(cam0_to_world),cam1_to_world))
-
-        for i in range(4):
-   
-            self.cam_path_list.append(self.root_path / Path("cam" + str(i) + "/points2"))
-        
-            # with correct calibration value, just read from one file
-
-            self.cam_transform_list.append(np.array(data["cam"+str(i)+"_rgb_camera_link"]))
-            # with error calibration value, read form calibration file then calculation is needed
+        if self.read_from_ply:
+            for i in range(4):
+    
+                self.cam_path_list.append(self.root_path / Path("cam" + str(i) + "/points2"))
             
-            # if i == 0:
-            #      self.cam_transform_list.append(cam0_to_world)
-            # else:
-            #      with open("/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data/cali0"+str(i)+".json") as cal_f:
-            #         cal_data = json.load(cal_f)
-            #      cami_to_cam0 = np.array( common.seven_num2matrix(np.array([cal_data["value0"]["translation"]["x"], cal_data["value0"]["translation"]["y"], cal_data["value0"]["translation"]["z"]])
-            #                                                            , np.array([cal_data["value0"]["rotation"]["x"], cal_data["value0"]["rotation"]["y"], cal_data["value0"]["rotation"]["z"], cal_data["value0"]["rotation"]["w"]])))
-                 
-            #      self.cam_transform_list.append(np.dot(cam0_to_world,cami_to_cam0))
+                # with correct calibration value, just read from one file
 
-        self.timestamp_list = []
-        for i in range(4):
-            timestamp_one_list = np.loadtxt(self.cam_path_list[i] / self.time_stamp_txt, dtype=np.float128)
-            self.timestamp_list.append(timestamp_one_list)
-            print("the number of frames of cam", i, len(timestamp_one_list)) 
-         # 15Hz for 0.0667s interval, 30Hz for 0.033 interval 
+                self.cam_transform_list.append(np.array(data["cam"+str(i)+"_rgb_camera_link"]))
+                # with error calibration value, read form calibration file then calculation is needed
+                
+                # if i == 0:
+                #      self.cam_transform_list.append(cam0_to_world)
+                # else:
+                #      with open("/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data/cali0"+str(i)+".json") as cal_f:
+                #         cal_data = json.load(cal_f)
+                #      cami_to_cam0 = np.array( common.seven_num2matrix(np.array([cal_data["value0"]["translation"]["x"], cal_data["value0"]["translation"]["y"], cal_data["value0"]["translation"]["z"]])
+                #                                                            , np.array([cal_data["value0"]["rotation"]["x"], cal_data["value0"]["rotation"]["y"], cal_data["value0"]["rotation"]["z"], cal_data["value0"]["rotation"]["w"]])))
+                    
+                #      self.cam_transform_list.append(np.dot(cam0_to_world,cami_to_cam0))
+
+            self.timestamp_list = []
+            for i in range(4):
+                timestamp_one_list = np.loadtxt(self.cam_path_list[i] / self.time_stamp_txt, dtype=np.float128)
+                self.timestamp_list.append(timestamp_one_list)
+                print("the number of frames of cam", i, len(timestamp_one_list)) 
+         
+        else :
+            self.depth_camera_param_list = []
+            self.rgb_camera_param_list = []
+            self.depth_stamp_list = []
+            self.rgb_stamp_list = []
+
+            for i in np.arange(4):
+                cam_folder = Path(self.root_path) / Path("cam" + str(i))
+
+                self.depth_camera_param_list.append(genPC_use_o3d.get_camera_info(Path(cam_folder) / Path("depth_to_rgb")))
+                self.rgb_camera_param_list.append(genPC_use_o3d.get_camera_info(Path(cam_folder) / Path("rgb")))
+
+                self.depth_stamp_list.append(np.loadtxt( Path(cam_folder) / Path("depth_to_rgb") / Path("image_raw")/ Path("info.txt")))
+                self.rgb_stamp_list.append(np.loadtxt( Path(cam_folder) / Path("rgb") / Path("image_raw")/ Path("info.txt")))
+            self.timestamp_list = self.depth_stamp_list        
+        
+        # 15Hz for 0.0667s interval, 30Hz for 0.033 interval 
                 # test 15Hz or 30Hz , pick frame 10 and frame 19 for stable and random
         if (self.timestamp_list[0][10]- self.timestamp_list[0][9]) and (self.timestamp_list[0][19]- self.timestamp_list[0][18]) < 4e+7 :
                     self.interval = 3.333e+7
@@ -73,14 +92,45 @@ class multiple_view_ply:
         else:
                     self.interval = 6.667e+7
                     # print("15 Hz")
-                
-        # print(self.cam_transform_list[0], self.cam_transform_list[1], self.cam_transform_list[2])       
         
+    def read_single_view(self, cam:int, num:int):
 
-    def read_single_view(self, cam , num):
-        # read from file or from other function
 
-        ply = o3d.io.read_point_cloud(str(self.cam_path_list[cam] / Path(str(num)+".ply")))
+        
+        depth_camera_param = self.depth_camera_param_list[cam]
+        rgb_camera_param = self.rgb_camera_param_list[cam]
+
+        depth_stamp = self.depth_stamp_list[cam]
+        rgb_stamp = self.rgb_stamp_list[cam]
+
+        depth_img_folder = self.root_path / Path("cam" + str(cam)) /  Path("depth_to_rgb") / Path("image_raw")
+        rgb_img_folder = self.root_path / Path("cam" + str(cam)) /  Path("rgb") / Path("image_raw")
+
+        
+   
+        rgb_index = common.find_time_closet(depth_stamp[num],rgb_stamp)
+
+        rgb_img_path = rgb_img_folder / Path(str(rgb_index) + ".png")
+        depth_img_path = depth_img_folder / Path(str(num) + ".png")
+        undistorted_rgb = genPC_use_o3d.ndistort_image(rgb_img_path, rgb_camera_param["K"], rgb_camera_param["D"])
+        undistorted_rgb = cv2.cvtColor(undistorted_rgb, cv2.COLOR_BGR2RGB)
+        undistorted_depth = genPC_use_o3d.undistort_image(depth_img_path, depth_camera_param["K"], depth_camera_param["D"])
+        pcd = genPC_use_o3d.create_point_cloud_from_rgb_and_depth(undistorted_rgb, undistorted_depth, rgb_camera_param["K"],rgb_camera_param["width"],rgb_camera_param["height"])
+        
+        return pcd
+
+
+    def process_single_view(self, cam:int , num:int):
+        # read from file 
+
+        if self.read_from_ply:
+            ply = o3d.io.read_point_cloud(str(self.cam_path_list[cam] / Path(str(num)+".ply")))
+
+        # read from images
+
+        else:
+            ply = self.read_single_view(cam, num)
+
 
         # hide unvisitable points
         _, pt_map = ply.hidden_point_removal([0, 0, 0], 200) 

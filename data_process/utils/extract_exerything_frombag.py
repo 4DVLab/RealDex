@@ -229,7 +229,7 @@ def bag_data_extract(bag_path, cams, bag_topics, output_folder, cam_transform_da
 
                 else:
                     print("nothing")
-    gen_aligned_pc(output_folder)
+    # gen_aligned_pc(output_folder)
 
 # folder是比专门的bag文件夹更高一级的
 def extract_everything_from_bag(folder_path: str, bag_name: str):
