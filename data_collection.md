@@ -5,32 +5,71 @@
 goody
 
 |object name|num of sequense|num of grasp|size(Gb)|read from bag|pointcloud|merged|split|uploaded|
-|---|---|---|---| ---| ---| ---| ---|---|
-|  banana |4| 104 | 80 |  done |   |
-|yangtao | 6|103 | |done| done|done| || 
-|yibu| 5|||done|
-|flower_bread||||done|
-|cream_cake||||done|
-|sprayer|8|97||done||
-|thunder_toy|4|97||done
+|---|---|---| --- | --- | ---| ---| ---|---|\
+|apple||||||
+|banana |4| 104 | 80 |  done |   |
+|big_eye_toy||||||||
+|blue_cup|||||
+|blue_magnet_toy|1|||
+|body_lotion|||||
+|castle_toy|||||
+|charger||||
+|cosmetics|||||||
+|cream_cake|||
+|crisps|||||
 |croissant|4|||done||
-|lion|1||||||||
-|magnet|1|||||
+|dinosaur_toy||||
+|duck_toy||||||||
+|dust_cleanning_spreyer|||||
+|fat_toy|1|||||
+|flower_cake|||||||
+|girl_toy||||||
+|goji_jar|||||
+|green_dragon_toy||||||||
+|grip_device|||||||
+|hammer_toy|||||
+|horse_toy||||||
+|huimian|||||
+|instance_noodles|||||||
+|kangaroo||||||||
+|light||||||||
+|lion_toy|1||||||||
 |mango|5|||||||||
-|pangding|1|||||||
-|purple_car|1||||||||||
-|shizi|1||||||||||
-|apple|1|||||||||||||
-|dinosaur|
-|horse|
-|huimian
-|lamian
-|milk
-|mouse
-|niuroumian
-|panda
-|pink_beer
-|xbox
+|mike_cup|||||
+|milk|||||||
+|mourse|||||||
+|normal_cake|||||||||
+|panda_toy||||||||||
+|pear||||||
+|persimmon|1||||||||||
+|pikachu_toy|||||||
+|pink_cup|||||
+|purple_car|1|||||
+|radish|||||
+|ramen_noodles|||||||
+|screen_cleaner||||||
+|shower_cleaner|||
+|spoon||||
+|sprayer|8|97||done||
+|strawberry|||
+|strawberry_cake|||||||
+|tea_jar|||||
+|thunder_toy|4|97||done
+|tolet_cleaning_sprayer|||||||
+|wd40||||||
+|xbox|||||||
+|yangtao| 6|103 | |done| done|done| || 
+|yogurt|||
+
+
+|yibu| 5|||done|
+
+
+
+
+
+
+
 --------------
 
 
