@@ -79,8 +79,8 @@ def transform_obj2result_pose(bag_folder_path,model_name,cam2world_transform = N
 
 
 if __name__ == "__main__":
-    bag_folder_path = "/media/tony/T7/camera_data/banana"
-    model_name = "banana"
+    bag_folder_path = "/media/tony/T7/yyx_tmp/for_dust_cleanning_sprayer_tracking/dust_cleanning_spreyer/dust_cleanning_spreyer_1_20231105"
+    model_name = "dust_cleaning_spreyer"
     transforms = json.load(open(str(Path(bag_folder_path) / Path("global_name_position/0.txt")),"r"))
     cam0_rgb_camera_link2world = np.array(transforms["cam0_rgb_camera_link"])
 
