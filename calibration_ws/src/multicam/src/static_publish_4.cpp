@@ -61,6 +61,8 @@ int main(int argc, char **argv)
         {
             cam0tcam_transform[i-1] = cam_transform[0]*cam0tcam_cali[i-1]*cam_transform[i].inverse();
             br.sendTransform(tf::StampedTransform(cam0tcam_transform[i-1], ros::Time::now(), "/cam0_camera_base", "/cam"+std::to_string(i)+"_camera_base"));
+            
+            // ROS_INFO("cam0 to cam%d, %lf %lf %lf", i, cam0tcam_transform[i-1].getOrigin().getX(), cam0tcam_transform[i-1].getOrigin().getY(), cam0tcam_transform[i-1].getOrigin().getZ());
 
         }
 

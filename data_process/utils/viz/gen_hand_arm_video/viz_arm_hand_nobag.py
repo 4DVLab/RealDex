@@ -335,7 +335,7 @@ def viz_arm_hand_mesh_without_bag(config_folder,bag_folder,rosbag_predix, base_f
         vis.update_renderer()
         image = vis.capture_screen_float_buffer(False)
         plt.imsave(image_save_folder / Path(f"{num}.png"),np.asarray(image), dpi = 1)
-        # vis.run()  # 这将显示mesh并允许交互直到用户按'q' 用来与用户交互的
+        # vis.run()  
         if output_jud:
             output_merge_mesh(mesh_show,bag_folder,num)
         print(KeyCallback_object.nums_to_save)

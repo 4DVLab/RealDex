@@ -2,15 +2,78 @@
 
 
 
+goody
+
+|object name|num of sequense|num of grasp|upload bags|read from bag|merged|tracking|well done|uploaded well done|
+|---|---|---| --- | --- | ---| ---| ---|---|
+|apple|5|118||||
+|banana |4| 104 | |  done |   |
+|big_eye_toy||||||||
+|blue_cup|||||
+|blue_magnet_toy|1|17||
+|body_lotion|||||
+|castle_toy|||||
+|charger||||
+|cosmetics|||||||
+|cream_cake|||
+|crisps|||||
+|croissant|4|||done||
+|dinosaur_toy||||
+|duck_toy||||||||
+|dust_cleanning_spreyer|6|105|||
+|fat_toy|1|17||||
+|flower_cake|||||||
+|girl_toy|3|55||||
+|goji_jar|7|103|||
+|green_dragon_toy||||||||
+|grip_device|||||||
+|hammer_toy|||||
+|instance_noodles|3|62|||||
+|kangaroo||||||||
+|light|4|47||||||
+|lion_toy|1|22|||||||
+|mango|5|116||||||||
+|mike_cup|||||
+|milk|||||||
+|mourse|||||||
+|normal_cake|||||||||
+|panda_toy||||||||||
+|pear||||||
+|persimmon|1|20|||||||||
+|pikachu_toy|||||||
+|pink_cup|||||
+|purple_car|1|21||||
+|radish|||||
+|ramen_noodles|3|52|||||
+|screen_cleaner||||||
+|shower_cleaner|||
+|spoon||||
+|sprayer|8|97||done||
+|strawberry|||
+|strawberry_cake|||||||
+|tea_jar|||||
+|thunder_toy|4|97||done
+|tolet_cleaning_sprayer|||||||
+|wd40|6|110||||
+|xbox|6|117|||||
+|yangtao| 6|103 | |done| done|done| || 
+|yibu| 6|||done|
+|yogurt|8|108|
 
 
-|object name|num of sequense|num of grasp|size(Gb)|pointcloud|uploaded|
-|---|---|---|---| ---|
-|  banana |4| 104 | 80 |   |   |
-| | | | |
 
 
 
+
+
+--------------
+
+
+
+NoO: 22
+NoS: 88
+NoG: 1484
+done: 0
 
 
 

@@ -35,7 +35,7 @@ def display_meshes_in_sequence( file_pattern="{}.ply", start_index=0):
         
         vis.get_view_control().convert_from_pinhole_camera_parameters(camera_params)
         
-        vis.run()  # q
+        # vis.run()  # q
         
 
     vis.destroy_window()
