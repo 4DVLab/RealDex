@@ -139,11 +139,14 @@ class GRABDataset(Dataset):
         return len(self.frame_names)
 
     def __getitem__(self, idx):
-                
-        obj_pc = self.ds['object_data']['verts'][idx] #[3000, 3]
+        obj_data = self.ds['object_data']
+        obj_transl = obj_data['transl'][idx]
+        obj_pc = obj_data['verts'][idx] #[3000, 3]
         
         if self.dataset_cfg['fps']:
             obj_pc = pytorch3d.ops.sample_farthest_points(obj_pc.unsqueeze(0), K=self.num_obj_points)[0][0]  # [NO, 3]
+            
+        # obj_rotation = axis_angle_to_matrix(self.ds['object_data']['global_orient'][idx])
         
         sbj_name = self.frame_sbjs[idx]
         hand_beta = self.sbj_betas[sbj_name]
@@ -151,32 +154,33 @@ class GRABDataset(Dataset):
         
         # hand mano param
         rh_data = self.ds['rhand_data']
-        global_rotation_mat = axis_angle_to_matrix(rh_data['global_orient'][idx])
+        rh_rotation_mat = axis_angle_to_matrix(rh_data['global_orient'][idx])
+        
+        
         global_translation = rh_data['transl'][idx]
         hand_pose = rh_data['fullpose'][idx]
+        hand_points = rh_data['points'][idx]
         
-        # table data
-        plane_data = self.ds['plane_data']
-        # plane_ori = plane_data['global_orient'][idx]
-        # plane_transl = plane_data['transl'][idx]
+        obj_pc = obj_pc - obj_transl
+        hand_points = hand_points - obj_transl
+        global_translation = global_translation - obj_transl
+        
+        
         
         """return data should be same as dex dataset"""
         if self.cfg["network_type"] == "ipdf":
-            plane_pose = plane_data['transform'][idx]
-            global_rotation_mat = plane_pose[:3, :3] @ global_rotation_mat
-            obj_gt_rotation = global_rotation_mat.T  # so that obj_gt_rotation @ obj_pc is what we want
-            # place the table horizontally
-            obj_pc = obj_pc @ plane_pose[:3, :3].T + plane_pose[:3, 3]
+            # global_rotation_mat = plane_pose[:3, :3] @ global_rotation_mat
+            obj_gt_rotation = rh_rotation_mat.T  # so that obj_gt_rotation @ obj_pc is what we want
 
             ret_dict = {
                 "obj_pc": obj_pc,
                 "obj_gt_rotation": obj_gt_rotation,
-                "world_frame_hand_rotation_mat": global_rotation_mat,
+                "world_frame_hand_rotation_mat": rh_rotation_mat,
             }
         elif self.cfg["network_type"] == "glow":  # TODO: 2: glow
-            canon_obj_pc = obj_pc @ global_rotation_mat
+            canon_obj_pc = obj_pc @ rh_rotation_mat
             hand_rotation_mat = np.eye(3)
-            hand_translation = global_translation @ global_rotation_mat
+            hand_translation = global_translation @ rh_rotation_mat
             ret_dict = {
                 "obj_pc": obj_pc,
                 "canon_obj_pc": canon_obj_pc,
@@ -185,13 +189,14 @@ class GRABDataset(Dataset):
                 "canon_translation": hand_translation,
             }
         elif self.cfg["network_type"] == "cm_net":  # TODO: 2: Contact Map
+            contact_map = contact_map_of_m_to_n(obj_pc, hand_points)  # [NO]
+            
             # Canonicalize pc
-            obj_pc = obj_pc @ global_rotation_mat
-            hand_rotation_mat = np.eye(3)
-            hand_translation = global_translation @ global_rotation_mat
+            obj_pc = obj_pc @ rh_rotation_mat # R^-1 X
+            hand_translation = global_translation @ rh_rotation_mat
     
-            gt_hand_pc = rh_data['points'][idx] + hand_translation
-            contact_map = contact_map_of_m_to_n(obj_pc, gt_hand_pc)  # [NO]
+            gt_hand_pc = (hand_points-global_translation) @ rh_rotation_mat  + hand_translation
+            
 
             ret_dict = {
                 "canon_obj_pc": obj_pc,
@@ -210,10 +215,11 @@ class GRABDataset(Dataset):
             ret_dict = {
                 "obj_pc": obj_pc,
                 "hand_qpos": hand_pose,
-                "world_frame_hand_rotation_mat": global_rotation_mat,
+                "world_frame_hand_rotation_mat": rh_rotation_mat,
                 "world_frame_hand_translation": global_translation
             }
         ret_dict["obj_scale"] = 1
+        ret_dict["beta"] = hand_beta
         return ret_dict
     
 

@@ -12,6 +12,7 @@ flow:
 
 
 sample_num: 8
+pose_dim: 45
 
 loss_weight:
   nll: 1.0

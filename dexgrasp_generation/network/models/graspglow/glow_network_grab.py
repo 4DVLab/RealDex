@@ -185,6 +185,8 @@ class DexGlowNet(nn.Module):
             ret_dict['sr_sampled_hand_qpos'] = sr_qpos_samples
             ret_dict['sr_sampled_translation'] = sr_trans_samples
             sr_pc = sr_pc.unsqueeze(1).repeat(1,self.sample_num,1,1).reshape(batch_size*self.sample_num,-1,3)
+            
+            
             cmap_loss, cmap_losses = self.cmap_func(sr_pc, sr_trans_samples.reshape(batch_size*self.sample_num, 3), sr_qpos_samples.reshape(batch_size*self.sample_num, self.pose_dim))
             ret_dict['cmap_loss']=cmap_loss.mean()#.reshape(batch_size,-1).mean(dim=-1)
             for key in cmap_losses.keys():

@@ -2,17 +2,17 @@ joint_training: True
 
 rotation_net:
   type: ipdf
-  ckpt_path: runs/ipdf_train/ckpt/model_000301.pt
+  ckpt_path: runs/ipdf_train/ckpt/model_000101.pt
 
 contact_net:
   type: cm_net
-  ckpt_path: runs/cm_net_train_gpu5/ckpt/model_000101.pt
+  ckpt_path: runs/cm_net_train/ckpt/model_000401.pt
 
 network:
   type: pointnet
 
 flow:
-  points: 22
+  points: 45 #22
   feature_dim: 1024
   hidden_dim: 64
   layer: 21
@@ -28,6 +28,7 @@ tta:
   thres_dis: 0.01
 
 sample_num: 8
+pose_dim: 45
 
 loss_weight:
   nll: 1.0
