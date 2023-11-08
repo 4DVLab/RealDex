@@ -20,10 +20,12 @@ def scale_mesh(mesh_path, scale_factor=0.001):
     mesh.vertices = o3d.utility.Vector3dVector(vertices)
 
     return mesh
-path = "/home/tony/mine/Projects/ArmHandVis/HandVersion/HandArmFiles/ARM_HAND_URDF/yyx_tmp/test_tracking_duck/models/duck.obj"
+
 # 使用示例
-scaled_mesh = scale_mesh(path)
-o3d.io.write_triangle_mesh(path, scaled_mesh)
+input_path = "/home/lab4dv/data/model/dust_cleaning_spreyer.obj"
+scaled_mesh = scale_mesh(input_path,)
+output_path = "/home/lab4dv/data/bags/dust_cleanning_spreyer/dust_cleanning_spreyer_5_20231105/tracking/dust_cleaning_spreyer.obj"
+o3d.io.write_triangle_mesh(output_path, scaled_mesh)
 
 
 
