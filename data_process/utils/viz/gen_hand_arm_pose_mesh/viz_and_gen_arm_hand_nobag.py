@@ -239,17 +239,24 @@ def mount_data2TFtree(TF_tree: dict, rosbag_folder_path):
     return TF_tree
 
 
-def dfs_position(TF_tree, global_name_postion, time_slot, output_time_record=False):
+def dfs_position(TF_tree, global_name_postion, time_slot, output_time_record=False,output_tf = False):
     global_name_postion['world'] = np.identity(4)
-    if output_time_record:
-        time_record = {}
-    else:
+    time_record = {}
+    if not output_time_record:
         time_record = False
+    all_links_tf = {}
+    if not output_tf:
+        all_links_tf = False
+
+
     dfs_position_update(TF_tree, global_name_postion,
-                        'world', time_slot, time_record)
+                        'world', time_slot, time_record,all_links_tf)
     # 这里面有一个安装盘，这个安装盘的位置是跟机械化艘的手腕的位置是一样的，特殊设置
     global_name_postion["rh_mounting_plate"] = global_name_postion["rh_forearm"]
-    return time_record
+    return time_record,all_links_tf
+
+
+
 
 
 def find_time_closet(slot, time_stamps):
@@ -265,7 +272,7 @@ def seven_num2matrix(translation, roatation):  # translation x,y,z rotation x,y,
     return transform_matrix
 
 
-def dfs_position_update(TF_tree, global_name_postion, name, time_slot, time_record):
+def dfs_position_update(TF_tree, global_name_postion, name, time_slot, time_record,all_links_tf):
     if name in TF_tree.keys():  # 叶子节点不会在keys里面
         for child_name in TF_tree[name].keys():
             # 有些TF只有一个，是static TF
@@ -275,14 +282,19 @@ def dfs_position_update(TF_tree, global_name_postion, name, time_slot, time_reco
             if time_record and child_name.startswith("rh_"):
                 time_record[child_name] = child_time_and_transform[time_index, 0]
                 print(child_name, child_time_and_transform[time_index, 0])
+
             senven_num_transform = child_time_and_transform[time_index, 1:]
             child_transform = seven_num2matrix(
                 translation=senven_num_transform[:3], roatation=senven_num_transform[3:])
+            
+            if all_links_tf is not None:
+                all_links_tf[child_name] = child_transform
+
             child_transform_position = np.dot(
                 global_name_postion[name], child_transform)
             global_name_postion[child_name] = child_transform_position
             dfs_position_update(TF_tree, global_name_postion,
-                                child_name, time_slot, time_record)
+                                child_name, time_slot, time_record, all_links_tf)
 
 
 def output_time_stamps(TF_tree, global_name_postion):
@@ -529,6 +541,33 @@ def gen_on_stamp_hand_arm_mesh(config_folder, bag_folder, rosbag_predix, stamp_i
     # vis.run()  # 这将显示mesh并允许交互直到用户按'q' 用来与用户交互的
 
 
+def gen_one_stamp_all_tf(bag_folder, stamp_index_begin, stamp_index_end=None):
+    TF_tree, global_name_postion = build_TFtree_without_bag(bag_folder)
+    all_names_in_rosbag = get_all_names_in_ros(bag_folder)
+    TF_tree = mount_data2TFtree(TF_tree, bag_folder)
+    cam0_rgb_time_stamp = np.loadtxt(
+        bag_folder / Path('rgbimage_timestamp.txt'), dtype=np.float128)
+
+
+    if stamp_index_end is None:
+        stamp_index_end = stamp_index_begin + 1
+    elif stamp_index_end > cam0_rgb_time_stamp.shape[0]:
+        stamp_index_end = cam0_rgb_time_stamp.shape[0]
+    else:
+        stamp_index_end += 1
+
+    for stamp_index in np.arange(stamp_index_begin, stamp_index_end):
+        slot = cam0_rgb_time_stamp[stamp_index]
+        _,all_tf_links = dfs_position(TF_tree, global_name_postion, slot,output_tf=True)
+        # save_global_position(global_name_postion,num,gobal_position_folder)
+    all_tf_links = {key:value.tolist() for key,value in all_tf_links.items()}
+
+    with open("/media/tony/T7/yumeng/TF/all_links_tf.json","w+") as json_writer:
+        json.dump(all_tf_links, json_writer, indent=4)
+
+
+    # vis.run()  # 这将显示mesh并允许交互直到用户按'q' 用来与用户交互的
+
 
 
 # 也需要只有一个arm_hand_mesh的
@@ -537,7 +576,7 @@ if __name__ == "__main__":
     ros_prefix_path = "/media/tony/T7/camera_data/configuration/hand_arm_mesh"
     configuration_path = "/media/tony/T7/camera_data/configuration"
     bag_folder = "/media/tony/T7/yyx_tmp/for_dust_cleanning_sprayer_tracking/dust_cleanning_spreyer/dust_cleanning_spreyer_1_20231105"
-    gen_on_stamp_hand_arm_mesh(configuration_path, bag_folder, ros_prefix_path,0,20000,)
+    gen_one_stamp_all_tf(bag_folder,1015)
 
     # bag_folder = "/media/tony/T7/camera_data/banana/"
     # gen_on_stamp_hand_arm_mesh(configuration_path,bag_folder,ros_prefix_path,stamp_index_begin=0,stamp_index_end=50000)
