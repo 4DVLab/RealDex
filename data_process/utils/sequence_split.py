@@ -16,11 +16,11 @@ import shutil
 import filecmp
 
 
-def sequence_split(root_path, split_file_root):
+def sequence_split(root_path, split_file):
     root_path = Path(root_path)
-    split_file_root = Path(split_file_root)
+    split_file = Path(split_file)
     for folder in os.listdir(root_path):
-        with open(split_file_root / Path(folder) /Path("rgb/segment.txt") ) as f:
+        with open(split_file ) as f:
             
 
 
