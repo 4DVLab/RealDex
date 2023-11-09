@@ -106,9 +106,6 @@ class DexGlowNet(nn.Module):
 
         if not 'canon_obj_pc' in dic.keys():
             dic['canon_obj_pc'] = torch.einsum('nab,nbc->nac', dic['obj_pc'], dic['sampled_rotation'])
-            plane = dic['plane'].clone()
-            plane[:, :3] = torch.einsum('nb,nbc->nc',plane[:, :3], dic['sampled_rotation'])
-            ret_dict['canon_plane'] = plane
             
         pc = dic['canon_obj_pc']
         batch_size=pc.shape[0]

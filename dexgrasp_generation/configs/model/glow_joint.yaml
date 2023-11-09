@@ -12,7 +12,7 @@ network:
   type: pointnet
 
 flow:
-  points: 45 #22
+  points: 24 #22
   feature_dim: 1024
   hidden_dim: 64
   layer: 21
@@ -20,15 +20,15 @@ flow:
 
 tta:
   normalize_factor: 60
-  weight_cmap: 0.02
-  weight_dis: 0.0
-  weight_pen: 500
-  weight_spen: 10
-  weight_tpen: 50
+  weight_cmap: 1
+  weight_dis: 1
+  weight_pen: 1
+  weight_spen: 1
+  weight_tpen: 1
   thres_dis: 0.01
 
 sample_num: 8
-pose_dim: 45
+pose_dim: 24
 
 loss_weight:
   nll: 1.0
