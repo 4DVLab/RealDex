@@ -27,7 +27,7 @@ freq:
 optimizer: Adam
 weight_decay: 0.0001
 learning_rate: 0.001
-lr_policy: step
+lr_policy: ReduceLROnPlateau #step
 lr_gamma: 0.5 # lr decay rate
 lr_step_size: 40
 lr_clip: 0.00001 # min lr
@@ -44,10 +44,10 @@ total_epoch: 250
 resume_epoch: -1
 
 # device
-cuda_id: 0
+cuda_id: 1
 
 # data loader
-num_workers: 8
+num_workers: 0
 batch_size: 32
 
 # hydra

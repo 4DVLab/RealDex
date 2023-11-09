@@ -51,6 +51,9 @@ def get_scheduler(optimizer, cfg, it=-1):
                                         step_size=cfg['lr_step_size'],
                                         gamma=cfg['lr_gamma'],
                                         last_epoch=it)
+    elif cfg['lr_policy'] == 'ReduceLROnPlateau':
+        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
+        
     else:
         assert 0, '{} not implemented'.format(cfg['lr_policy'])
     return scheduler
@@ -120,12 +123,12 @@ class Trainer(nn.Module):
         self.epoch += 1
 
         cfg = self.cfg
-        if self.scheduler is not None and self.scheduler.get_last_lr()[0] > cfg['lr_clip']:
-            self.scheduler.step()
-        self.lr = self.scheduler.get_last_lr()[0]
-
-        self.log_string("Epoch %d/%d, learning rate = %f" % (
-            self.epoch, cfg['total_epoch'], self.lr))
+        
+        # self.log_string("Epoch %d/%d, learning rate = %f" % (
+        #     self.epoch, cfg['total_epoch'], self.lr))
+        
+        self.log_string("Epoch %d/%d" % (
+            self.epoch, cfg['total_epoch']))
 
         momentum = cfg['momentum_original'] * (
                 cfg['momentum_decay'] ** (self.epoch // cfg['momentum_step_size']))
@@ -185,7 +188,6 @@ class Trainer(nn.Module):
         self.log_string("Saving model at epoch {}, path {}".format(epoch, savepath))
 
     def update(self, data):
-        torch.cuda.empty_cache() 
         self.optimizer.zero_grad()
         self.model.train()
         self.model.set_data(data)
@@ -193,6 +195,17 @@ class Trainer(nn.Module):
         loss_dict = self.model.loss_dict
         update_dict(self.loss_dict, loss_dict)
         self.optimizer.step()
+        
+        if self.cfg['lr_policy'] == 'ReduceLROnPlateau':
+            if 'nll' in loss_dict:
+                self.scheduler.step(loss_dict['nll'])
+            else:
+                self.scheduler.step(loss_dict['contact_map'])
+        elif self.cfg['lr_policy'] == 'step':
+            self.lr = self.scheduler.get_last_lr()[0]
+            if self.lr > self.cfg['lr_clip']:
+                self.scheduler.step()
+                
         self.iteration += 1
 
         return loss_dict

@@ -1,4 +1,5 @@
 import sys
+sys.path.append(".")
 from torch.utils.data import Dataset
 import torch
 import os
@@ -21,6 +22,7 @@ from network.models.loss import contact_map_of_m_to_n
 from utils.grab_hand_model import HandModel
 from manotorch.manolayer import ManoLayer, MANOOutput
 from tqdm import tqdm, trange
+import matplotlib.pyplot as plt
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -30,8 +32,23 @@ def transform_mat(ori, transl):
     rotmat = axis_angle_to_matrix(ori)
     t = Transform3d().rotate(rotmat).translate(transl)
     return t.get_matrix()
-    
 
+def feature_to_color(feature_values):
+    colormap = plt.get_cmap('rainbow')  # Choose a colormap (e.g., 'viridis')
+    colors = colormap(feature_values)[:, :3] # Apply the colormap and extract RGB values
+    print(np.max(colors), np.min(colors))
+    
+    colors *= 255
+    return colors
+    
+def export_data(obj_pc, hand_pc, contact_map, idx=0):
+    print(torch.max(contact_map), torch.min(contact_map))
+    colors = feature_to_color(contact_map.numpy())
+    obj_cloud = trimesh.PointCloud(vertices=obj_pc, colors=colors)
+    hand_cloud = trimesh.PointCloud(vertices=hand_pc)
+    obj_cloud.export(f"obj_{idx}.ply")
+    hand_cloud.export(f"hand_{idx}.ply")
+    
 class GRABDataset(Dataset):
     def __init__(self, cfg, mode='train', need_process=False):
         
@@ -107,16 +124,6 @@ class GRABDataset(Dataset):
         ).type(torch.float32) # torch.tensor: [NH, 3]
         self.ds['rhand_data']['points'][batched_idx] = gt_hand_pc.cpu()
         
-        # pert data
-        # hand_pose = self.ds['rhand_data']['fullpose'][batched_idx]
-        # hand_beta = [self.sbj_betas[self.frame_sbjs[id]] for id in batched_idx]
-        # hand_beta = torch.stack(hand_beta, dim=0)
-        # pert_pose = hand_pose + torch.randn(hand_pose.size()) * 0.01
-        # print(pert_pose.shape, hand_beta.shape)
-        
-        # pert_hand_model: MANOOutput = self.mano_layer(pert_pose, hand_beta)
-        # self.ds['rhand_data']['observed_hand_pc'][batched_idx] = pert_hand_model.verts
-        
     
     def __load_tools__(self):
         sub_path = os.path.join(self.tools_path, 'subject_meshes')
@@ -139,11 +146,14 @@ class GRABDataset(Dataset):
         return len(self.frame_names)
 
     def __getitem__(self, idx):
-                
-        obj_pc = self.ds['object_data']['verts'][idx] #[3000, 3]
+        obj_data = self.ds['object_data']
+        obj_transl = obj_data['transl'][idx]
+        obj_pc = obj_data['verts'][idx] #[3000, 3]
         
         if self.dataset_cfg['fps']:
             obj_pc = pytorch3d.ops.sample_farthest_points(obj_pc.unsqueeze(0), K=self.num_obj_points)[0][0]  # [NO, 3]
+            
+        # obj_rotation = axis_angle_to_matrix(self.ds['object_data']['global_orient'][idx])
         
         sbj_name = self.frame_sbjs[idx]
         hand_beta = self.sbj_betas[sbj_name]
@@ -151,32 +161,33 @@ class GRABDataset(Dataset):
         
         # hand mano param
         rh_data = self.ds['rhand_data']
-        global_rotation_mat = axis_angle_to_matrix(rh_data['global_orient'][idx])
-        global_translation = rh_data['transl'][idx]
-        hand_pose = rh_data['fullpose'][idx]
+        rh_rotation_mat = axis_angle_to_matrix(rh_data['global_orient'][idx])
         
-        # table data
-        plane_data = self.ds['plane_data']
-        # plane_ori = plane_data['global_orient'][idx]
-        # plane_transl = plane_data['transl'][idx]
+        
+        global_translation = rh_data['transl'][idx]
+        hand_pose = rh_data['hand_pose'][idx]
+        hand_points = rh_data['points'][idx]
+        
+        obj_pc = obj_pc - obj_transl
+        hand_points = hand_points - obj_transl
+        global_translation = global_translation - obj_transl
+        
+        
         
         """return data should be same as dex dataset"""
         if self.cfg["network_type"] == "ipdf":
-            plane_pose = plane_data['transform'][idx]
-            global_rotation_mat = plane_pose[:3, :3] @ global_rotation_mat
-            obj_gt_rotation = global_rotation_mat.T  # so that obj_gt_rotation @ obj_pc is what we want
-            # place the table horizontally
-            obj_pc = obj_pc @ plane_pose[:3, :3].T + plane_pose[:3, 3]
+            # global_rotation_mat = plane_pose[:3, :3] @ global_rotation_mat
+            obj_gt_rotation = rh_rotation_mat.T  # so that obj_gt_rotation @ obj_pc is what we want
 
             ret_dict = {
                 "obj_pc": obj_pc,
                 "obj_gt_rotation": obj_gt_rotation,
-                "world_frame_hand_rotation_mat": global_rotation_mat,
+                "world_frame_hand_rotation_mat": rh_rotation_mat,
             }
         elif self.cfg["network_type"] == "glow":  # TODO: 2: glow
-            canon_obj_pc = obj_pc @ global_rotation_mat
+            canon_obj_pc = obj_pc @ rh_rotation_mat
             hand_rotation_mat = np.eye(3)
-            hand_translation = global_translation @ global_rotation_mat
+            hand_translation = global_translation @ rh_rotation_mat
             ret_dict = {
                 "obj_pc": obj_pc,
                 "canon_obj_pc": canon_obj_pc,
@@ -185,13 +196,14 @@ class GRABDataset(Dataset):
                 "canon_translation": hand_translation,
             }
         elif self.cfg["network_type"] == "cm_net":  # TODO: 2: Contact Map
+            contact_map = contact_map_of_m_to_n(obj_pc, hand_points)  # [NO]
+            
             # Canonicalize pc
-            obj_pc = obj_pc @ global_rotation_mat
-            hand_rotation_mat = np.eye(3)
-            hand_translation = global_translation @ global_rotation_mat
+            obj_pc = obj_pc @ rh_rotation_mat # R^-1 X
+            hand_translation = global_translation @ rh_rotation_mat
     
-            gt_hand_pc = rh_data['points'][idx] + hand_translation
-            contact_map = contact_map_of_m_to_n(obj_pc, gt_hand_pc)  # [NO]
+            gt_hand_pc = (hand_points-global_translation) @ rh_rotation_mat  + hand_translation
+            
 
             ret_dict = {
                 "canon_obj_pc": obj_pc,
@@ -210,15 +222,30 @@ class GRABDataset(Dataset):
             ret_dict = {
                 "obj_pc": obj_pc,
                 "hand_qpos": hand_pose,
-                "world_frame_hand_rotation_mat": global_rotation_mat,
+                "world_frame_hand_rotation_mat": rh_rotation_mat,
                 "world_frame_hand_translation": global_translation
             }
         ret_dict["obj_scale"] = 1
+        ret_dict["beta"] = hand_beta
         return ret_dict
     
 
-# if __name__ == '__main__':
-#     cfg = {
+if __name__ == '__main__':
+    cfg = {
+        'dataset': {
+            'root_path': "/remote-home/share/yumeng/GRAB-Unidexgrasp-data/",
+            'dataset_dir': "grab",
+            'hand_global_trans': [0, -0.7, 0.2],
+            'hand_global_rotation_xyz': [-1.57, 0, 3.14],
+            'num_obj_points': 1024,
+            'num_hand_points': 1024,
+            'perturb': True,
+            'fps': True,
+        },
         
-#     }
-#     dataset = GRABDataset()
+        'network_type':'cm_net'
+        
+    }
+    dataset = GRABDataset(cfg)
+    ret_dict = dataset[0]
+    export_data(ret_dict['canon_obj_pc'], ret_dict['gt_hand_pc'], ret_dict['contact_map'])

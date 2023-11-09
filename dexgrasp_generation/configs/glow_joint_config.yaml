@@ -44,11 +44,11 @@ total_epoch: 250
 resume_epoch: -1
 
 # device
-cuda_id: 5
+cuda_id: 4
 
 # data loader
-num_workers: 8
-batch_size: 64
+num_workers: 2
+batch_size: 32
 
 # hydra
 hydra:

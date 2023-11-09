@@ -4,7 +4,7 @@ network:
   type: pointnet
 
 flow:
-  points: 45 #22
+  points: 24 #22
   feature_dim: 1024
   hidden_dim: 64
   layer: 21
@@ -12,6 +12,7 @@ flow:
 
 
 sample_num: 8
+pose_dim: 24 #45
 
 loss_weight:
   nll: 1.0

@@ -106,9 +106,6 @@ class DexGlowNet(nn.Module):
 
         if not 'canon_obj_pc' in dic.keys():
             dic['canon_obj_pc'] = torch.einsum('nab,nbc->nac', dic['obj_pc'], dic['sampled_rotation'])
-            plane = dic['plane'].clone()
-            plane[:, :3] = torch.einsum('nb,nbc->nc',plane[:, :3], dic['sampled_rotation'])
-            ret_dict['canon_plane'] = plane
             
         pc = dic['canon_obj_pc']
         batch_size=pc.shape[0]
@@ -185,6 +182,8 @@ class DexGlowNet(nn.Module):
             ret_dict['sr_sampled_hand_qpos'] = sr_qpos_samples
             ret_dict['sr_sampled_translation'] = sr_trans_samples
             sr_pc = sr_pc.unsqueeze(1).repeat(1,self.sample_num,1,1).reshape(batch_size*self.sample_num,-1,3)
+            
+            
             cmap_loss, cmap_losses = self.cmap_func(sr_pc, sr_trans_samples.reshape(batch_size*self.sample_num, 3), sr_qpos_samples.reshape(batch_size*self.sample_num, self.pose_dim))
             ret_dict['cmap_loss']=cmap_loss.mean()#.reshape(batch_size,-1).mean(dim=-1)
             for key in cmap_losses.keys():
