@@ -180,7 +180,7 @@ def gen_four_txt(path:str):
             file_writer.write("")
 
 if __name__ == "__main__":
-    path = "/home/lab4dv/data/bags/dust_cleanning_spreyer/dust_cleanning_spreyer_5_20231105"
+    path = "/home/lab4dv/data/bags/dust_cleanning_spreyer/dust_cleanning_spreyer_6_20231105"
     
     gen_one_pc_to_use_for_init_pose(path)
     gen_four_txt(path)
