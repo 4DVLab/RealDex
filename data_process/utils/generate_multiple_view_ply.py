@@ -1,4 +1,3 @@
-# %%
 import os
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs import point_cloud2
@@ -21,11 +20,6 @@ from common import common
 
 
 
-# %%
-
-
-
-
 
 class multiple_view_ply:
 
@@ -45,6 +39,7 @@ class multiple_view_ply:
         self.cam_transform_list = []
         # calibration value read from local file 
 
+        # for the wrong extrinsics, read from calibration file then calculation is needed
         # extrinsics  
 
         # for i in range(4):
@@ -99,8 +94,7 @@ class multiple_view_ply:
 
         self.read_intrinsics_from_local()
 
-    def read_intrinsics_from_global():
-         pass
+
 
     def read_intrinsics_from_local(self):
         with open(self.root_path / Path("global_name_position/0.txt"), "r") as f:
@@ -142,7 +136,7 @@ class multiple_view_ply:
         return pcd
 
 
-    def process_single_view(self, cam:int , num:int):
+    def process_single_view(self, cam:int , num:int):#crop and filter the point cloud 
         # read from file 
 
         if self.read_from_ply:
@@ -250,6 +244,9 @@ def generate_multiple_view_ply(root_path, middle_path):
     mvp.read_multiple_view()
 
 
+
+
+
 root_folder_list = ["/home/lab4dv/data/bags/", "/home/lab4dv/data/ssd/", "/home/lab4dv/data/sda/" ]
 bags_folder_list = ["ramen_noodles", "wd40"]
 ssd_folder_list = ["castle", "cream_cake", "duck_toy", "flower_bread", "light", "xbox", "yibu"]
@@ -262,6 +259,3 @@ generate_multiple_view_ply(root_folder_list[1]+ssd_folder_list[5], "xbox_6_20231
 
 
 
-
-
-# %%

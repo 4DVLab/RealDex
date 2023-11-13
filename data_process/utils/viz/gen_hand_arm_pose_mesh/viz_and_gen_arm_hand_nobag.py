@@ -163,8 +163,8 @@ def get_global_position_with_timeslot(time_index, bag_folder):
         position_dict = json.load(json_file)
     return position_dict
 
-
 def get_all_names_in_ros(bag_folder):
+
     position_dict = get_global_position_with_timeslot(0, bag_folder)
     names = set([key for key in position_dict.keys()])
     return names
@@ -576,7 +576,7 @@ if __name__ == "__main__":
     ros_prefix_path = "/media/tony/T7/camera_data/configuration/hand_arm_mesh"
     configuration_path = "/media/tony/T7/camera_data/configuration"
     bag_folder = "/media/tony/T7/yyx_tmp/for_dust_cleanning_sprayer_tracking/dust_cleanning_spreyer/dust_cleanning_spreyer_1_20231105"
-    gen_one_stamp_all_tf(bag_folder,1015)
+    # gen_one_stamp_all_tf(bag_folder,1015)
 
     # bag_folder = "/media/tony/T7/camera_data/banana/"
-    # gen_on_stamp_hand_arm_mesh(configuration_path,bag_folder,ros_prefix_path,stamp_index_begin=0,stamp_index_end=50000)
+    gen_on_stamp_hand_arm_mesh(configuration_path,bag_folder,ros_prefix_path,stamp_index_begin=0,stamp_index_end=50000)
