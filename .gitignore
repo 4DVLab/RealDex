@@ -185,3 +185,4 @@ cython_debug/
 #.idea/
 .DS_Store
 mjcf/~$adow_hand_vis.xml
+./history
