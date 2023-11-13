@@ -27,7 +27,7 @@ class HandModel(nn.Module):
         
         # self.mano_path = os.path.join(mano_path, 'MANO_RIGHT.pkl')
             
-        self.mano_layer = ManoLayer(use_pca=False, flat_hand_mean=False)
+        self.mano_layer = ManoLayer(use_pca=True, ncomps=24, flat_hand_mean=True)
         self.anchor_layer = AnchorLayer()
         # self.mano_faces = self.mano_layer.get_mano_closed_faces().unsqueeze(0)
         self.mano_faces = self.mano_layer.th_faces.unsqueeze(0)
