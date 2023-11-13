@@ -1,15 +1,14 @@
 # Data Collection List
 
 
+yibu_6 is not segmented yet
 
-goody
-
-|object name|num of sequense|num of grasp|upload bags|read from bag|merged|tracking|well done|uploaded well done|
-|---|---|---| --- | --- | ---| ---| ---|---|
-|apple|5|118||||
-|banana |4| 104 | |  done |   |
+|object name|num of sequense|num of grasp|upload bags|read from bag|merged|tracking|well done|uploaded well done|labeled|split|
+|---|---|---| --- | --- | ---| ---| ---|---|---|---|
+|apple|5|118||||||||y|
+|banana |4| 104 | |  done |   ||
 |big_eye_toy||||||||
-|blue_cup|||||
+|blue_cup|||||||
 |blue_magnet_toy|1|17||
 |body_lotion|||||
 |castle_toy|||||
@@ -20,9 +19,9 @@ goody
 |croissant|4|||done||
 |dinosaur_toy||||
 |duck_toy||||||||
-|dust_cleanning_spreyer|6|105|||
+|dust_cleanning_spreyer|6|105||||||||y|
 |fat_toy|1|17||||
-|flower_cake|||||||
+|flower_cake||||||||||y?|
 |girl_toy|3|55||||
 |goji_jar|7|103|||
 |green_dragon_toy||||||||
@@ -52,13 +51,14 @@ goody
 |strawberry|||
 |strawberry_cake|||||||
 |tea_jar|||||
-|thunder_toy|4|97||done
+|thunder_toy|5|97||done
 |tolet_cleaning_sprayer|||||||
 |wd40|6|110||||
 |xbox|6|117|||||
-|yangtao| 6|103 | |done| done|done| || 
+|yangtao| 6|103 | |done| done|done| |||y| 
 |yibu| 6|||done|
-|yogurt|8|108|
+|yogurt|8|108||||||||y|
+
 
 
 
