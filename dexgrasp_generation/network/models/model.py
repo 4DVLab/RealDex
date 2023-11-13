@@ -38,11 +38,10 @@ class BaseModel(nn.Module):
         for key, item in self.loss_weights.items():
             if key in loss_dict:
                 total_loss += loss_dict[key] * item
-        # loss_dict['total_loss'] = total_loss
-        total_loss = float(total_loss)
-        loss_tensor = torch.tensor([total_loss], requires_grad=True)
-        loss_dict['total_loss'] = loss_tensor
+        
+        loss_dict['total_loss'] = total_loss
         self.loss_dict = loss_dict
+        # print(loss_dict)
 
     def update(self):
         self.pred_dict = self.net(self.feed_dict)
@@ -166,6 +165,7 @@ class ContactModel(BaseModel):
             gt_bins_labels = torch.argmax(gt_bins, dim=-1)  # [B, N]
             pred_contact_map = pred_contact_map.transpose(2, 1)  # [B, 10, N]
             loss_dict["contact_map"] = self.cm_bin_loss(pred_contact_map, gt_bins_labels)
+        
 
         self.summarize_losses(loss_dict)
 

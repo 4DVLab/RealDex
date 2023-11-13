@@ -20,6 +20,7 @@ build/
 devel/
 *.ply
 *.pcd
+data_preprocess/ours/assets/*
 
 
 # Byte-compiled / optimized / DLL files

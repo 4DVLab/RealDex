@@ -9,84 +9,71 @@ import json
 import torch
 from torch import nn
 import pytorch_kinematics as pk
-import trimesh
-import pytorch3d.structures
+import pytorch3d
+from pytorch3d.structures import Meshes
+from pytorch3d.ops import sample_points_from_meshes, sample_farthest_points
 import pytorch3d.ops
 import pytorch3d.transforms
 from csdf import index_vertices_by_faces, compute_sdf
 import pickle
 from manotorch.manolayer import ManoLayer, MANOOutput
+from manotorch.anchorlayer import AnchorLayer
+from utils.tta_loss import inter_penetr_loss, get_NN
+from network.models.loss import min_distance_from_m_to_n, contact_map_of_m_to_n
 
 class HandModel(nn.Module):
-    def __init__(self):
+    def __init__(self, n_surface_points=3000):
         super().__init__()
         
         # self.mano_path = os.path.join(mano_path, 'MANO_RIGHT.pkl')
             
         self.mano_layer = ManoLayer(use_pca=False, flat_hand_mean=False)
-        self.mano_faces = self.mano_layer.get_mano_closed_faces()
-        self.hand_beta = torch.zeros(1, 10)
+        self.anchor_layer = AnchorLayer()
+        # self.mano_faces = self.mano_layer.get_mano_closed_faces().unsqueeze(0)
+        self.mano_faces = self.mano_layer.th_faces.unsqueeze(0)
+        self.closed_faces = self.mano_layer.get_mano_closed_faces().unsqueeze(0)
+        self.n_surface_points = n_surface_points
         
-    def forward(self, hand_pose, points, with_penetration=True, with_surface_points=True, with_contact_candidates=True, with_penetration_keypoints=True):
+        
+    def forward(self, hand_pose, obj_points, hand_beta=None, with_penetration=True, with_meshes=False, with_surface_points=True, with_contact_candidates=True, with_penetration_keypoints=True):
         B,_ = hand_pose.shape
-        hand_beta = self.hand_beta.expand(B, -1).to(hand_pose.device)
-        rh_m:MANOOutput = self.mano_layer(hand_pose, hand_beta)
+        if hand_beta is None:
+            hand_beta =  torch.zeros(1, 10)
+            hand_beta = hand_beta.expand(B, -1).to(hand_pose.device)
         
-        batch_size = len(hand_pose)
         global_translation = hand_pose[:, 0:3]
-        global_rotation = pytorch3d.transforms.axis_angle_to_matrix(hand_pose[:, 3:6])
-        current_status = self.chain.forward_kinematics(hand_pose[:, 6:])
-
+        hand_faces = self.mano_faces.expand(B, -1, -1).to(hand_pose.device)
+        closed_faces = self.closed_faces.expand(B, -1, -1).to(hand_pose.device)
+        
+        rh_m:MANOOutput = self.mano_layer(hand_pose[:, 3:], hand_beta)
+        hand_verts = rh_m.verts + global_translation[:, None, :]
+        
+        nn_dists, nn_idx = get_NN(src_xyz=obj_points, trg_xyz=hand_verts)
+        
         hand = {}
+        # hand['distances'] = min_distance_from_m_to_n(obj_points, hand_verts)
+        hand['cmap'] = contact_map_of_m_to_n(obj_points, hand_verts)
+        if with_penetration:
+            hand['penetration'] = inter_penetr_loss(hand_xyz=hand_verts, hand_face=closed_faces,
+                                                    obj_xyz=obj_points, nn_dist=nn_dists, nn_idx=nn_idx)
 
-        if object_pc is not None:
-            distances = []
-            penetration = []
-            x = (object_pc - global_translation.unsqueeze(1)) @ global_rotation  # (batch_size, num_samples, 3)
-            for link_name in self.mesh:
-                if link_name in ['robot0:ffknuckle_child', 'robot0:mfknuckle_child', 'robot0:rfknuckle_child', 'robot0:lfknuckle_child', 'robot0:thbase_child', 'robot0:thhub_child']:
-                    continue
-                matrix = current_status[link_name].get_matrix()
-                x_local = (x - matrix[:, :3, 3].unsqueeze(1)) @ matrix[:, :3, :3]
-                x_local = x_local.reshape(-1, 3)  # (batch_size * num_samples, 3)
-                if 'geom_param' not in self.mesh[link_name]:
-                    face_verts = self.mesh[link_name]['face_verts']
-                    dis_local, _, dis_signs, _, _ = compute_sdf(x_local, face_verts)
-                    dis_local = dis_local * (-dis_signs)
-                    if with_penetration:
-                        penetration_local = dis_local
-                else:
-                    height = self.mesh[link_name]['geom_param'][1] * 2
-                    radius = self.mesh[link_name]['geom_param'][0]
-                    projected_point = x_local.detach().clone()
-                    projected_point[:, :2] = 0
-                    projected_point[:, 2] = torch.clamp(projected_point[:, 2], 0, height)
-                    direction = torch.nn.functional.normalize(x_local.detach() - projected_point)
-                    direction = torch.where(direction.norm(dim=1, keepdim=True) < 0.9, torch.tensor([1, 0, 0], dtype=torch.float, device=self.device), direction)
-                    nearest_point = projected_point + radius * direction
-                    dis_local = (x_local - nearest_point).square().sum(dim=1)  # (batch_size * num_samples)
-                    mask = (x_local.detach() - projected_point).norm(dim=1) < radius
-                    dis_local = torch.where(mask, dis_local, -dis_local)
-                    if with_penetration:
-                        if link_name not in ['robot0:thmiddle_child', 'robot0:thdistal_child', 'robot0:thproximal_child']:
-                            nearest_point = projected_point.clone()
-                            nearest_point[:, 1] = -radius
-                            penetration_local = (x_local - nearest_point).square().sum(dim=1)  # (batch_size * num_samples)
-                            penetration_local = torch.where(mask, penetration_local, -penetration_local)
-                        else:
-                            nearest_point = projected_point.clone()
-                            nearest_point[:, 0] = -radius
-                            penetration_local = (x_local - nearest_point).square().sum(dim=1)  # (batch_size * num_samples)
-                            penetration_local = torch.where(mask, penetration_local, -penetration_local)
-                            # penetration_local = dis_local
-                distances.append(dis_local.reshape(x.shape[0], x.shape[1]))  # (batch_size, num_samples)
-                if with_penetration:
-                    penetration.append(penetration_local.reshape(x.shape[0], x.shape[1]))
-            distances = torch.max(torch.stack(distances), dim=0)[0]
-            hand['distances'] = distances
-            if with_penetration:
-                penetration = torch.max(torch.stack(penetration), dim=0)[0]
-                hand['penetration'] = penetration
+        if with_meshes:
+            hand['vertices'] = hand_verts
+            hand['faces'] = hand_faces
+        
+        if with_surface_points:
+            # meshes = Meshes(verts=hand_verts, faces=hand_faces)
+            # surface_points = sample_points_from_meshes(meshes, num_samples=self.n_surface_points)
+            hand['surface_points'] = hand_verts
+        
+        if with_contact_candidates:
+            hand['contact_candidates'] = self.anchor_layer(hand_verts)
+
+        if with_penetration_keypoints:
+            hand['penetration_keypoints'] = hand_verts
+            
+        return hand
+
         
     
 
@@ -103,7 +90,7 @@ class AdditionalLoss(nn.Module):
         #     device=device,
         # )
         self.hand_model = HandModel()
-        self.cmap_func = cmap_net.forward
+        self.cmap_func = cmap_net.forward # cmap net is the contact net
         self.normalize_factor=tta_cfg['normalize_factor']
         self.weights = dict(
             weight_cmap=tta_cfg['weight_cmap'],
@@ -120,13 +107,13 @@ class AdditionalLoss(nn.Module):
         discretized_cmap_pred = self.cmap_func(dict(canon_obj_pc=points, observed_hand_pc=hand['surface_points']))['contact_map'].detach().exp()# [B, N, 10]
         arange = (torch.arange(0, discretized_cmap_pred.shape[-1], dtype=discretized_cmap_pred.dtype, device=discretized_cmap_pred.device)+0.5)
         cmap_pred = torch.mean(discretized_cmap_pred * arange, dim=-1).detach()
-        cmap = 2 - 2 * torch.sigmoid(self.normalize_factor * (hand['distances'].abs() + 1e-8).sqrt())  # calculate pseudo contactmap: 0~3cm mapped into value 1~0
+        cmap = hand['cmap'] # calculate pseudo contactmap: 0~3cm mapped into value 1~0
         loss, losses = cal_loss(hand, cmap, cmap_pred, points, self.num_obj_points, **self.weights, verbose=True)
         return loss, losses
     
     def tta_loss(self, hand_pose, points, cmap_pred, plane_parameters):
         hand = self.hand_model(hand_pose, points, with_penetration=True, with_surface_points=True, with_contact_candidates=True, with_penetration_keypoints=True)
-        cmap = 2 - 2 * torch.sigmoid(self.normalize_factor * (hand['distances'].abs() + 1e-8).sqrt())
+        cmap = hand['cmap']
         loss = cal_loss(hand, cmap, cmap_pred, points, plane_parameters, self.num_obj_points, **self.weights)
         return loss
 
@@ -151,11 +138,11 @@ def cal_loss(hand, cmap_labels, cmap_pred, object_pc, num_obj_points, verbose=Fa
     loss_dis = dis_pred[small_dis_pred].sqrt().sum()# / (small_dis_pred.sum() + 1e-4)
 
     # loss_spen
-    dis_spen = (penetration_keypoints.unsqueeze(1) - penetration_keypoints.unsqueeze(2) + 1e-13).square().sum(3).sqrt()
-    dis_spen = torch.where(dis_spen < 1e-6, 1e6 * torch.ones_like(dis_spen), dis_spen)
-    dis_spen = 0.02 - dis_spen
-    dis_spen[dis_spen < 0] = 0
-    loss_spen = dis_spen.sum() / batch_size
+    # dis_spen = (penetration_keypoints.unsqueeze(1) - penetration_keypoints.unsqueeze(2) + 1e-13).square().sum(3).sqrt()
+    # dis_spen = torch.where(dis_spen < 1e-6, 1e6 * torch.ones_like(dis_spen), dis_spen)
+    # dis_spen = 0.02 - dis_spen
+    # dis_spen[dis_spen < 0] = 0
+    # loss_spen = dis_spen.sum() / batch_size
 
     # loss_tpen
     # plane_distances[plane_distances > 0] = 0
@@ -166,20 +153,8 @@ def cal_loss(hand, cmap_labels, cmap_pred, object_pc, num_obj_points, verbose=Fa
 
 
     # loss
-    loss = weight_cmap * loss_cmap + weight_pen * loss_pen + weight_dis * loss_dis + weight_spen * loss_spen #+ weight_tpen * loss_tpen
+    loss = weight_cmap * loss_cmap + weight_pen * loss_pen + weight_dis * loss_dis #+ weight_spen * loss_spen #+ weight_tpen * loss_tpen
     if verbose:
-        return loss, dict(loss=loss, loss_cmap=loss_cmap, loss_pen=loss_pen, loss_dis=loss_dis, loss_spen=loss_spen) #, loss_tpen=loss_tpen)
+        return loss, dict(loss=loss, loss_cmap=loss_cmap, loss_pen=loss_pen, loss_dis=loss_dis) #, loss_spen=loss_spen) #, loss_tpen=loss_tpen)
     else:
         return loss
-
-def add_rotation_to_hand_pose(hand_pose, rotation):
-    translation = hand_pose[..., :3]
-    added_rot_aa = hand_pose[..., 3:6]
-    added_rot_mat = pytorch3d.transforms.axis_angle_to_matrix(added_rot_aa)
-    hand_qpos = hand_pose[..., 6:]
-
-    new_translation = torch.einsum('na,nba->nb', translation, rotation)
-    new_rotation_mat = rotation @ added_rot_mat
-    new_rotation_aa = pytorch3d.transforms.matrix_to_axis_angle(new_rotation_mat)
-
-    return torch.cat([new_translation, new_rotation_aa, hand_qpos], dim=-1)
