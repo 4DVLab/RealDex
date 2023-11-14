@@ -2,22 +2,67 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from models.shadow_hand_builder import sr_builder
+from models.shadow_hand_builder import ShadowHandBuilder
 from utils.tta_util import get_NN, inter_penetr_loss, contact_map_of_m_to_n
 from utils.tta_util import check_ray_triangle_intersection, batched_index_select
 
+import numpy as np
+import open3d as o3d
+
 class SR_Loss(nn.Module):
     """Loss related to shadow hand"""
-    def __init__(self, hand_builder:sr_builder):
+    def __init__(self, hand_builder):
         super(SR_Loss, self).__init__()
         self.hand_builder = hand_builder
-
-    def pc_diff_loss(self, rh_m, pc):
-        sr_meshes = rh_m['meshes']
-        sr_points_list = rh_m['sampled_pts']
+        self.mse_loss = torch.nn.MSELoss()
         
+    def setup_tgt(self, tgt_pc):
+        self.tgt_pc = tgt_pc
+        self.tgt_feat = self.compute_feature(tgt_pc.cpu())
+        self.tgt_kdtree = o3d.geometry.KDTreeFlann()
+        self.tgt_kdtree.set_feature(self.tgt_feat)
         
     
+    def compute_feature(self, pc, pc_normal=None):
+        pc_o3d = o3d.geometry.PointCloud()
+        pc_o3d.points = o3d.utility.Vector3dVector(pc)
+        if pc_normal is None:
+            pc_o3d.estimate_normals()
+        else:
+            pc_o3d.normals = o3d.utility.Vector3dVector(pc_normal)
+        pc_feature = o3d.pipelines.registration.compute_fpfh_feature(pc_o3d, 
+                o3d.geometry.KDTreeSearchParamHybrid(radius=0.2, max_nn=30))
+        return pc_feature
+    
+    def find_correspondences(self, source, target_kdtree, max_distance=np.inf):
+        """
+        :param source: 
+        :param target: 
+        :param max_distance: correspndence will be eliminated if the distance is larger than max_distance
+        :return: correspondence index
+        """
+        source_feat = self.compute_feature(source.cpu())
+        source_indices = []
+        target_indices = []
+        for i in range(len(source_feat.data)):
+            dist, idx, _ = target_kdtree.search_knn_vector_xd(source_feat.data[i], 1)
+            print(dist)
+            if dist < max_distance:
+                source_indices.append(i)
+                target_indices.append(idx[0])
+        
+        return source_indices, target_indices
+
+    def pc_diff_loss(self, sr_points, sr_points_normal):
+        print(sr_points)
+        with torch.no_grad():
+            sr_points_feat = self.compute_feature(sr_points.detach().cpu(), sr_points_normal.detach().cpu())
+            src_index, tgt_index = self.find_correspondences(sr_points_feat.cpu(), self.tgt_kdtree, max_distance=1e-3)
+        # nn_dists, _ = get_NN(sr_points[src_index], self.tgt_pc[tgt_index])
+        # loss = torch.mean(nn_dists)
+        loss = self.mse_loss(sr_points[src_index], self.tgt_pc[tgt_index])
+        return loss
+        
     def forward(self, global_rotation, transl, hand_pose, obj_points):
         
         rh_m = self.hand_builder.get_hand_model(global_rotation, transl, hand_pose)

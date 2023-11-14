@@ -90,13 +90,17 @@ class ShadowHandBuilder():
             bbox_vol = 1
             for i in range(3):
                 bbox_vol *= bbox[:, i, 1] - bbox[:, i, 0]
-            print(body.link.name, bbox_vol)
+            # print(body.link.name, bbox_vol)
             
-            sampled_pts = sample_points_from_meshes(meshes=mesh, num_samples=self.num_sample)
+            num_sample = bbox_vol / 1e-5 * self.num_sample
+            num_sample = self.num_sample / 10 if num_sample < self.num_sample / 10 else num_sample
+            
+            sampled_pts, pts_normal = sample_points_from_meshes(meshes=mesh, num_samples=int(num_sample), return_normals=True)
             self.mesh[body.link.name] = {   'vertices': mesh.verts_packed(),
                                             'faces': mesh.faces_packed(),
                                             'face_normals': mesh.faces_normals_packed(),
-                                            'sampled_pts':sampled_pts
+                                            'sampled_pts':sampled_pts.squeeze(),
+                                            'sampled_pts_normal':pts_normal.squeeze()
                                         }
         
         for children in body.children:
@@ -144,19 +148,22 @@ class ShadowHandBuilder():
             assert hand_qpos_dict is not None, "Both qpos and qpos_dict are None!"
             qpos = np.array([hand_qpos_dict[name] for name in hand_qpos_names], dtype=np.float32)
         jn = self.chain.get_joint_parameter_names()
-        print(len(jn), jn)
+        # print(len(jn), jn)
         current_status = self.chain.forward_kinematics(qpos[None, :])
 
         verts = []
         faces = []
         face_normals = []
         points = []
+        pts_normals_list = []
         
 
         for link_name in self.mesh:
             v = current_status[link_name].transform_points(self.mesh[link_name]['vertices'])
             pts = current_status[link_name].transform_points(self.mesh[link_name]['sampled_pts'])
             normals = current_status[link_name].transform_normals(self.mesh[link_name]['face_normals'])
+            pts_normals = current_status[link_name].transform_normals(self.mesh[link_name]['sampled_pts_normal'])
+            
             
             v = v @ rotation_mat.T + world_translation
             pts = pts @ rotation_mat.T + world_translation
@@ -167,9 +174,13 @@ class ShadowHandBuilder():
             faces.append(f)
             points.append(pts)
             face_normals.append(normals)
+            pts_normals_list.append(pts_normals)
 
         meshes = Meshes(verts=verts, faces=faces)
-        ret_dict = {'meshes': meshes, 'sampled_pts': points, 'face_normals': face_normals}
+        ret_dict = {'meshes': meshes, 
+                    'sampled_pts': points, 
+                    'face_normals': face_normals, 
+                    'sampled_pts_normal':pts_normals_list}
             
         return ret_dict
 
