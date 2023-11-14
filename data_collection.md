@@ -1,7 +1,51 @@
 # Data Collection List
 
+|object name|num of sequense|num of grasp|upload bags|read from bag|merged|tracking|well done|uploaded well done|labeled|split|
+|---|---|---| --- | --- | ---| ---| ---|---|---|---|
+|apple|5|118|done|done||||||y|
+|banana |4| 104 |done |  done | |
+|blue_magnet_toy(magnet)|1|17|done|done|
+|castle_toy|4|109|done|done|
+|cream_cake|1|21|done|done|
+|croissant|4|?|done|done||
+|duck_toy|5|107|done|done|||
+|dust_cleanning_spreyer|6|105|done|done||||||y|
+|fat_toy(pangding)|1|17|done|done||
+|flower_cake(flower_bread)|4|94|done|done||||||y?|
+|girl_toy|3|55|done|done||
+|goji_jar|7|103|done|done|
+|instance_noodles|3|62|done|done|||
+|light|4|47|done|done||||
+|lion_toy(lion)|1|22|done|done|||||
+|mango|5|116|done|done|||
+|persimmon(shizi)|1|20|done|done|||||||
+|purple_car|1|21|done|done||
+|ramen_noodles|3|52|done|done|||
+|sprayer|8|97|done|done||
+|thunder_toy|5|97|done|done
+|wd40|6|110|done|done||
+|xbox|6|117|done|done|||
+|yangtao| 6|103 | done|done| done|done| |||y| 
+|yibu| 6|?|done|done|
+|yogurt|8|108|done|done||||||y|
 
-yibu_6 is not segmented yet
+--------------
+
+
+
+NoO: 26
+
+NoS: 108
+
+NoG: 1822+?+?
+
+done: 0
+
+
+
+
+
+
 
 |object name|num of sequense|num of grasp|upload bags|read from bag|merged|tracking|well done|uploaded well done|labeled|split|
 |---|---|---| --- | --- | ---| ---| ---|---|---|---|

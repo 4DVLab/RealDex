@@ -5,6 +5,11 @@ import json
 from pathlib import Path 
 import os
 import shutil
+from typing import List
+
+
+
+
 def undistort_image(image_path, camera_matrix, distortion_coeffs):
     image = cv2.imread(str(image_path), cv2.IMREAD_UNCHANGED)
     
@@ -34,8 +39,8 @@ def create_point_cloud_from_rgb_and_depth(undistorted_rgb, undistorted_depth, ca
     # Return the point cloud
     return pcd
 
-def get_camera_info(param_path):
-    info_path = Path(param_path) / Path("camera_info") / Path("info.txt")
+def get_camera_info(param_folder_path):
+    info_path = Path(param_folder_path) / Path("camera_info") / Path("info.txt")
     with open(info_path,"r") as json_file:
         camera_param = json.load(json_file)
 
@@ -44,6 +49,10 @@ def get_camera_info(param_path):
 
     return camera_param
 
+def get_camera_info_in_folders(folder_paths_to_read_camera_info:List[Path]):
+    camera_infos = [get_camera_info(folder_path) for folder_path in folder_paths_to_read_camera_info]
+    return camera_infos
+
 
 def find_time_closet(slot,time_stamps):
     diff = np.abs(time_stamps - slot)
@@ -51,41 +60,75 @@ def find_time_closet(slot,time_stamps):
     return index
 
 
-def gen_aligned_pc(bag_data_path:str):
-    cam_num = 4
+
+
+def concat_target_folders(root_folder:Path,folder_postfixs: List[Path] = []) ->None:
+    result_path_list = [root_folder / post_path for post_path in folder_postfixs]
+    return result_path_list
+
+
+def gen_pcd_with_depth_and_rgb_paths(rgb_param,
+                               depth_param,
+                               rgb_img_folder,
+                               rgb_img_name,
+                               depth_img_folder,
+                               depth_img_name
+                               ):
+    
+    rgb_img_path = rgb_img_folder / Path(str(rgb_img_name) + ".png")
+    depth_img_path = depth_img_folder / Path(str(depth_img_name) + ".png")
+
+    undistorted_rgb = undistort_image(rgb_img_path, rgb_param["K"], rgb_param["D"])
+    undistorted_rgb = cv2.cvtColor(undistorted_rgb, cv2.COLOR_BGR2RGB)
+
+    undistorted_depth = undistort_image(depth_img_path, depth_param["K"], depth_param["D"])
+    pcd = create_point_cloud_from_rgb_and_depth(
+        undistorted_rgb, undistorted_depth, rgb_param["K"], rgb_param["width"], rgb_param["height"])
+    return pcd
+
+
+
+
+def gen_time_aligned_pc(bag_data_path:str,cam_nums = [0,1,2,3],img_nums = [num for num in range(0,2000,1)],pcd_save_jud =False):#set a range 
+
+    img_nums = img_nums.sort()
+
     image_prefix_folder = ["depth_to_rgb","rgb"]
-    for cam_index in np.arange(cam_num):
+    for cam_index in cam_nums:
+
+
         cam_folder = Path(bag_data_path) / Path("cam" + str(cam_index))
-        depth_msg_folder = Path(cam_folder) / Path(image_prefix_folder[0])
-        rgb_msg_folder = Path(cam_folder) / Path(image_prefix_folder[1])
+        depth_msg_folder, rgb_msg_folder = concat_target_folders(cam_folder,image_prefix_folder)
         
-        depth_camera_param = get_camera_info(depth_msg_folder)
-        rgb_camera_param = get_camera_info(rgb_msg_folder)
+        depth_camera_param,rgb_camera_param = get_camera_info_in_folders([depth_msg_folder, rgb_msg_folder])
 
         depth_img_folder = depth_msg_folder / Path("image_raw") 
         rgb_img_folder = rgb_msg_folder / Path("image_raw")
 
         depth_stamp = np.loadtxt(depth_img_folder / Path("info.txt"))
         rgb_stamp = np.loadtxt(rgb_img_folder / Path("info.txt"))
+        
+        rgb_stamps_length = rgb_stamp.shape[0]
+
         #以depth为主来生成点云
-        for img_index in np.arange(depth_stamp.shape[0]):
-            rgb_index = find_time_closet(depth_stamp[img_index],rgb_stamp)
+        for rgb_img_index in img_nums:
+            if rgb_img_index >= rgb_stamps_length:#enhance the robust of this program
+                return
+            
+            depth_img_index = find_time_closet(rgb_stamp[rgb_img_index], depth_stamp)
 
-            rgb_img_path = rgb_img_folder / Path(str(rgb_index) + ".png")
-            depth_img_path = depth_img_folder / Path(str(img_index) + ".png")
+            pcd = gen_pcd_with_depth_and_rgb_paths(rgb_camera_param,depth_camera_param,rgb_img_folder,str(rgb_img_index),depth_img_folder,str(depth_img_index))
 
-            undistorted_rgb = undistort_image(rgb_img_path, rgb_camera_param["K"], rgb_camera_param["D"])
-            undistorted_rgb = cv2.cvtColor(undistorted_rgb, cv2.COLOR_BGR2RGB)
-
-            undistorted_depth = undistort_image(depth_img_path, depth_camera_param["K"], depth_camera_param["D"])
-            pcd = create_point_cloud_from_rgb_and_depth(undistorted_rgb, undistorted_depth, rgb_camera_param["K"],rgb_camera_param["width"],rgb_camera_param["height"])
             # o3d.visualization.draw_geometries([pcd])
             point_cloud_folder = cam_folder / Path("points2")
-            os.makedirs(point_cloud_folder,exist_ok=True)
-
-            o3d.io.write_point_cloud(str(point_cloud_folder / Path(str(img_index) + ".ply")), pcd)
-
-        shutil.copy2(depth_img_folder / Path("info.txt"),cam_folder / Path("points2"))#将depth_stamp当作是points_stramp,所有的stamp都是以主相机为准
+            if pcd_save_jud:
+                os.makedirs(point_cloud_folder,exist_ok=True)
+                o3d.io.write_point_cloud(str(point_cloud_folder / Path(str(rgb_img_index) + ".ply")), pcd)
+                
+        if pcd_save_jud:
+        # 将depth_stamp当作是points_stramp,所有的stamp都是以主相机为准
+            shutil.copy2(rgb_img_folder / Path("info.txt"),
+                        cam_folder / Path("points2"))
 
 
 def gen_one_pc_to_use_for_init_pose(bag_data_path:str):
