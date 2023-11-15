@@ -82,9 +82,8 @@ if __name__ == "__main__":
     
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    
     data = torch.load(os.path.join(data_dir, "init_pose.pt"))
-    pc = trimesh.load(os.path.join(data_dir, "cam0/pcd/1015_cropped.ply"))
+    pc = trimesh.load(os.path.join(data_dir, "pc_transform_to_world/0_cropped.ply"))
     pc = torch.tensor(pc.vertices).float()
     meshes = estimate_qpos(data, pc)
     meshes.export(os.path.join(out_dir, "./hand.ply"))

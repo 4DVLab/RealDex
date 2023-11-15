@@ -94,11 +94,11 @@ def load_tf_data(tf_path, sr_xml_tree):
             transf_angle = transf_euler[-1]
             
         if key in ['rh_lfmiddle', 'rh_rfmiddle', 'rh_mfmiddle', 'rh_ffmiddle']:
-            transf_angle = angle_range.max() / 2
+            transf_angle = angle_range.max() / 1
         # if key in ['rh_lfdistal','rh_rfdistal', 'rh_mfdistal', 'rh_ffdistal']:
         #     transf_angle *= 10
         if key in ['rh_rfproximal', 'rh_mfproximal', 'rh_ffproximal']:
-            transf_angle = angle_range.max() / 2
+            transf_angle = angle_range.max() / 3
         if key == 'rh_thdistal':
             transf_angle = -transf_euler[1]
         if key in ['rh_lfknuckle', 'rh_rfknuckle', 'rh_mfknuckle', 'rh_thmiddle', 'rh_lfproximal']:
@@ -124,7 +124,9 @@ if __name__ == '__main__':
     palm_correction_path = '/remote-home/share/yumeng/our_data/single_frame/global_postion/palm_pose.json'
     
     
-    qpos = load_tf_data(tf_file_path, sr_builder.sr_xml_tree).cuda()
+    # qpos = load_tf_data(tf_file_path, sr_builder.sr_xml_tree).cuda()
+    qpos = torch.rand(22)
+    qpos = qpos.cuda()
     rh_wrist = load_wrist_data(global_tf_path, palm_correction_path)
     
     rotation_mat = rh_wrist[:3, :3].cuda()

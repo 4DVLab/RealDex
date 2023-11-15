@@ -20,7 +20,9 @@ class SR_Loss(nn.Module):
         self.tgt_pc = tgt_pc
         self.tgt_feat = self.compute_feature(tgt_pc.cpu())
         self.tgt_kdtree = o3d.geometry.KDTreeFlann()
-        self.tgt_kdtree.set_feature(self.tgt_feat)
+        # print(self.tgt_feat.dimension(), self.tgt_feat.num())
+        # print(self.tgt_feat.data)
+        self.tgt_kdtree.set_matrix_data(self.tgt_feat.data)
         
     
     def compute_feature(self, pc, pc_normal=None):
@@ -34,32 +36,33 @@ class SR_Loss(nn.Module):
                 o3d.geometry.KDTreeSearchParamHybrid(radius=0.2, max_nn=30))
         return pc_feature
     
-    def find_correspondences(self, source, target_kdtree, max_distance=np.inf):
+    def find_correspondences(self, source_feat, target_kdtree, max_distance=np.inf):
         """
         :param source: 
         :param target: 
         :param max_distance: correspndence will be eliminated if the distance is larger than max_distance
         :return: correspondence index
         """
-        source_feat = self.compute_feature(source.cpu())
         source_indices = []
         target_indices = []
         for i in range(len(source_feat.data)):
-            dist, idx, _ = target_kdtree.search_knn_vector_xd(source_feat.data[i], 1)
-            print(dist)
-            if dist < max_distance:
+            feat = np.array(source_feat.data[:, i],dtype=np.float64)
+            ret = target_kdtree.search_knn_vector_xd(feat.reshape(-1,1), 1)
+            
+            _, idx, dist = ret
+            if dist[0] < max_distance:
                 source_indices.append(i)
                 target_indices.append(idx[0])
         
         return source_indices, target_indices
 
     def pc_diff_loss(self, sr_points, sr_points_normal):
-        print(sr_points)
         with torch.no_grad():
             sr_points_feat = self.compute_feature(sr_points.detach().cpu(), sr_points_normal.detach().cpu())
-            src_index, tgt_index = self.find_correspondences(sr_points_feat.cpu(), self.tgt_kdtree, max_distance=1e-3)
+            src_index, tgt_index = self.find_correspondences(sr_points_feat, self.tgt_kdtree, max_distance=2e3)
         # nn_dists, _ = get_NN(sr_points[src_index], self.tgt_pc[tgt_index])
         # loss = torch.mean(nn_dists)
+        print(src_index, tgt_index)
         loss = self.mse_loss(sr_points[src_index], self.tgt_pc[tgt_index])
         return loss
         
