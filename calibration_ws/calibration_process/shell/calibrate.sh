@@ -1,7 +1,7 @@
 ## !/bin/zsh
 
-# ./record4mkv.sh
-#  sleep 20
+./record4mkv.sh
+ sleep 20
 
  cd ../../k4a-calibration/build
  make -j$(nproc)

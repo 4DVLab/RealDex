@@ -130,12 +130,28 @@ def gen_time_aligned_pc(bag_data_path:str,cam_nums = [0,1,2,3],img_nums = [num f
             shutil.copy2(rgb_img_folder / Path("info.txt"),
                         cam_folder / Path("points2"))
 
+def load_four_cam_rgb_transform(bag_folder):
+    four_cam_transform = []
+    all_global_position_file_path = Path(bag_folder) / f"global_name_position/0.txt"
+    with open(all_global_position_file_path,"r") as json_reader:
+        all_global_transform = json.load(json_reader)
+        for cam_index in np.arange(4):
+            temp_transform = all_global_transform[f"cam{cam_index}_rgb_camera_link"]
+            four_cam_transform.append(np.array(temp_transform).reshape((4,4)))
+    return four_cam_transform
 
-def gen_one_pc_to_use_for_init_pose(bag_data_path:str):
+def gen_one_pc_to_use_for_init_pose(bag_data_path:str,transform_to_world_frame_and_merge:bool = False,img_index = 0):
+
+    four_cam_transform = []
+    if transform_to_world_frame_and_merge:
+        four_cam_transform = load_four_cam_rgb_transform(bag_data_path)
+    
+
 
     bag_name = path.split('/')[-1]
     cam_num = 4
     image_prefix_folder = ["depth_to_rgb","rgb"]
+    merge_pcd = o3d.geometry.PointCloud()
     for cam_index in np.arange(cam_num):
         cam_folder = Path(bag_data_path) / Path("cam" + str(cam_index))
         depth_msg_folder = Path(cam_folder) / Path(image_prefix_folder[0])
@@ -151,7 +167,7 @@ def gen_one_pc_to_use_for_init_pose(bag_data_path:str):
         rgb_stamp = np.loadtxt(rgb_img_folder / Path("info.txt"))
         #以depth为主来生成点云
 
-        img_index = 0
+
         rgb_index = find_time_closet(depth_stamp[img_index],rgb_stamp)
 
         rgb_img_path = rgb_img_folder / Path(str(rgb_index) + ".png")
@@ -162,6 +178,9 @@ def gen_one_pc_to_use_for_init_pose(bag_data_path:str):
 
         undistorted_depth = undistort_image(depth_img_path, depth_camera_param["K"], depth_camera_param["D"])
         pcd = create_point_cloud_from_rgb_and_depth(undistorted_rgb, undistorted_depth, rgb_camera_param["K"],rgb_camera_param["width"],rgb_camera_param["height"])
+        merge_pcd += pcd.transform(four_cam_transform[cam_index])
+        if transform_to_world_frame_and_merge:
+            o3d.io.write_point_cloud(str(Path(bag_data_path) / Path(f"merge_pcd_with_origin_transform/{bag_name}_cam{cam_index}.ply")), pcd)
         # o3d.visualization.draw_geometries([pcd])
         point_cloud_folder = Path(bag_data_path) / Path("tracking")
         os.makedirs(point_cloud_folder,exist_ok=True)
@@ -223,8 +242,12 @@ def gen_four_txt(path:str):
             file_writer.write("")
 
 if __name__ == "__main__":
+    # path = "/home/lab4dv/data/sda/banana/original/banana_1_20231027"
+    # gen_one_pc_to_use_for_init_pose(path,True,150)
+
+
+    # the code as follow is used for initial pose
     path = "/home/lab4dv/data/bags/dust_cleanning_spreyer/dust_cleanning_spreyer_6_20231105"
     
     gen_one_pc_to_use_for_init_pose(path)
     gen_four_txt(path)
-    # gen_aligned_pc("/home/lab4dv/data/sda/duck/duck_4_20231024/")

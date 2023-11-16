@@ -44,7 +44,7 @@ class gen_merge_pcd_ply:
 
         self.all_cams_time_stamp_index = []
 
-        self.merge_pcd_and_filter()
+        # self.merge_pcd_and_filter()
 
     def read_intrisics_from_ros_data(self,cam_index):
         intrisics_path = self.bag_folder / f"cam{cam_index}/rgb/camera_info"
@@ -110,11 +110,16 @@ class gen_merge_pcd_ply:
 
         return all_cams_align_to_cam0_rgb_time_index
 
-    def merge_pcd_and_filter(self):
+    def merge_pcd_and_filter(self,constrain_bound):
+
+        if constrain_bound is None:
+            constrain_bound = np.inf
         self.all_cams_time_stamp_index = self.gen_cams_time_stamp()
         merge_pcd = o3d.geometry.PointCloud()
-        for time_index in self.all_cams_time_stamp_index[0]:
 
+        for time_index in self.all_cams_time_stamp_index[0]:
+            if time_index > constrain_bound:
+                return 
             for cam_index in np.arange(4):
                 pcd = self.gen_pcd_with_depth_and_rgb_paths(
                     self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
@@ -122,14 +127,14 @@ class gen_merge_pcd_ply:
                 pcd.transform(self.four_cams_to_world_frame[cam_index])
                 
                 pcd = self.filter_pcd(pcd)
-                print(cam_index)
-                o3d.visualization.draw_geometries([pcd])
+
                 
-                o3d.io.write_point_cloud(str(
-                    self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
+                # o3d.io.write_point_cloud(str(
+                #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
                 merge_pcd += pcd
                 merge_pcd.remove_duplicated_points()
-            
+            # o3d.visualization.draw_geometries([merge_pcd])
+
             o3d.io.write_point_cloud(str(
                 self.merge_pcd_save_folder / f"merge_pcd_{time_index}.ply"), merge_pcd, write_ascii=False, compressed=False, print_progress=True)
 
@@ -194,25 +199,58 @@ class gen_merge_pcd_ply:
     def filter_pcd(self, pcd):  # for every pcd, we have to filter the point cloud
         # origin, she process the filter in the world frame
 
-        _, pt_map = pcd.hidden_point_removal([0, 0, 0], 200)
+        _, pt_map = pcd.hidden_point_removal([0, 0, 0], 10000)
         pcd = pcd.select_by_index(pt_map)
 
         pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
             np.array([-0.5, -0.8, 0], np.float64), np.array([2, 0.8, 1.5], np.float64)))
 
         # filter
-        pcd, ind = pcd.remove_statistical_outlier(30, 0.8)
+        pcd, ind = pcd.remove_statistical_outlier(30, 1.5)
 
         return pcd
 
 
-if __name__ == "__main__":
+def gen_severa_annotate_pcd(bag_folder,four_cam_intrisics_extrisics_save_folder):
+
+    gen_merge_pcd = gen_merge_pcd_ply(
+        bag_folder, four_cam_intrisics_extrisics_save_folder)
+
+    gen_merge_pcd.merge_pcd_and_filter(2)
+
+
+def gen_pcd_for_annotate(root_path: Path, four_cam_intrisics_extrisics_save_folder:Path):
+
+    try:
+        if "TF" in os.listdir(root_path):
+            print(root_path)
+            gen_severa_annotate_pcd(
+                root_path, four_cam_intrisics_extrisics_save_folder)
+            return 
+        for sub_file_path in os.listdir(root_path):
+            if os.path.isdir(root_path / sub_file_path):
+                gen_pcd_for_annotate(root_path / sub_file_path,
+                                    four_cam_intrisics_extrisics_save_folder)
+    except PermissionError:
+        print(root_path)
+        return
+
+def mint():
     bag_folder = Path("/home/lab4dv/data/sda/banana/original/banana_1_20231027")
     four_cam_intrisics_extrisics_save_folder = Path(
         "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
     gen_merge_pcd = gen_merge_pcd_ply(
         bag_folder, four_cam_intrisics_extrisics_save_folder)
-    gen_merge_pcd.merge_pcd_and_filter()
+    gen_merge_pcd.merge_pcd_and_filter(2)
+
+
+
+if __name__ == "__main__":
+    four_cam_intrisics_extrisics_save_folder = Path(
+        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
+    root_path = Path("/home/lab4dv/data")
+    gen_pcd_for_annotate(root_path, four_cam_intrisics_extrisics_save_folder)
+
 
 
 # # you have to change the code use the code as follow to read the file of extrisics to gen the multiple view ply

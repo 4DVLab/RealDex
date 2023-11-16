@@ -22,9 +22,9 @@ def scale_mesh(mesh_path, scale_factor=0.001):
     return mesh
 
 # 使用示例
-input_path = "/home/lab4dv/data/model/yogurt.obj"
+input_path = "/home/lab4dv/Downloads/yibu.obj"
 scaled_mesh = scale_mesh(input_path,)
-output_path = "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105/tracking/yogurt.obj"
+output_path = "/home/lab4dv/Downloads/yibu.obj"
 o3d.io.write_triangle_mesh(output_path, scaled_mesh)
 
 
