@@ -56,6 +56,9 @@ def get_NN(src_xyz, trg_xyz, k=1):
     :param trg_xyz: [B, N2, 3]
     :return: nn_dists, nn_dix: all [B, N1] tensor for NN distance and index in N2
     '''
+    if len(src_xyz.shape) == 2:
+        src_xyz = src_xyz.unsqueeze(0)
+        trg_xyz = trg_xyz.unsqueeze(0)
     B = src_xyz.size(0)
     src_lengths = torch.full(
         (src_xyz.shape[0],), src_xyz.shape[1], dtype=torch.int64, device=src_xyz.device

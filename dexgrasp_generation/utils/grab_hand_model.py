@@ -158,3 +158,15 @@ def cal_loss(hand, cmap_labels, cmap_pred, object_pc, num_obj_points, verbose=Fa
         return loss, dict(loss=loss, loss_cmap=loss_cmap, loss_pen=loss_pen, loss_dis=loss_dis) #, loss_spen=loss_spen) #, loss_tpen=loss_tpen)
     else:
         return loss
+
+def add_rotation_to_hand_pose(hand_pose, rotation):
+    translation = hand_pose[..., :3]
+    added_rot_aa = hand_pose[..., 3:6]
+    added_rot_mat = pytorch3d.transforms.axis_angle_to_matrix(added_rot_aa)
+    hand_qpos = hand_pose[..., 6:]
+
+    new_translation = torch.einsum('na,nba->nb', translation, rotation)
+    new_rotation_mat = rotation @ added_rot_mat
+    new_rotation_aa = pytorch3d.transforms.matrix_to_axis_angle(new_rotation_mat)
+
+    return torch.cat([new_translation, new_rotation_aa, hand_qpos], dim=-1)

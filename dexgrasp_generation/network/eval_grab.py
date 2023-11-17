@@ -3,7 +3,8 @@ import logging
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from data.dataset import get_mesh_dataloader
+from datasets.grab_dataset import MeshData
+
 from trainer_grab import Trainer
 from utils.global_utils import result_to_loader, flatten_result
 from omegaconf import OmegaConf
@@ -44,7 +45,7 @@ def main(cfg):
 
 
     """ DataLoaders """
-    test_loader = get_mesh_dataloader(cfg, "test")
+    mesh_data = MeshData(cfg, 'test')
 
     """ Trainer """
     trainers = []

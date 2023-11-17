@@ -22,7 +22,7 @@ class SR_Loss(nn.Module):
         self.tgt_kdtree = o3d.geometry.KDTreeFlann()
         # print(self.tgt_feat.dimension(), self.tgt_feat.num())
         # print(self.tgt_feat.data)
-        self.tgt_kdtree.set_matrix_data(self.tgt_feat.data)
+        self.tgt_kdtree.set_feature(self.tgt_feat)
         
     
     def compute_feature(self, pc, pc_normal=None):
@@ -59,11 +59,16 @@ class SR_Loss(nn.Module):
     def pc_diff_loss(self, sr_points, sr_points_normal):
         with torch.no_grad():
             sr_points_feat = self.compute_feature(sr_points.detach().cpu(), sr_points_normal.detach().cpu())
-            src_index, tgt_index = self.find_correspondences(sr_points_feat, self.tgt_kdtree, max_distance=2e3)
+            src_index, tgt_index = self.find_correspondences(sr_points_feat, self.tgt_kdtree)
         # nn_dists, _ = get_NN(sr_points[src_index], self.tgt_pc[tgt_index])
         # loss = torch.mean(nn_dists)
-        print(src_index, tgt_index)
-        loss = self.mse_loss(sr_points[src_index], self.tgt_pc[tgt_index])
+        sr_points = sr_points[src_index]
+        tgt_pc =  self.tgt_pc[tgt_index]
+        dists = torch.norm(sr_points - tgt_pc, dim=-1)
+        loss = torch.mean(dists[dists<0.05])
+        # print(max(dists))
+        # print(src_index, tgt_index)
+        # loss = self.mse_loss(sr_points[src_index], self.tgt_pc[tgt_index])
         return loss
         
     def forward(self, global_rotation, transl, hand_pose, obj_points):
