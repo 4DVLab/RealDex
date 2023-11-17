@@ -145,15 +145,19 @@ class gen_merge_pcd_ply:
         return all_cams_align_to_cam0_rgb_time_index
 
     def merge_pcd_and_filter(self,constrain_bound):
-
+        constrain_bound[1] += 1
         if constrain_bound is None:
-            constrain_bound = np.inf
+            constrain_bound = [0,np.inf]
         self.all_cams_time_stamp_index = self.gen_cams_time_stamp()
         merge_pcd = o3d.geometry.PointCloud()
 
-        for time_index in self.all_cams_time_stamp_index[0]:
-            if time_index > constrain_bound:
-                return 
+        time_index_length = len(self.all_cams_time_stamp_index[0])
+        # for time_index in self.all_cams_time_stamp_index[0]:
+        for index in np.arange(constrain_bound[0],constrain_bound[1]):
+            if index >= time_index_length:
+                return
+            time_index = self.all_cams_time_stamp_index[0][index]
+
             for cam_index in np.arange(4):
                 pcd = self.gen_pcd_with_depth_and_rgb_paths(
                     self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
@@ -166,7 +170,7 @@ class gen_merge_pcd_ply:
                 # o3d.io.write_point_cloud(str(
                 #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
                 merge_pcd += pcd
-                # merge_pcd.remove_duplicated_points()
+                merge_pcd.remove_duplicated_points()
             # o3d.visualization.draw_geometries([merge_pcd])
 
             o3d.io.write_point_cloud(str(
@@ -245,21 +249,21 @@ class gen_merge_pcd_ply:
         return pcd
 
 
-def gen_severa_annotate_pcd(bag_folder, four_cam_intrisics_extrisics_save_folder, pcd_number_you_want_to_gen):
+def gen_severa_annotate_pcd(bag_folder, four_cam_intrisics_extrisics_save_folder, constrain_bound):
 
     gen_merge_pcd = gen_merge_pcd_ply(
         bag_folder, four_cam_intrisics_extrisics_save_folder)
 
-    gen_merge_pcd.merge_pcd_and_filter(pcd_number_you_want_to_gen)
+    gen_merge_pcd.merge_pcd_and_filter(constrain_bound)
 
 
-def gen_pcd_for_annotate(root_path: Path, four_cam_intrisics_extrisics_save_folder: Path, pcd_number_you_want_to_gen):
+def gen_pcd_for_annotate(root_path: Path, four_cam_intrisics_extrisics_save_folder: Path, constrain_bound):
 
     try:
         if "TF" in os.listdir(root_path):
             print(root_path)
             gen_severa_annotate_pcd(
-                root_path, four_cam_intrisics_extrisics_save_folder, pcd_number_you_want_to_gen)
+                root_path, four_cam_intrisics_extrisics_save_folder, constrain_bound)
             return 
         for sub_file_path in os.listdir(root_path):
             if os.path.isdir(root_path / sub_file_path):
@@ -281,10 +285,16 @@ def mint():
 
 if __name__ == "__main__":
     four_cam_intrisics_extrisics_save_folder = Path(
-        "/home/tony/mine/Projects/ArmHandVis/git_hand_arm/IntelligentHand/calibration_ws/calibration_process/data")
-    root_path = Path("/media/tony/新加卷/yyx_tmp")
-    pcd_number_you_want_to_gen = 5
+        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
+    
+    
+    
+    root_path = Path("/home/lab4dv/data/sample")
+    
+    
+    
+    constrain_bound = [330,350]
     gen_pcd_for_annotate(
-        root_path, four_cam_intrisics_extrisics_save_folder, pcd_number_you_want_to_gen)
+        root_path, four_cam_intrisics_extrisics_save_folder, constrain_bound)
 
 
