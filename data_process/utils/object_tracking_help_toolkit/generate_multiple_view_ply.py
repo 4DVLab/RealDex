@@ -289,11 +289,11 @@ if __name__ == "__main__":
     
     
     
-    root_path = Path("/home/lab4dv/data/sample")
+    root_path = Path("/home/lab4dv/data/bags/croissant/croissant_1_20231027")
     
     
     
-    constrain_bound = [330,350]
+    constrain_bound = [1191,1192]
     gen_pcd_for_annotate(
         root_path, four_cam_intrisics_extrisics_save_folder, constrain_bound)
 

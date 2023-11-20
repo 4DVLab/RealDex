@@ -51,7 +51,7 @@ def transform_mesh_with_matrix(transform_matrix,mesh):
 def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interval = [0,99999], cam2world_transform=None,cam_index=0):
 
     mesh_path = Path(bag_folder_path) / Path("models") /  Path(model_name + ".obj")
-    bag_name = bag_folder_path.split('/')[-1][:-9]
+    bag_name = bag_folder_path.split('/')[-1] #[:-9]
     mesh = o3d.io.read_triangle_mesh(str(mesh_path))
     # mesh = simplify_mesh(mesh)
     pcd = mesh.sample_points_poisson_disk(9000)#don't use mesh simplify, but the sample points
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     transforms = json.load(open(str(Path(bag_folder_path) / Path("global_name_position/0.txt")),"r"))
     cam0_rgb_camera_link2world = np.array(transforms["cam0_rgb_camera_link"])
     #simplify_persentage = 0.9
-    transform_mesh_interval = [0,500]
+    transform_mesh_interval = [0,2000]
 
     transform_obj2result_pose(bag_folder_path, model_name,
                               transform_mesh_interval,

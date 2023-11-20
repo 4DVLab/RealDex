@@ -17,7 +17,7 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path):
     obj_folder = Path(bag_folder_path) / Path("object_pose_in_every_frame")
 
     for index in np.arange(pcd_length):
-        env_pcd = o3d.io.read_point_cloud(str(env_pcd_folder / Path(f"merge_pcd_{index}.ply")))
+        env_pcd = o3d.io.read_point_cloud(str(env_pcd_folder / Path(f"yogurt_1_20231105_{index}.ply")))
         obj_pcd = o3d.io.read_point_cloud(str(obj_folder / f"{index}.ply"))
 
         if index != 0:
@@ -31,6 +31,6 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path):
     vis.destroy_window()
 
 if __name__ == "__main__":
-    bag_folder_path = "/media/tony/新加卷/yyx_tmp"
-    viz_camera_info_path = "/media/tony/新加卷/yyx_tmp/rh_palm_0.obj_camera_params.json"
+    bag_folder_path = "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105"
+    viz_camera_info_path = "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105/rh_palm_0.obj_camera_params.json"
     show_obj_env_pcd(bag_folder_path, viz_camera_info_path)

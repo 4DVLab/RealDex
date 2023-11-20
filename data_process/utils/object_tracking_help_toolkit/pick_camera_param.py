@@ -6,10 +6,10 @@ import open3d as o3d
 def save_camera_parameters(vis):
     parameters = vis.get_view_control().convert_to_pinhole_camera_parameters()
     o3d.io.write_pinhole_camera_parameters(
-        "/media/tony/新加卷/yyx_tmp/merged_pcd_filter/rh_palm_0.obj_camera_params.json", parameters)
+        "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105/rh_palm_0.obj_camera_params.json", parameters)
 
 
-bag_path = "/media/tony/新加卷/yyx_tmp/merged_pcd_filter/merge_pcd_0.ply"
+bag_path = "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105/merged_pcd_filter/merge_pcd_703.ply"
 mesh = o3d.io.read_point_cloud(bag_path)
 
 vis = o3d.visualization.VisualizerWithKeyCallback()
