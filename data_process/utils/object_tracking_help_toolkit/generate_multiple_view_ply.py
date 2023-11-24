@@ -285,15 +285,14 @@ def mint():
 
 if __name__ == "__main__":
     four_cam_intrisics_extrisics_save_folder = Path(
-        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
+        "/home/tony/mine/Projects/ArmHandVis/git_hand_arm/IntelligentHand/calibration_ws/calibration_process/data")
     
     
+    root_path = Path("/media/tony/新加卷/yyx_tmp")
+
     
-    root_path = Path("/home/lab4dv/data/bags/croissant/croissant_1_20231027")
     
-    
-    
-    constrain_bound = [1191,1192]
+    constrain_bound = [0,1192]
     gen_pcd_for_annotate(
         root_path, four_cam_intrisics_extrisics_save_folder, constrain_bound)
 

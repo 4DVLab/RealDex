@@ -17,19 +17,36 @@ def get_args():
     parser.add_argument("--mesh_model_name", type=str)
     return parser.parse_args()
 
-def ICP_between_two_pcd(source_pcd,target_pcd):
-    icp_result = o3d.pipelines.registration.registration_icp(
-        source_pcd, target_pcd, max_correspondence_distance=0.1,
-        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-        criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=5000))
-    return icp_result.transformation
 
+#you have to also try the point to plane ICP
+def ICP_between_two_pcd(mesh_model,env_pcd,point_to_point=True):
+    transform = None
+    if point_to_point:
+        source_pcd = mesh_model.sample_points_uniformly(number_of_points=10000)
+        icp_result = o3d.pipelines.registration.registration_icp(
+            source_pcd, env_pcd, max_correspondence_distance=0.1,
+            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=5000))
+        transform = icp_result.transformation
+    else:
+        model_point_cloud = o3d.geometry.PointCloud()
+        model_point_cloud.points = mesh_model.vertices
+        mesh_model.compute_vertex_normals()
+        model_point_cloud.normals = mesh_model.vertex_normals
+        icp_result = o3d.pipelines.registration.registration_icp(
+            # 最大的crospondence距离，不能设置太小了，不然找不到对应点
+            env_pcd, model_point_cloud, max_correspondence_distance=0.004,
+            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=5000)
+        )    
+        transform = np.linalg.inv(icp_result.transformation)# cuz this is the env to icp the model
+    return transform
 
 # the final target is to gen the ICP transform matrix in the world frame
 
 def load_backtrack_index(bag_path,n_steps_backward):
     bag_path = Path(bag_path)
-    backtrack_file_path = bag_path / f"trakcing_result/tracking_index.txt"
+    backtrack_file_path = bag_path / f"tracking_result/tracking_index.txt"
 
     tracking_index = 0
     with open(backtrack_file_path,"r") as index_reader:
@@ -59,21 +76,24 @@ def seven_num2matrix(seven_num):
 def load_mesh_model_in_bag(bag_path,mesh_model_name):
     bag_path = Path(bag_path)
     mesh_model_file_path = bag_path / f"models/{mesh_model_name}.obj"
-    mesh_model = o3d.io.read_triangle_mesh(mesh_model_file_path)
+    mesh_model = o3d.io.read_triangle_mesh(str(mesh_model_file_path))
+    return mesh_model
 
 def load_index_pcd_in_bag(bag_path,pcd_index):
     bag_name = bag_path.split("/")[-1]
-    pcd_path = Path(bag_path) / f"merged_pcd_filter/{bag_name}_{pcd_index}.ply"
-    pcd = o3d.io.read_point_cloud(pcd_path)
+    pcd_path = Path(bag_path) / f"merged_pcd_filter/merge_pcd_{pcd_index}.ply"
+    pcd = o3d.io.read_point_cloud(str(pcd_path))
     return pcd
     
     
 
 def get_index_tracking_result(bag_path, cam_index,tracking_index):#input is a mesh model and a env point cloud
     bag_name = bag_path.split("/")[-1]
-    tracking_result_file_path = bag_path / f"{bag_name}_cam_index_{cam_index}_tracking_result.txt"
+    bag_path = Path(bag_path)
+    tracking_result_file_path = bag_path / f"tracking_result/{bag_name}_cam_index_{cam_index}_tracking_result.txt"
     with open(tracking_result_file_path,"r") as tracking_result_file_reader:
         tracking_transforms = np.loadtxt(tracking_result_file_reader)
+    tracking_index = round(tracking_index)
     transform_seven_num = np.array(tracking_transforms[tracking_index]).flatten()
     tracking_index_matrix = seven_num2matrix(transform_seven_num)
     return tracking_index_matrix
@@ -110,6 +130,8 @@ def write_transform_to_gt_file(bag_path,transform,gt_index):
 def backward_nsteps(bag_path, n_steps_backward, cam_index, mesh_model_name):
 
     new_begin_tracking_index = load_backtrack_index(bag_path,n_steps_backward)
+
+    new_begin_tracking_index = round(new_begin_tracking_index)
 
     new_gt_tranform = get_new_gt_transform_with_icp(
         bag_path, new_begin_tracking_index, cam_index, mesh_model_name)

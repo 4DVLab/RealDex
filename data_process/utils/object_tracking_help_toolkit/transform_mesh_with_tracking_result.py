@@ -81,7 +81,7 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
 
 
 if __name__ == "__main__":
-    bag_folder_path = "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105"
+    bag_folder_path = "/media/tony/新加卷/backup/yogurt_1_20231105"
     model_name = "yogurt"
     cam_index = 0
     transforms = json.load(open(str(Path(bag_folder_path) / Path("global_name_position/0.txt")),"r"))

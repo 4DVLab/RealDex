@@ -248,7 +248,7 @@ def mint():
 if __name__ == "__main__":
     four_cam_intrisics_extrisics_save_folder = Path(
         "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
-    root_path = Path("/home/lab4dv/data")
+    root_path = Path("/media/tony/T7/test_data/test_1")
     gen_pcd_for_annotate(root_path, four_cam_intrisics_extrisics_save_folder)
 
 

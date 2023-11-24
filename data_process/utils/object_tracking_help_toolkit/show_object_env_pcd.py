@@ -31,6 +31,6 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path):
     vis.destroy_window()
 
 if __name__ == "__main__":
-    bag_folder_path = "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105"
-    viz_camera_info_path = "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105/rh_palm_0.obj_camera_params.json"
+    bag_folder_path = "/media/tony/新加卷/backup/yogurt_1_20231105"
+    viz_camera_info_path = "/media/tony/新加卷/backup/yogurt_1_20231105/rh_palm_0.obj_camera_params.json"
     show_obj_env_pcd(bag_folder_path, viz_camera_info_path)
