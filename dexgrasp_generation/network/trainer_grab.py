@@ -196,6 +196,7 @@ class Trainer(nn.Module):
         update_dict(self.loss_dict, loss_dict)
         self.optimizer.step()
         
+        
         if self.cfg['lr_policy'] == 'ReduceLROnPlateau':
             if 'nll' in loss_dict:
                 self.scheduler.step(loss_dict['nll'])

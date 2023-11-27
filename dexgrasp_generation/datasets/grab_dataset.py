@@ -229,6 +229,48 @@ class GRABDataset(Dataset):
         ret_dict["beta"] = hand_beta
         return ret_dict
     
+class GRABMeshData(Dataset):
+    def __init__(self, cfg, mode='train', splits=None):
+        self.cfg = cfg
+        self.mode = mode
+
+        dataset_cfg = cfg["dataset"]
+        self.dataset_cfg = dataset_cfg
+        
+        root_path = dataset_cfg["root_path"]
+        baseDir = dataset_cfg["dataset_dir"]
+        baseDir = os.path.join(root_path, baseDir)
+        self.obj_info = np.load(os.path.join(baseDir, 'obj_info.npy'), allow_pickle=True).item()
+        self.all_class = self.obj_info.keys()
+        if splits is None:
+            self.splits = {'test': ['mug', 'wineglass', 'camera', 'binoculars', 'fryingpan', 'toothpaste'],
+                            'val': ['apple', 'toothbrush', 'elephant', 'hand'],
+                            'train': []}
+            for key in self.all_class:
+                if key not in self.splits['test'] or key not in self.splits['val']:
+                    self.splits['train'].append(key)
+        else:
+            self.splits = splits
+        self.obj_list = self.splits[mode]
+    def get_categories(self):
+        
+        return self.obj_list
+        
+    def __len__(self):
+        return len(self.obj_list)
+        
+    def __getitem__(self, index):
+        obj_class = self.obj_list[index]
+        obj = self.obj_info[obj_class]
+        obj_pc = torch.tensor(obj['verts_sample'])
+        # print(obj['verts_sample'].shape)
+        if self.dataset_cfg['fps']:
+            obj_pc = pytorch3d.ops.sample_farthest_points(obj_pc.unsqueeze(0), K=self.dataset_cfg["num_obj_points"])[0][0]  # [NO, 3]
+        ret_dict = {
+                "obj_pc": obj_pc,
+            }
+        return ret_dict
+        
 
 if __name__ == '__main__':
     cfg = {
@@ -246,6 +288,9 @@ if __name__ == '__main__':
         'network_type':'cm_net'
         
     }
-    dataset = GRABDataset(cfg)
-    ret_dict = dataset[0]
-    export_data(ret_dict['canon_obj_pc'], ret_dict['gt_hand_pc'], ret_dict['contact_map'])
+    # dataset = GRABDataset(cfg)
+    # ret_dict = dataset[0]
+    # export_data(ret_dict['canon_obj_pc'], ret_dict['gt_hand_pc'], ret_dict['contact_map'])
+    dataset = MeshData(cfg)
+    for i in [0, 1]:
+        dataset[i]
