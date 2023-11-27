@@ -10,7 +10,7 @@ sys.path.append(pjoin(base_dir, '..', '..'))  # data -> model -> root, to import
 
 from datasets.dex_dataset import DFCDataset
 from datasets.object_dataset import Meshdata
-from datasets.grab_dataset import GRABDataset
+from datasets.grab_dataset import GRABDataset, GRABMeshData
 
 
 def get_grab_dataloader(cfg, mode="train", shuffle=None):
@@ -29,4 +29,8 @@ def get_dex_dataloader(cfg, mode="train", shuffle=None):
 
 def get_mesh_dataloader(cfg, mode="train"):
     dataset = Meshdata(cfg, mode)
+    return DataLoader(dataset, batch_size=cfg["batch_size"], shuffle=False, num_workers=cfg["num_workers"])
+
+def get_grab_mesh_dataloader(cfg, mode="train"):
+    dataset = GRABMeshData(cfg, mode)
     return DataLoader(dataset, batch_size=cfg["batch_size"], shuffle=False, num_workers=cfg["num_workers"])

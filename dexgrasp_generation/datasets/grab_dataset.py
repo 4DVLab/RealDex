@@ -229,13 +229,14 @@ class GRABDataset(Dataset):
         ret_dict["beta"] = hand_beta
         return ret_dict
     
-class MeshData(Dataset):
+class GRABMeshData(Dataset):
     def __init__(self, cfg, mode='train', splits=None):
         self.cfg = cfg
         self.mode = mode
 
         dataset_cfg = cfg["dataset"]
         self.dataset_cfg = dataset_cfg
+        
         root_path = dataset_cfg["root_path"]
         baseDir = dataset_cfg["dataset_dir"]
         baseDir = os.path.join(root_path, baseDir)
@@ -261,8 +262,14 @@ class MeshData(Dataset):
     def __getitem__(self, index):
         obj_class = self.obj_list[index]
         obj = self.obj_info[obj_class]
+        obj_pc = torch.tensor(obj['verts_sample'])
         # print(obj['verts_sample'].shape)
-        return obj['verts_sample']
+        if self.dataset_cfg['fps']:
+            obj_pc = pytorch3d.ops.sample_farthest_points(obj_pc.unsqueeze(0), K=self.dataset_cfg["num_obj_points"])[0][0]  # [NO, 3]
+        ret_dict = {
+                "obj_pc": obj_pc,
+            }
+        return ret_dict
         
 
 if __name__ == '__main__':
