@@ -38,6 +38,7 @@ class Meshdata(Dataset):
     
     
     def __len__(self):
+        return 10
         return len(self.object_list)
     
     def __getitem__(self, idx):

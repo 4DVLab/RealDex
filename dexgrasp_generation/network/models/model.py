@@ -15,8 +15,8 @@ sys.path.insert(0, pjoin(base_path, '..', '..'))
 
 from network.models.loss import discretize_gt_cm
 from network.models.graspipdf.ipdf_network import IPDFFullNet
-# from network.models.graspglow.glow_network import DexGlowNet
-from network.models.graspglow.glow_network_grab import DexGlowNet
+from network.models.graspglow.glow_network import DexGlowNet
+# from network.models.graspglow.glow_network_grab import DexGlowNet
 from network.models.contactnet.contact_network import ContactMapNet
 from network.models.approachnet.toch_network import TOCHSingleNet
 
