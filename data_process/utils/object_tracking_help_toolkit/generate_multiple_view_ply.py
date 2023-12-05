@@ -158,10 +158,11 @@ class gen_merge_pcd_ply:
                 return
             time_index = self.all_cams_time_stamp_index[0][index]
 
-            for cam_index in np.arange(4):
+            for cam_index in np.arange(0,1):
                 pcd = self.gen_pcd_with_depth_and_rgb_paths(
                     self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
-                
+                # o3d.io.write_point_cloud(str(
+                #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
                 pcd.transform(self.four_cams_to_world_frame[cam_index])
                 
                 pcd = self.filter_pcd(pcd)
@@ -170,7 +171,7 @@ class gen_merge_pcd_ply:
                 # o3d.io.write_point_cloud(str(
                 #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
                 merge_pcd += pcd
-                merge_pcd.remove_duplicated_points()
+                # merge_pcd.remove_duplicated_points()
             # o3d.visualization.draw_geometries([merge_pcd])
 
             o3d.io.write_point_cloud(str(
@@ -237,14 +238,14 @@ class gen_merge_pcd_ply:
     def filter_pcd(self, pcd):  # for every pcd, we have to filter the point cloud
         # origin, she process the filter in the world frame
 
-        _, pt_map = pcd.hidden_point_removal([0, 0, 0], 10000)
-        pcd = pcd.select_by_index(pt_map)
+        # _, pt_map = pcd.hidden_point_removal([0, 0, 0], 10000)
+        # pcd = pcd.select_by_index(pt_map)
 
         pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
             np.array([-0.5, -0.8, 0], np.float64), np.array([2, 0.8, 1.5], np.float64)))
 
         # filter
-        pcd, ind = pcd.remove_statistical_outlier(30, 1.5)
+        # pcd, ind = pcd.remove_statistical_outlier(30, 1.5)
 
         return pcd
 
@@ -284,17 +285,16 @@ def mint():
 
 
 if __name__ == "__main__":
-    four_cam_intrisics_extrisics_save_folder = Path(
-        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
+    #now the code onlyh generalize the cam 0 data
+    four_cam_intrisics_extrisics_save_folder =  Path("/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
     
     
-    
-    root_path = Path("/home/lab4dv/data/bags/croissant/croissant_1_20231027")
-    
-    
-    
-    constrain_bound = [1191,1192]
+    root_path = Path("/home/lab4dv/data/bags/test/test_3")
+
+
+    constrain_bound = [0,5000]
     gen_pcd_for_annotate(
-        root_path, four_cam_intrisics_extrisics_save_folder, constrain_bound)
+        root_path, 
+        four_cam_intrisics_extrisics_save_folder, constrain_bound)
 
 

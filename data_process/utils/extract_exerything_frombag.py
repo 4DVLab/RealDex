@@ -11,7 +11,7 @@ import cv2
 import json
 from pathlib import Path
 import json
-from utils.genPC.genPC_use_o3d import gen_aligned_pc
+# from utils.genPC.genPC_use_o3d import gen_aligned_pc
 def camera_info2dict(msg):
     camera_info_dict = {
             'header': {

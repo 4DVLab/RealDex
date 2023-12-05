@@ -81,8 +81,8 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
 
 
 if __name__ == "__main__":
-    bag_folder_path = "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105"
-    model_name = "yogurt"
+    bag_folder_path = "/home/lab4dv/data/bags/croissant/croissant_1_20231027"
+    model_name = "simplication_croissant"
     cam_index = 0
     transforms = json.load(open(str(Path(bag_folder_path) / Path("global_name_position/0.txt")),"r"))
     cam0_rgb_camera_link2world = np.array(transforms["cam0_rgb_camera_link"])
