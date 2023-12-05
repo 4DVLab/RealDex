@@ -3,6 +3,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 from typing import Callable
 from functools import lru_cache, wraps
+import os
 
 def np_cache(function):
     @lru_cache(maxsize=None)
@@ -34,7 +35,7 @@ class Node(object):
         self.name = name
         self.parent = None
         self.children = [ ]
-        self.transform = dict()
+        self.transform = None # transform relative to its parent node
         self.value = dict()
 
     def print_tree(self, level=0):
@@ -48,19 +49,11 @@ class Node(object):
     def __repr__(self):
         return '<tree node representation>'
     
-    def set_tf(self, i, tf):
-        transl = [tf['translation'][d] for d in ["x", "y", "z"]]
-        orient_quat = [tf['rotation'][d] for d in ["x", "y", "z", "w"]]
-        self.transform["transl"][i] = transl
-        self.transform["orient_quat"][i] = orient_quat
-        
+    def set_tf(self, tf):
+        self.transform = tf
 
-    def add_link(self, child, tf):
+    def add_link(self, child):
         self.children.append(child)
-        transl = [tf['translation'][d] for d in ["x", "y", "z"]]
-        orient_quat = [tf['rotation'][d] for d in ["x", "y", "z", "w"]]
-        self.transform.setdefault("transl", []).append(np.asarray(transl))
-        self.transform.setdefault("orient_quat", []).append(np.asarray(orient_quat))
         
 
 class Kintree(object):
@@ -108,6 +101,17 @@ class Kintree(object):
             pnode = self.nodes[parent]
             child_id = pnode.children.index(self.nodes[child])
             pnode.set_tf(child_id, tf)
+
+    # def dfs_position_update(self, global_name_postion,name,time_slot):
+    #     if name in TF_tree.keys():#叶子节点不会在keys里面
+    #         for child_name in TF_tree[name].keys():
+    #             child_time_and_transform = TF_tree[name][child_name]#有些TF只有一个，是static TF
+    #             time_index = find_time_closet(time_slot,child_time_and_transform[:,0])
+    #             senven_num_transform = child_time_and_transform[time_index,1:]
+    #             child_transform = seven_num2matrix(translation=senven_num_transform[:3],roatation=senven_num_transform[3:])
+    #             child_transform_position = np.dot(global_name_postion[name],child_transform)
+    #             global_name_postion[child_name] = child_transform_position
+    #             dfs_position_update(TF_tree,global_name_postion,child_name,time_slot)
             
     # @lru_cache(maxsize=None)
     # def forward_kinematic(self, node_name='rh_palm'):
@@ -133,18 +137,55 @@ class Kintree(object):
                                 base_frame=child_ori_global, 
                                 node_name=child.name)
             del rel_rot, child_coord_local, child_coord_global, child_ori_global
-        
 
+def tf_to_mat(tf):
+    transl = tf[:3]
+    rot = Rotation.from_quat(tf[3:])
+    mat = np.zeros(4, 4)
+    mat[:3, :3] = rot
+    mat[:, 3] = transl
+    mat[3, 3] = 1
+    return mat
+
+def read_tf_file(file, cname):
+    with open(file, 'r') as f:
+        lines = f.readlines()
+    tf_data_list = []
+    for line in lines:
+        line = line.strip().split()
+        time_stamp = int(float(line[0]))
+        tf_data = np.array(line[1:], dtype=float) # transl, quat(x,y,z,w)
+        
+        tf_data_list.append((time_stamp, tf_data, cname))
+    return tf_data_list
+    
+
+def rearrange_tf(tf_data_dir, tf_info):
+    link_list = tf_info['link']
+    tf_data_list = []
+    for link in link_list:
+        pname = link['parent']
+        cname = link['child']
+        tf_data_list += read_tf_file(os.path.join(tf_data_dir, f"{pname}-{cname}.txt"), cname)
+    tf_data_list = sorted(tf_data_list, key=lambda x:x[0])
+    tf_data_list = np.array(tf_data_list, dtype=object)
+    np.save(os.path.join(tf_data_dir, "tf.npy"),tf_data_list)
 
 
 if __name__ == "__main__":
-    data_file = "./out_json/frame_1687318023320834343.json"
-    tree = Kintree(data_file)
-    tree.forward_kinematic(base_pos=np.zeros(3), base_frame=Rotation.identity())
+    tf_data_dir = "/home/lab4dv/data/bags/test/test_3/TF"
+    tf_info_file = "./kintree/srhand_ur.json"
 
-    for name, node in tree.nodes.items():
-        if len(node.value) > 0:
-            print(name, ":\t", node.value['position'])
+    with open(tf_info_file, 'r') as f:
+        tf_info = json.load(f)
+
+    rearrange_tf(tf_data_dir, tf_info)
+    # tree = Kintree(data_file)
+    # tree.forward_kinematic(base_pos=np.zeros(3), base_frame=Rotation.identity())
+
+    # for name, node in tree.nodes.items():
+    #     if len(node.value) > 0:
+    #         print(name, ":\t", node.value['position'])
 
 
         

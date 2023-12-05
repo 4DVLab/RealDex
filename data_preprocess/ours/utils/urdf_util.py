@@ -64,11 +64,14 @@ def load_parent_link_from_urdf(urdf_path, link_list):
     urdf_tree = ET.parse(urdf_path)
     root = urdf_tree.getroot()
     parent_dict = {}
-    for joint in root.findall(".//joint[child]"):
-        child_name = joint.find('child').attrib['link']
-        if child_name in link_list:
-            parent_name = joint.find('parent').attrib['link']
-            parent_dict[child_name] = parent_name
+    for joint in root.findall(".//joint"):
+        child = joint.find("./child")
+        if child is not None:
+            child_name = child.attrib['link']
+            print(child_name)
+            if child_name in link_list:
+                parent_name = joint.find('parent').attrib['link']
+                parent_dict[child_name] = parent_name
     return parent_dict
 
 def load_visible_link_from_urdf(urdf_path):
@@ -84,46 +87,62 @@ def load_visible_link_from_urdf(urdf_path):
         
 
 if __name__ == '__main__':
-    urdf_path = "/home/liuym/Project/IntelligentHand/data_process/bimanual_srhand_ur.urdf"
+    urdf_path = "../../data_process/bimanual_srhand_ur.urdf"
     urdf_tree = ET.parse(urdf_path)
-    # link_list = load_visible_link_from_urdf(urdf_path)
-    # parent_dict = load_parent_link_from_urdf(urdf_path, link_list)
-    # print(len(link_list), link_list)
-    # print(len(parent_dict))
-    # print(parent_dict)
-    
-    prefix = "/remote-home/liuym/ShadowHand/description"
-    struct_file = "/home/liuym/Project/IntelligentHand/data_preprocess/ours/assets/shadow_hand/srhand_ur_chain.json"
-    with open(struct_file, 'r') as f:
-        # Load the JSON data
-        sr_struct = json.load(f)
-        
-    link_list = sr_struct['node_names']
-    mesh_dict = load_mesh_from_urdf(urdf_path,link_list, prefix)
-    
-    tf_data_file = "/remote-home/liuym/data/one_frame/global_position.txt"
-    with open(tf_data_file, 'r') as f:
-        # Load the JSON data
-        tf_data = json.load(f)
-        
-    
-        
-    for key in list(mesh_dict.keys()):
-        if key not in tf_data:
-            mesh_dict.pop(key)
+    node_list = load_visible_link_from_urdf(urdf_path)
+    parent_dict = load_parent_link_from_urdf(urdf_path, node_list)
+
+    out_dict = {'node_names': [], 'link': []}
+    for node in node_list:
+        prefix = node.split('_')[0]
+        if prefix == "la" or prefix == "lh":
             continue
-        tf = np.array(tf_data[key])
-        # print(tf)
-        mesh = mesh_dict[key]
-        verts = mesh.vertices
-        verts = np.concatenate([verts, np.ones((verts.shape[0], 1))], axis=1)
-        # print(verts.shape)
-        verts = verts @ tf.T
-        mesh.vertices = verts[:, :3]
-        mesh_dict[key] = mesh
+        if node in parent_dict and parent_dict[node] not in node_list:
+            out_dict['node_names'].append(parent_dict[node])
+        out_dict['node_names'].append(node)
+
+    for node in out_dict['node_names']:
+        if node in parent_dict:
+            out_dict['link'].append({'parent': parent_dict[node], 'child': node})
+    json_string = json.dumps(out_dict, indent=4)
+
+    out_path = "./kintree/srhand_ur.json"
+    with open(out_path, 'w') as outfile:
+        outfile.write(json_string)
+    print(json_string)
+    
+    # prefix = "/remote-home/liuym/ShadowHand/description"
+    # struct_file = "/home/liuym/Project/IntelligentHand/data_preprocess/ours/assets/shadow_hand/srhand_ur_chain.json"
+    # with open(struct_file, 'r') as f:
+    #     # Load the JSON data
+    #     sr_struct = json.load(f)
+        
+    # link_list = sr_struct['node_names']
+    # mesh_dict = load_mesh_from_urdf(urdf_path,link_list, prefix)
+    
+    # tf_data_file = "/remote-home/liuym/data/one_frame/global_position.txt"
+    # with open(tf_data_file, 'r') as f:
+    #     # Load the JSON data
+    #     tf_data = json.load(f)
         
     
-    combined_mesh = trimesh.util.concatenate(mesh_dict.values())
-    combined_mesh.export("combined_sr.ply")
+        
+    # for key in list(mesh_dict.keys()):
+    #     if key not in tf_data:
+    #         mesh_dict.pop(key)
+    #         continue
+    #     tf = np.array(tf_data[key])
+    #     # print(tf)
+    #     mesh = mesh_dict[key]
+    #     verts = mesh.vertices
+    #     verts = np.concatenate([verts, np.ones((verts.shape[0], 1))], axis=1)
+    #     # print(verts.shape)
+    #     verts = verts @ tf.T
+    #     mesh.vertices = verts[:, :3]
+    #     mesh_dict[key] = mesh
+        
+    
+    # combined_mesh = trimesh.util.concatenate(mesh_dict.values())
+    # combined_mesh.export("combined_sr.ply")
     
     
