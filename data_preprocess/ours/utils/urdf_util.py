@@ -65,13 +65,25 @@ def load_parent_link_from_urdf(urdf_path, link_list):
     root = urdf_tree.getroot()
     parent_dict = {}
     for joint in root.findall(".//joint"):
-        child = joint.find("./child")
+        joint_name = joint.get('name')
+        joint_type = joint.get('type')
+
+        parent = joint.find('parent')
+        if parent is not None:
+            parent_link = parent.get('link')
+        else:
+            parent_link = None
+
+        child = joint.find('child')
         if child is not None:
-            child_name = child.attrib['link']
-            print(child_name)
-            if child_name in link_list:
-                parent_name = joint.find('parent').attrib['link']
-                parent_dict[child_name] = parent_name
+            child_link = child.get('link')
+        else:
+            child_link = None
+            
+        # print(f"Joint Name: {joint_name}, Joint Type: {joint_type}, Parent Link: {parent_link}, Child Link: {child_link}")
+        
+        if child_link is not None and parent_link is not None:
+            parent_dict[child_link] = parent_link
     return parent_dict
 
 def load_visible_link_from_urdf(urdf_path):
@@ -91,6 +103,7 @@ if __name__ == '__main__':
     urdf_tree = ET.parse(urdf_path)
     node_list = load_visible_link_from_urdf(urdf_path)
     parent_dict = load_parent_link_from_urdf(urdf_path, node_list)
+    print(parent_dict['ra_flange'])
 
     out_dict = {'node_names': [], 'link': []}
     for node in node_list:

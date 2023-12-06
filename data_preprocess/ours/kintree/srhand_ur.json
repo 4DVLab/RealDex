@@ -37,6 +37,10 @@
     ],
     "link": [
         {
+            "parent": "world",
+            "child": "ra_base_link"
+        },
+        {
             "parent": "ra_base_link",
             "child": "ra_base_link_inertia"
         },
@@ -63,6 +67,10 @@
         {
             "parent": "ra_wrist_2_link",
             "child": "ra_wrist_3_link"
+        },
+        {
+            "parent": "ra_wrist_3_link",
+            "child": "ra_flange"
         },
         {
             "parent": "ra_flange",
