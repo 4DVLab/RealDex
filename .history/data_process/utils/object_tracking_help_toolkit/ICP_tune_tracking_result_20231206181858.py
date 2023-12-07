@@ -1,0 +1,116 @@
+from scipy.spatial.transform import Rotation 
+import numpy as np
+from pathlib import Path
+import json
+import open3d as o3d
+import os
+from copy import deepcopy
+from tqdm import tqdm
+
+
+def seven_num2matrix(seven_num):
+    translation = seven_num[:3]
+    roatation = seven_num[3:]
+    transform_matrix = np.identity(4)
+    transform_matrix[:3, :3] = Rotation.from_quat(roatation).as_matrix()
+    transform_matrix[:3, 3] = translation
+    return transform_matrix
+
+
+def icp_mesh_pcd(mesh_model,pcd):
+    criteria = o3d.registration.ICPConvergenceCriteria(max_iteration=100, 
+                                                  relative_fitness=1e-6, 
+                                                  relative_rmse=1e-6)
+    model_point_cloud = o3d.geometry.PointCloud()
+    model_point_cloud.points = mesh_model.vertices
+    mesh_model.compute_vertex_normals()
+    model_point_cloud.normals = mesh_model.vertex_normals
+    icp_result = o3d.pipelines.registration.registration_icp(
+        # 最大的crospondence距离，不能设置太小了，不然找不到对应点
+        pcd, model_point_cloud, max_correspondence_distance=0.01,
+        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+        criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=5000)
+    )    
+    transform = np.linalg.inv(icp_result.transformation)# cuz this is the env to icp the model
+    return transform
+
+def load_mesh_model(folder_path,model_name):
+
+    model_path = Path(folder_path) / Path("models") / Path(model_name )
+    mesh_model = o3d.io.read_triangle_mesh(str(model_path))
+    return mesh_model
+
+def load_cam0_to_world_transform(folder_path):
+    file_path = Path(folder_path) / f"global_name_position/0.txt"
+    with open(file_path,"r") as json_reader:
+        transform_file = json.load(json_reader)
+    cam0_to_world_transform = transform_file["cam0_rgb_camera_link"]
+    cam0_to_world_transform = np.array(cam0_to_world_transform).reshape((4,4))
+    return cam0_to_world_transform
+
+
+def load_tracking_result(folder_path,cam_index = 0):
+    cam0_to_world_transform = load_cam0_to_world_transform(folder_path)
+    bag_name = folder_path.split('/')[-1] #[:-9]
+    pose_path = Path(folder_path) / Path(f"tracking_result/{bag_name}_cam_index_{cam_index}_tracking_result.txt")
+    with open(pose_path,"r") as pose_reader:
+        pose_list = np.loadtxt(pose_reader,dtype=np.float32)
+    pose_list = [cam0_to_world_transform @ np.array(seven_num2matrix(pose)) for pose in pose_list]
+    pose_list =  np.array(pose_list)
+    return pose_list
+
+
+class pcd_iter():
+    def __init__(self,folder_path,file_name_prefix = "",file_name_postfix = "") -> None:
+        self.folder_path = folder_path
+        self.pcd_num = len(os.listdir(Path(folder_path)))
+        self.pcd_index = 0
+        self.file_name_prefix = file_name_prefix
+        self.file_name_postfix = file_name_postfix
+    def __iter__(self):
+        return self
+    def __next__(self):
+        if self.pcd_index < self.pcd_num:
+            pcd_path = Path(self.folder_path) / Path(f"{self.file_name_prefix}{self.pcd_index}{self.file_name_postfix}")
+            pcd = o3d.io.read_point_cloud(str(pcd_path))
+            self.pcd_index += 1
+            return pcd
+        else:
+            raise StopIteration
+
+def load_pcd_iter(folder_path,file_name_prefix = "",file_name_postfix = ""):
+    folder_path = Path(folder_path) / f"merged_pcd_filter"
+    return pcd_iter(folder_path,file_name_prefix,file_name_postfix)
+
+def fram
+
+
+
+def icp_tune_tracking_result(folder_path):
+    pcd_folder = folder_path / "merged_pcd_filter"
+    tracking_result_list = load_tracking_result(str(folder_path))
+    mesh_model = load_mesh_model(folder_path, "simplified_yogurt.obj")
+    pcd_num = len(os.listdir(pcd_folder))
+    transform_list = []
+    for index in tqdm(np.arange(0,pcd_num)):
+        pcd_path = pcd_folder / Path(f"merge_pcd_{index}.ply")
+        pcd = o3d.io.read_point_cloud(str(pcd_path))
+        temp_mesh_model = deepcopy(mesh_model)
+        temp_mesh_model.transform(tracking_result_list[index])
+        icp_transform_matrix = icp_mesh_pcd(temp_mesh_model, pcd)#return the mesh_model transform matrix
+        temp_mesh_model.transform(icp_transform_matrix)
+        final_transform_matrix = icp_transform_matrix @ tracking_result_list[index]
+        transform_list.append()
+        # mesh_model.transform(tracking_result_list[index]).paint_uniform_color([1,0,0])
+        # temp_mesh_model.paint_uniform_color([0,1,0])
+        
+        # o3d.visualization.draw_geometries([mesh_model, temp_mesh_model, pcd])
+
+
+
+if __name__ == "__main__":
+    bag_folder = Path("/media/tony/新加卷/test_data/test/test_1")
+    icp_tune_tracking_result(bag_folder)
+
+
+
