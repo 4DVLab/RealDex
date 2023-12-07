@@ -10,11 +10,7 @@ import matplotlib.pylab as plt
 
 def camera_param_init():
     camera_param = {
-        "intrisics": None,
-        "extrisics": None,
-        "width": None,
-        "height": None,
-        "distortion": None
+        "intrinsic": {},
     }
     return camera_param
 
@@ -45,7 +41,10 @@ def load_camera_param(data_dir, cam_index=0, frame_id=0):
     camera_param = ros_camera_info_to_camera_param(camera_info)
     
     global_position_path = os.path.join(data_dir, "global_name_position", f"{frame_id}.txt")
-    camera_param["extrinsic"] = np.linalg.inv(load_camera_extrinsic(global_position_path, cam_index))
+    # camera_param["extrinsic"] = np.linalg.inv(load_camera_extrinsic(global_position_path, cam_index))
+    # print(camera_param["extrinsic"])
+    camera_param["extrinsic"] = load_camera_extrinsic(global_position_path, cam_index)
+    
     return camera_param
 
 
@@ -60,18 +59,18 @@ def change_param(intrinsic):
     return intrinsic
 
 
-def change_o3d_camera_param(o3d_camera_param_path, mine_camera_param):
+def change_o3d_camera_param(camera_param):
 
-    o3d_camera_param = json.load(open(o3d_camera_param_path, "r"))
-    extrisic = [item for list_item in mine_camera_param["extrinsic"]
+    o3d_camera_param = camera_param_init()
+    extrisic = [item for list_item in camera_param["extrinsic"]
                 for item in list_item]
     o3d_camera_param["extrinsic"] = change_param(extrisic)
     # mine_camera_param["intrinsic"][2] = mine_camera_param["width"] / 2 -0.5
     # mine_camera_param["intrinsic"][5] = mine_camera_param["height"] / 2 -0.5
     o3d_camera_param["intrinsic"]["intrinsic_matrix"] = change_param(
-        mine_camera_param["intrinsic"])
-    o3d_camera_param["intrinsic"]["width"] = mine_camera_param["width"]
-    o3d_camera_param["intrinsic"]["height"] = mine_camera_param["height"]
+        camera_param["intrinsic"])
+    o3d_camera_param["intrinsic"]["width"] = camera_param["width"]
+    o3d_camera_param["intrinsic"]["height"] = camera_param["height"]
     return o3d_camera_param
 
 def tf_to_mat(tf):
@@ -90,7 +89,8 @@ def viz_project_object_to_2d(data_dir, object_name, pose_dir, cam_index, frame_i
     camera_param_path = os.path.join(pose_dir, "camera_param.json")
     if not os.path.exists(camera_param_path):
         camera_param = load_camera_param(data_dir, cam_index)
-        o3d_params = change_o3d_camera_param(camera_param_path, camera_param)
+        print(camera_param)
+        o3d_params = change_o3d_camera_param(camera_param)
         json.dump(o3d_params, open(camera_param_path, "w"), indent=4)
         
     camera_params = o3d.io.read_pinhole_camera_parameters(str(camera_param_path))
@@ -101,13 +101,13 @@ def viz_project_object_to_2d(data_dir, object_name, pose_dir, cam_index, frame_i
     
     # lose poses
     pose = np.loadtxt(os.path.join(pose_dir, "pose.txt"))
-    pose = tf_to_mat(pose)
-    global_position_path = os.path.join(data_dir, "global_name_position", f"{frame_id}.txt")
-    cam_mat = load_camera_extrinsic(global_position_path, cam_index=0)
-    cam_mat = np.array(cam_mat)
-    cam_mat_inv = np.linalg.inv(cam_mat)
-    print(cam_mat)
-    mesh = mesh.transform(cam_mat_inv @ pose @ cam_mat )
+    pose = pose.reshape([4,4])
+    # global_position_path = os.path.join(data_dir, "global_name_position", f"{frame_id}.txt")
+    # cam_mat = load_camera_extrinsic(global_position_path, cam_index=0)
+    # cam_mat = np.array(cam_mat)
+    # cam_mat_inv = np.linalg.inv(cam_mat)
+    # print(cam_mat)
+    mesh = mesh.transform(pose)
     
     vis = o3d.visualization.Visualizer()
     vis.create_window()
@@ -127,8 +127,6 @@ def viz_project_object_to_2d(data_dir, object_name, pose_dir, cam_index, frame_i
 
 
 
-
-# 也需要只有一个arm_hand_mesh的
 if __name__ == "__main__":
 
     data_folder = "/Users/yumeng/Working/data/CollectedDataset/test_1_obj_pose"
