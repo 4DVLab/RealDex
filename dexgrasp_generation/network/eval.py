@@ -224,7 +224,7 @@ if __name__ == "__main__":
     if not os.path.exists(result_path):
         os.makedirs(result_path)
     results_file = os.path.join(result_path, "result_test_set_orig_ckpt.pt")
-    # main(cfg, results_file)
+    main(cfg, results_file)
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     vis_result(results_file, device, result_path)

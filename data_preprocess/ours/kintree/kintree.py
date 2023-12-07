@@ -143,20 +143,14 @@ def load_sequence(tf_data_dir, tf_info_file):
 
 
 if __name__ == "__main__":
-    tf_data_dir = "/home/lab4dv/data/bags/test/test_3/TF"
+    tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
     tf_info_file = "./kintree/srhand_ur.json"
 
     with open(tf_info_file, 'r') as f:
         tf_info = json.load(f)
 
-    # rearrange_tf(tf_data_dir, tf_info)
+    rearrange_tf(tf_data_dir, tf_info)
     load_sequence(tf_data_dir, tf_info_file)
-    # tree = Kintree(data_file)
-    # tree.forward_kinematic(base_pos=np.zeros(3), base_frame=Rotation.identity())
-
-    # for name, node in tree.nodes.items():
-    #     if len(node.value) > 0:
-    #         print(name, ":\t", node.value['position'])
 
 
         

@@ -96,7 +96,9 @@ def load_visible_link_from_urdf(urdf_path):
             link_list.append(link.attrib['name'])
     return link_list
         
-        
+def global_tf_to_joint_angle(global_tf, kintree):
+    # TODO: convert the tf matrix to a single joint angle
+    pass
 
 if __name__ == '__main__':
     urdf_path = "../../data_process/bimanual_srhand_ur.urdf"

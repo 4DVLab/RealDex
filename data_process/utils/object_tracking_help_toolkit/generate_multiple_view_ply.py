@@ -153,12 +153,16 @@ class gen_merge_pcd_ply:
 
         time_index_length = len(self.all_cams_time_stamp_index[0])
         # for time_index in self.all_cams_time_stamp_index[0]:
+        for cam_index in np.arange(0,4):
+            camera_image_save_folder = self.merge_pcd_save_folder / f"cam{cam_index}"
+            os.makedirs(camera_image_save_folder)
+
         for index in np.arange(constrain_bound[0],constrain_bound[1]):
             if index >= time_index_length:
                 return
             time_index = self.all_cams_time_stamp_index[0][index]
 
-            for cam_index in np.arange(0,1):
+            for cam_index in np.arange(0,4):
                 pcd = self.gen_pcd_with_depth_and_rgb_paths(
                     self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
                 # o3d.io.write_point_cloud(str(
@@ -168,14 +172,14 @@ class gen_merge_pcd_ply:
                 pcd = self.filter_pcd(pcd)
 
                 
-                # o3d.io.write_point_cloud(str(
-                #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
-                merge_pcd += pcd
+                o3d.io.write_point_cloud(str(
+                    self.merge_pcd_save_folder / f"cam{cam_index}/index{index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
+                # merge_pcd += pcd
                 # merge_pcd.remove_duplicated_points()
             # o3d.visualization.draw_geometries([merge_pcd])
 
-            o3d.io.write_point_cloud(str(
-                self.merge_pcd_save_folder / f"merge_pcd_{time_index}.ply"), merge_pcd, write_ascii=False, compressed=False, print_progress=True)
+            # o3d.io.write_point_cloud(str(
+            #     self.merge_pcd_save_folder / f"3_{time_index}.ply"), merge_pcd, write_ascii=False, compressed=False, print_progress=True)
 
     def init_merge_pcd_timestamp(self):
         shutil.copy2(
@@ -289,10 +293,10 @@ if __name__ == "__main__":
     four_cam_intrisics_extrisics_save_folder =  Path("/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
     
     
-    root_path = Path("/home/lab4dv/data/bags/test/test_3")
+    root_path = Path("/home/lab4dv/data/bags/test/backup/test_1/")
 
 
-    constrain_bound = [0,5000]
+    constrain_bound = [0,2000]
     gen_pcd_for_annotate(
         root_path, 
         four_cam_intrisics_extrisics_save_folder, constrain_bound)
