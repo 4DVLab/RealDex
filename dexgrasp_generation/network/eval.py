@@ -4,7 +4,9 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from data.dataset import get_mesh_dataloader
+from data.dataset import get_grab_mesh_dataloader, feature_to_color
 from trainer import Trainer
+# from trainer_grab import Trainer
 from utils.global_utils import result_to_loader, flatten_result
 from omegaconf import OmegaConf
 from omegaconf.omegaconf import open_dict
@@ -21,12 +23,13 @@ from network.models.contactnet.contact_network import ContactMapNet
 from utils.hand_model import AdditionalLoss, add_rotation_to_hand_pose
 from utils.eval_utils import KaolinModel, eval_result
 from utils.visualize import visualize
-
+from utils.hand_model import HandModel
+import trimesh
 from pytorch3d import transforms as pttf
 
 
 
-def main(cfg):
+def main(cfg, result_file):
     cfg = process_config(cfg)
 
     """ Logging """
@@ -44,7 +47,8 @@ def main(cfg):
 
 
     """ DataLoaders """
-    test_loader = get_mesh_dataloader(cfg, "test")
+    # test_loader = get_mesh_dataloader(cfg, "test")
+    test_loader = get_grab_mesh_dataloader(cfg, "test")
 
     """ Trainer """
     trainers = []
@@ -60,7 +64,11 @@ def main(cfg):
     contact_cfg = compose(f"{cfg['tta']['contact_net']['type']}_config")
     with open_dict(contact_cfg):
         contact_cfg['device'] = cfg['device']
-    contact_net = ContactMapNet(contact_cfg).to(cfg['device'])
+        
+    tta_trainer = Trainer(contact_cfg, logger)
+    tta_trainer.resume()
+    contact_net = tta_trainer.model.net
+    # contact_net = ContactMapNet(contact_cfg).to(cfg['device'])
     contact_net.eval()
     tta_loss = AdditionalLoss(cfg['tta'], 
                               cfg['device'], 
@@ -92,7 +100,12 @@ def main(cfg):
         hand_pose = hand_pose.cuda()
         hand = tta_loss.hand_model(hand_pose, with_surface_points=True)
         discretized_cmap_pred = tta_loss.cmap_func(dict(canon_obj_pc=points, observed_hand_pc=hand['surface_points']))['contact_map'].exp()
-        cmap_pred = (torch.argmax(discretized_cmap_pred, dim=-1) + 0.5) / discretized_cmap_pred.shape[-1]
+        # cmap_pred = (torch.argmax(discretized_cmap_pred, dim=-1) + 0.5) / discretized_cmap_pred.shape[-1]
+        arange = (torch.arange(0, discretized_cmap_pred.shape[-1], dtype=discretized_cmap_pred.dtype, device=discretized_cmap_pred.device)+0.5)
+        cmap_pred = torch.mean(discretized_cmap_pred * arange, dim=-1).detach()
+        # print(cmap_pred.shape)
+        # print(discretized_cmap_pred.shape)
+        data['cmap_pred'] = cmap_pred
         
         hand_pose.requires_grad_()
         optimizer = torch.optim.Adam([hand_pose], lr=cfg['tta']['lr'])
@@ -105,31 +118,27 @@ def main(cfg):
         data['tta_hand_pose'] = add_rotation_to_hand_pose(hand_pose.detach().cpu(), data['sampled_rotation'])
         result.append(data)
         
-        if i % 100 == 0:
-            eval_result(cfg['q1'], {k: data[k] for k in data.keys()}, hand_model, object_model, cfg['device'])
-            logger.info(result)
-            logger.info([f"{key}: {result[key]}\n" for key in result])
-            logger.info("\n")
+    torch.save(data, result_file)
 
-    result = flatten_result(result)
+    # result = flatten_result(result)
     
 
-    hand_model = tta_loss.hand_model
-    object_model = KaolinModel(
-        data_root_path='data/DFCData/meshes',
-        batch_size_each=1,
-        device=cfg['device']
-    )
+    # hand_model = tta_loss.hand_model
+    # object_model = KaolinModel(
+    #     data_root_path='data/DFCData/meshes',
+    #     batch_size_each=1,
+    #     device=cfg['device']
+    # )
 
-    final_results = []
-    for i in trange(len(result['hand_pose'])):
-        final_results.append(eval_result(cfg['q1'], {k: result[k][i] for k in result.keys()}, hand_model, object_model, cfg['device']))
-    result.update(flatten_result(final_results))
+    # final_results = []
+    # for i in trange(len(result['hand_pose'])):
+    #     final_results.append(eval_result(cfg['q1'], {k: result[k][i] for k in result.keys()}, hand_model, object_model, cfg['device']))
+    # result.update(flatten_result(final_results))
     
-    seen_result, unseen_result = divide(result)
+    # seen_result, unseen_result = divide(result)
 
-    output_result(seen_result, 'seen')
-    output_result(unseen_result, 'unseen')
+    # output_result(seen_result, 'seen')
+    # output_result(unseen_result, 'unseen')
 
 
 def divide(data):
@@ -171,11 +180,51 @@ def parse_args():
     return parser.parse_args()
 
 
+def vis_result(filename, device, result_path):
+    result = torch.load(filename)
+    print(result.keys())
+    print(len(result))
+    
+    hand_pose = result['tta_hand_pose'].to(device)
+    hand_model = HandModel(
+            mjcf_path='data/mjcf/shadow_hand.xml',
+            mesh_path='data/mjcf/meshes',
+            contact_points_path='data/mjcf/contact_points.json',
+            penetration_points_path='data/mjcf/penetration_points.json',
+            device=device,
+        )
+    hand_pose = hand_pose.float()
+    hand = hand_model(hand_pose=hand_pose, object_pc=result['obj_pc'].to(device), with_meshes=True)
+    num_hand = hand['vertices'].shape[0]
+    hand_verts = hand['vertices'].cpu()
+    hand_faces = hand['faces'].cpu()
+    print(hand_verts.shape, hand_faces.shape)
+    for i in range(num_hand):
+        colors = feature_to_color(result['cmap_pred'][i].cpu())
+        obj_pc = trimesh.PointCloud(vertices=result['obj_pc'][i], colors=colors)
+        hand_mesh = trimesh.Trimesh(vertices=hand_verts[i], faces=hand_faces)
+        hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
+        obj_pc.export(os.path.join(result_path, f"test_obj_{i}.ply"))
+        obj_mesh = result['obj_mesh'][i]
+        (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
+
+
 if __name__ == "__main__":
     args = parse_args()
-    initialize(version_base=None, config_path="../configs", job_name="train")
+    # config_name= "configs_baseline"
+    config_name= "configs_grab_mesh"
+    
+    initialize(version_base=None, config_path="../" + config_name, job_name="train")
     if args.exp_dir is None:
         cfg = compose(config_name=args.config_name)
     else:
         cfg = compose(config_name=args.config_name, overrides=[f"exp_dir={args.exp_dir}"])
-    main(cfg)
+    
+    result_path = "/home/liuym/results/unidexgrasp_test_"+config_name
+    if not os.path.exists(result_path):
+        os.makedirs(result_path)
+    results_file = os.path.join(result_path, "result_test_set_orig_ckpt.pt")
+    main(cfg, results_file)
+    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    vis_result(results_file, device, result_path)

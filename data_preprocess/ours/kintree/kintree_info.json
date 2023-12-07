@@ -29,16 +29,24 @@
     ],
     "link": [
         [
-            "ra_upper_arm_link",
-            "ra_forearm_link"
+            "world",
+            "ra_base_link"
+        ],
+        [
+            "ra_base_link",
+            "ra_base_link_inertia"
+        ],
+        [
+            "ra_base_link_inertia",
+            "ra_shoulder_link"
         ],
         [
             "ra_shoulder_link",
             "ra_upper_arm_link"
         ],
         [
-            "ra_base_link_inertia",
-            "ra_shoulder_link"
+            "ra_upper_arm_link",
+            "ra_forearm_link"
         ],
         [
             "ra_forearm_link",
@@ -53,20 +61,36 @@
             "ra_wrist_3_link"
         ],
         [
-            "rh_ffmiddle",
-            "rh_ffdistal"
+            "ra_wrist_3_link",
+            "ra_flange"
         ],
         [
-            "rh_ffproximal",
-            "rh_ffmiddle"
+            "ra_flange",
+            "rh_forearm"
+        ],
+        [
+            "rh_forearm",
+            "rh_wrist"
+        ],
+        [
+            "rh_wrist",
+            "rh_palm"
+        ],
+        [
+            "rh_palm",
+            "rh_ffknuckle"
         ],
         [
             "rh_ffknuckle",
             "rh_ffproximal"
         ],
         [
-            "rh_palm",
-            "rh_ffknuckle"
+            "rh_ffproximal",
+            "rh_ffmiddle"
+        ],
+        [
+            "rh_ffmiddle",
+            "rh_ffdistal"
         ],
         [
             "rh_lfmiddle",
@@ -139,14 +163,7 @@
         [
             "rh_palm",
             "rh_thbase"
-        ],
-        [
-            "rh_wrist",
-            "rh_palm"
-        ],
-        [
-            "rh_forearm",
-            "rh_wrist"
         ]
+        
     ]
 }

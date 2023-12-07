@@ -1,0 +1,176 @@
+{
+    "node_names": [
+        "ra_base_link",
+        "ra_base_link_inertia",
+        "ra_shoulder_link",
+        "ra_upper_arm_link",
+        "ra_forearm_link",
+        "ra_wrist_1_link",
+        "ra_wrist_2_link",
+        "ra_wrist_3_link",
+        "ra_flange",
+        "rh_forearm",
+        "rh_wrist",
+        "rh_palm",
+        "rh_ffknuckle",
+        "rh_ffproximal",
+        "rh_ffmiddle",
+        "rh_ffdistal",
+        "rh_mfknuckle",
+        "rh_mfproximal",
+        "rh_mfmiddle",
+        "rh_mfdistal",
+        "rh_rfknuckle",
+        "rh_rfproximal",
+        "rh_rfmiddle",
+        "rh_rfdistal",
+        "rh_lfmetacarpal",
+        "rh_lfknuckle",
+        "rh_lfproximal",
+        "rh_lfmiddle",
+        "rh_lfdistal",
+        "rh_thbase",
+        "rh_thproximal",
+        "rh_thhub",
+        "rh_thmiddle",
+        "rh_thdistal"
+    ],
+    "link": [
+        {
+            "parent": "world",
+            "child": "ra_base_link"
+        },
+        {
+            "parent": "ra_base_link",
+            "child": "ra_base_link_inertia"
+        },
+        {
+            "parent": "ra_base_link_inertia",
+            "child": "ra_shoulder_link"
+        },
+        {
+            "parent": "ra_shoulder_link",
+            "child": "ra_upper_arm_link"
+        },
+        {
+            "parent": "ra_upper_arm_link",
+            "child": "ra_forearm_link"
+        },
+        {
+            "parent": "ra_forearm_link",
+            "child": "ra_wrist_1_link"
+        },
+        {
+            "parent": "ra_wrist_1_link",
+            "child": "ra_wrist_2_link"
+        },
+        {
+            "parent": "ra_wrist_2_link",
+            "child": "ra_wrist_3_link"
+        },
+        {
+            "parent": "ra_wrist_3_link",
+            "child": "ra_flange"
+        },
+        {
+            "parent": "ra_flange",
+            "child": "rh_forearm"
+        },
+        {
+            "parent": "rh_forearm",
+            "child": "rh_wrist"
+        },
+        {
+            "parent": "rh_wrist",
+            "child": "rh_palm"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_ffknuckle"
+        },
+        {
+            "parent": "rh_ffknuckle",
+            "child": "rh_ffproximal"
+        },
+        {
+            "parent": "rh_ffproximal",
+            "child": "rh_ffmiddle"
+        },
+        {
+            "parent": "rh_ffmiddle",
+            "child": "rh_ffdistal"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_mfknuckle"
+        },
+        {
+            "parent": "rh_mfknuckle",
+            "child": "rh_mfproximal"
+        },
+        {
+            "parent": "rh_mfproximal",
+            "child": "rh_mfmiddle"
+        },
+        {
+            "parent": "rh_mfmiddle",
+            "child": "rh_mfdistal"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_rfknuckle"
+        },
+        {
+            "parent": "rh_rfknuckle",
+            "child": "rh_rfproximal"
+        },
+        {
+            "parent": "rh_rfproximal",
+            "child": "rh_rfmiddle"
+        },
+        {
+            "parent": "rh_rfmiddle",
+            "child": "rh_rfdistal"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_lfmetacarpal"
+        },
+        {
+            "parent": "rh_lfmetacarpal",
+            "child": "rh_lfknuckle"
+        },
+        {
+            "parent": "rh_lfknuckle",
+            "child": "rh_lfproximal"
+        },
+        {
+            "parent": "rh_lfproximal",
+            "child": "rh_lfmiddle"
+        },
+        {
+            "parent": "rh_lfmiddle",
+            "child": "rh_lfdistal"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_thbase"
+        },
+        {
+            "parent": "rh_thbase",
+            "child": "rh_thproximal"
+        },
+        {
+            "parent": "rh_thproximal",
+            "child": "rh_thhub"
+        },
+        {
+            "parent": "rh_thhub",
+            "child": "rh_thmiddle"
+        },
+        {
+            "parent": "rh_thmiddle",
+            "child": "rh_thdistal"
+        }
+    ]
+}

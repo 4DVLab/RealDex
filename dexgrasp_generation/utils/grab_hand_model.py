@@ -14,7 +14,7 @@ from pytorch3d.structures import Meshes
 from pytorch3d.ops import sample_points_from_meshes, sample_farthest_points
 import pytorch3d.ops
 import pytorch3d.transforms
-from csdf import index_vertices_by_faces, compute_sdf
+# from csdf import index_vertices_by_faces, compute_sdf
 import pickle
 from manotorch.manolayer import ManoLayer, MANOOutput
 from manotorch.anchorlayer import AnchorLayer
@@ -22,13 +22,13 @@ from utils.tta_loss import inter_penetr_loss, get_NN
 from network.models.loss import min_distance_from_m_to_n, contact_map_of_m_to_n
 
 class HandModel(nn.Module):
-    def __init__(self, n_surface_points=3000):
+    def __init__(self, device, n_surface_points=3000):
         super().__init__()
         
         # self.mano_path = os.path.join(mano_path, 'MANO_RIGHT.pkl')
-            
-        self.mano_layer = ManoLayer(use_pca=False, flat_hand_mean=False)
-        self.anchor_layer = AnchorLayer()
+        self.device = device
+        self.mano_layer = ManoLayer(use_pca=True, ncomps=24, flat_hand_mean=True).to(device)
+        self.anchor_layer = AnchorLayer().to(device)
         # self.mano_faces = self.mano_layer.get_mano_closed_faces().unsqueeze(0)
         self.mano_faces = self.mano_layer.th_faces.unsqueeze(0)
         self.closed_faces = self.mano_layer.get_mano_closed_faces().unsqueeze(0)
@@ -39,11 +39,11 @@ class HandModel(nn.Module):
         B,_ = hand_pose.shape
         if hand_beta is None:
             hand_beta =  torch.zeros(1, 10)
-            hand_beta = hand_beta.expand(B, -1).to(hand_pose.device)
+            hand_beta = hand_beta.expand(B, -1).to(self.device)
         
         global_translation = hand_pose[:, 0:3]
-        hand_faces = self.mano_faces.expand(B, -1, -1).to(hand_pose.device)
-        closed_faces = self.closed_faces.expand(B, -1, -1).to(hand_pose.device)
+        hand_faces = self.mano_faces.expand(B, -1, -1).to(self.device)
+        closed_faces = self.closed_faces.expand(B, -1, -1).to(self.device)
         
         rh_m:MANOOutput = self.mano_layer(hand_pose[:, 3:], hand_beta)
         hand_verts = rh_m.verts + global_translation[:, None, :]
@@ -89,7 +89,7 @@ class AdditionalLoss(nn.Module):
         #     penetration_points_path='data/mjcf/penetration_points.json',
         #     device=device,
         # )
-        self.hand_model = HandModel()
+        self.hand_model = HandModel(device)
         self.cmap_func = cmap_net.forward # cmap net is the contact net
         self.normalize_factor=tta_cfg['normalize_factor']
         self.weights = dict(
@@ -111,10 +111,10 @@ class AdditionalLoss(nn.Module):
         loss, losses = cal_loss(hand, cmap, cmap_pred, points, self.num_obj_points, **self.weights, verbose=True)
         return loss, losses
     
-    def tta_loss(self, hand_pose, points, cmap_pred, plane_parameters):
+    def tta_loss(self, hand_pose, points, cmap_pred):
         hand = self.hand_model(hand_pose, points, with_penetration=True, with_surface_points=True, with_contact_candidates=True, with_penetration_keypoints=True)
         cmap = hand['cmap']
-        loss = cal_loss(hand, cmap, cmap_pred, points, plane_parameters, self.num_obj_points, **self.weights)
+        loss = cal_loss(hand, cmap, cmap_pred, points, self.num_obj_points, **self.weights)
         return loss
 
 def cal_loss(hand, cmap_labels, cmap_pred, object_pc, num_obj_points, verbose=False, weight_cmap=1., weight_pen=1., weight_dis=1., weight_spen=1., weight_tpen=1., thres_dis=0.02):
@@ -158,3 +158,15 @@ def cal_loss(hand, cmap_labels, cmap_pred, object_pc, num_obj_points, verbose=Fa
         return loss, dict(loss=loss, loss_cmap=loss_cmap, loss_pen=loss_pen, loss_dis=loss_dis) #, loss_spen=loss_spen) #, loss_tpen=loss_tpen)
     else:
         return loss
+
+def add_rotation_to_hand_pose(hand_pose, rotation):
+    translation = hand_pose[..., :3]
+    added_rot_aa = hand_pose[..., 3:6]
+    added_rot_mat = pytorch3d.transforms.axis_angle_to_matrix(added_rot_aa)
+    hand_qpos = hand_pose[..., 6:]
+
+    new_translation = torch.einsum('na,nba->nb', translation, rotation)
+    new_rotation_mat = rotation @ added_rot_mat
+    new_rotation_aa = pytorch3d.transforms.matrix_to_axis_angle(new_rotation_mat)
+
+    return torch.cat([new_translation, new_rotation_aa, hand_qpos], dim=-1)

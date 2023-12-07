@@ -15,7 +15,7 @@ for file_name in os.listdir(model_folder_path):
         model_path = model_folder_path / file_name
         break
 
-model_mesh = o3d.io.read_triangle_mesh(str(model_path))
+    model_mesh = o3d.io.read_triangle_mesh(str(model_path))
 
 
 matrix = np.array([
@@ -57,5 +57,9 @@ cam0_to_world_transform = np.array([
 
 model_mesh.transform(cam0_to_world_transform@matrix)
 
-write_path = model_folder_path / f"transform_{model_name}"
-o3d.io.write_triangle_mesh(str(write_path),model_mesh)
+    write_path = model_folder_path / f"transform_{model_name}"
+    o3d.io.write_triangle_mesh(str(write_path),model_mesh)
+
+
+if __name__ == "__main__":
+    transform_with_one_matrix()

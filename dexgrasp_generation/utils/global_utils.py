@@ -12,6 +12,16 @@ class ResultDataset(Dataset):
     
     def __getitem__(self, index):
         return {k: v[index] for k, v in self.result.items()}
+    
+def my_collate_fn(batch):
+    ret_dict = {}
+    for item in batch:
+        for key in item:
+            if key not in ["obj_mesh", "object_code"]:
+                ret_dict[key] = torch.stack([item[key] for item in batch])
+            else:
+                ret_dict[key] = [item[key] for item in batch]
+    return ret_dict
 
 def flatten_result(result):
     return {k: (torch.cat([dic[k] for dic in result]) if (type(result[0][k]) == torch.Tensor) else [obj for dic in result for obj in dic[k]]) for k in result[0].keys()}
@@ -21,7 +31,7 @@ def result_to_loader(result, cfg, batch_size=None):
         batch_size = cfg['batch_size']
     result = flatten_result(result)
     dataset = ResultDataset(result)
-    return DataLoader(dataset, batch_size, shuffle=False, num_workers=cfg['num_workers'])
+    return DataLoader(dataset, batch_size, shuffle=False, num_workers=cfg['num_workers'], collate_fn=my_collate_fn)
 
 
 def update_dict(old_dict, new_dict):

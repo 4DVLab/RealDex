@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import animation
 
-from kintree import Kintree
+from ours.kintree.kintree import Kintree
 import json
 
 def draw_skeleton(joints3D, link_table, ax=None, with_numbers=True):
