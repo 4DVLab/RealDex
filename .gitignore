@@ -1,4 +1,6 @@
 # added by yumeng
+.history/
+.vscode/
 */.DS_Store
 /__pycache__
 /out_json
