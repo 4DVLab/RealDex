@@ -23,10 +23,9 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path):
     hand_arm_mesh_folder_path = Path(bag_folder_path) / Path("arm_hand_mesh")
     for index in np.arange(pcd_length):
         env_pcd = o3d.io.read_point_cloud(
-            str(env_pcd_folder / Path(f"TEMP/cam0_index{index}.ply")))
+            str(env_pcd_folder / Path(f"cam0/cam0_inde{index}_simplified.ply")))
         # obj_pcd = o3d.io.read_point_cloud(str(obj_folder / f"{index}.ply"))
         hand_arm_mesh = o3d.io.read_triangle_mesh(str(hand_arm_mesh_folder_path / Path(f"{index}.ply")))
-        hand_arm_mesh.compute_vertex_normals()
         if index != 0:
             vis.clear_geometries()
         

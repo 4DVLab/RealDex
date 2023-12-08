@@ -25,7 +25,10 @@ for index in np.arange(0,100):
     depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(
         depth_img, alpha=0.03), cv2.COLORMAP_JET)
     
-    rgb_img = cv2.imread(str(rgb_img_path), -1)
+    rgb_img = cv2.imread(str
+#     # plt.show()#使用这个的话就一次只能出一个窗口，要看下一个，就要重新开一个
+#     fig.clf()
+(rgb_img_path), -1)
     rgb_img = cv2.cvtColor(rgb_img,cv2.COLOR_BGR2RGB)
 
     # hand_arm_img = cv2.imread(str(object_img_path), -1)
@@ -41,7 +44,4 @@ for index in np.arange(0,100):
 
 #     plt.imshow(result)
 #     plt.pause(0.001)  
-#     # plt.show()#使用这个的话就一次只能出一个窗口，要看下一个，就要重新开一个
-#     fig.clf()
-
 # plt.close(fig)

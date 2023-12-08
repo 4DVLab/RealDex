@@ -20,24 +20,23 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path):
         Path("object_pose_in_every_frame_with_icp")
     image_save_folder = obj_folder / f"capture_image"
     os.makedirs(image_save_folder, exist_ok=True)
-    hand_arm_mesh_folder_path = Path(bag_folder_path) / Path("arm_hand_mesh")
+
     for index in np.arange(pcd_length):
         env_pcd = o3d.io.read_point_cloud(
-            str(env_pcd_folder / Path(f"TEMP/cam0_index{index}.ply")))
+            str(env_pcd_folder / Path(f"merge_pcd_{index}_simplified.ply")))
         # obj_pcd = o3d.io.read_point_cloud(str(obj_folder / f"{index}.ply"))
-        hand_arm_mesh = o3d.io.read_triangle_mesh(str(hand_arm_mesh_folder_path / Path(f"{index}.ply")))
-        hand_arm_mesh.compute_vertex_normals()
+        hand_arm_mesh
         if index != 0:
             vis.clear_geometries()
         
         vis.add_geometry(env_pcd)
-        vis.add_geometry(hand_arm_mesh)
+        vis.add_geometry(obj_pcd)
         vis.get_view_control().convert_from_pinhole_camera_parameters(camera_params)
         vis.poll_events()
         vis.update_renderer()
-        # image = vis.capture_screen_float_buffer(False)
-        # plt.imsave(image_save_folder /
-        #            Path(f"{index}.png"), np.asarray(image), dpi=1)
+        image = vis.capture_screen_float_buffer(False)
+        plt.imsave(image_save_folder /
+                   Path(f"{index}.png"), np.asarray(image), dpi=1)
     vis.destroy_window()
 
 if __name__ == "__main__":

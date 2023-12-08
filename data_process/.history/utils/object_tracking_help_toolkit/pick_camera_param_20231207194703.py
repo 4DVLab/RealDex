@@ -9,7 +9,7 @@ def save_camera_parameters(vis):
         "/media/tony/新加卷/test_data/test/test_1/camera_param.json", parameters)
 
 
-bag_path = "/media/tony/新加卷/test_data/test/test_1/merged_pcd_filter/cam0/cam0_index0.ply"
+bag_path = "/media/tony/新加卷/test_data/test/test_1/merged_pcd_filter/cam0/"
 mesh = o3d.io.read_point_cloud(bag_path)
 
 vis = o3d.visualization.VisualizerWithKeyCallback()

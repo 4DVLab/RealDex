@@ -15,7 +15,7 @@ depth_folder = folder / Path(f"cam{cam_index}/depth_to_rgb/image_raw")
 
 object_folder = folder / Path(f"icg_capture_image")
 
-save_folder = folder / Path("objecct_merge_with_rgb/rgb_merge_depth")
+save_folder = folder / Path("objecct_merge_with_rgb/depth_merge")
 os.makedirs(save_folder,exist_ok=True)
 for index in np.arange(0,100):
     depth_img_path = depth_folder / Path(f"{index}.png")
@@ -35,7 +35,7 @@ for index in np.arange(0,100):
 
     result = cv2.addWeighted(depth_colormap, 0.6, rgb_img, 0.4, 0.0)
 
-    save_path = save_folder / Path(f"{index}.png")
+    save_path = save_folder / Path(f"icg_result_depth_{index}.png")
     plt.imsave(save_path,result)
     
 

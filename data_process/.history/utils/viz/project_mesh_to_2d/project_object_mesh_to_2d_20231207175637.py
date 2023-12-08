@@ -96,12 +96,12 @@ def viz_project_object_to_2d(object_folder,my_cam=True):
         str(camera_param_path))
     
 
-    image_save_folder = object_folder / f"icg_capture_image"
+    image_save_folder = object_folder / f"iccapture_image"
 
     os.makedirs(image_save_folder, exist_ok=True)
     for object_index in np.arange(223):
         object_path = object_folder / \
-            Path(f"object_pose_in_every_frame/{object_index}.ply")
+            Path(f"object_pose_in_every_frame_with_icp/{object_index}.ply")
         mesh = o3d.io.read_triangle_mesh(str(object_path))
         mesh.paint_uniform_color([1, 0, 0])
         if object_index != 0:
@@ -127,4 +127,3 @@ if __name__ == "__main__":
     folder_path = Path("/media/tony/新加卷/test_data/test/test_1")
 
     viz_project_object_to_2d(folder_path)
-

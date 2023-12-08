@@ -127,4 +127,3 @@ if __name__ == "__main__":
     folder_path = Path("/media/tony/新加卷/test_data/test/test_1")
 
     viz_project_object_to_2d(folder_path)
-

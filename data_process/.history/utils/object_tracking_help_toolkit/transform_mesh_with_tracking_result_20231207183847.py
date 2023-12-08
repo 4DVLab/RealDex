@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     transform_obj2result_pose(bag_folder_path, model_name,
                               transform_mesh_interval,
-                              cam0_rgb_camera_link2world,
+                              None,
                               cam_index)
 
 

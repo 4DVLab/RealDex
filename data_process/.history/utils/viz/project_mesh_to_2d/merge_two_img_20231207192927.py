@@ -35,7 +35,7 @@ for index in np.arange(0,100):
 
     result = cv2.addWeighted(depth_colormap, 0.6, rgb_img, 0.4, 0.0)
 
-    save_path = save_folder / Path(f"{index}.png")
+    save_path = save_folder / Path(f"icg_result_depth_{index}.png")
     plt.imsave(save_path,result)
     
 
