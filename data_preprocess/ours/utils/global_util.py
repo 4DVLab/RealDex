@@ -1,9 +1,15 @@
 import numpy as np
-import open3d as o3d
 import os
 import re
 from tqdm import tqdm, trange
 import json
+# os.environ['EGL_PLATFORM'] = 'surfaceless'   # Ubunu 20.04+
+# os.environ['OPEN3D_CPU_RENDERING'] = 'true'  # Ubuntu 18.04
+import open3d as o3d
+import open3d.visualization.rendering as rendering
+import matplotlib.pyplot as plt
+
+
 def segment_scene_point_cloud(scene_pcd, object_mesh, single_test=False):
     distance_threshold = 0.02
     scene_pcd_tree = o3d.geometry.KDTreeFlann(scene_pcd)
@@ -20,12 +26,13 @@ def segment_scene_point_cloud(scene_pcd, object_mesh, single_test=False):
         if len(idx) > 0:
             closet_pt = scene_pcd.points[idx[0]]
             distance += np.linalg.norm(point - closet_pt)
-            counter += 1           
+            counter += 1      
         idx_list += idx
         
     distance /= counter
     idx_list = np.unique(idx_list)
-    seg_points_ratio = len(idx_list)/len(scene_pcd.points)
+    # seg_points_ratio = len(idx_list)/len(scene_pcd.points)
+    seg_points_ratio = counter/len(mesh_pcd.points)
 
     segmented_scene_pcd = o3d.geometry.PointCloud() 
     if single_test:
@@ -60,23 +67,37 @@ def time_synchronization(sr_mesh_dir, scene_dir):
         scene_pcd = o3d.io.read_point_cloud(os.path.join(scene_dir,scene_file))
         gotit = False
         progress_bar = trange(start_id, num_sr_mesh, desc="Processing items", unit="item")
+        potential_list = []
         for i in progress_bar:
             sr_mesh_file = sr_mesh_file_list[i]
             sr_mesh = o3d.io.read_triangle_mesh(os.path.join(sr_mesh_dir, sr_mesh_file))
             seg_points_ratio, distance, _ = segment_scene_point_cloud(scene_pcd, sr_mesh)
             progress_bar.set_postfix({"ratio": seg_points_ratio, "distance":distance}, refresh=True)
-            if seg_points_ratio > 0.101 and distance < 0.01:
-                scene_to_mesh[scene_file] = sr_mesh_file 
+
+            if seg_points_ratio > 0.33 and distance < 0.01:
+                metric = seg_points_ratio - 10 * distance
+                potential_list.append((i, metric))
+            elif len(potential_list) > 0:
+                potential_list = sorted(potential_list, key=lambda x: x[1], reverse=True) # the higher the better
+                selected_id, metric = potential_list[0]
+                scene_to_mesh[scene_file] = sr_mesh_file_list[selected_id] 
+                start_id = selected_id + 1
                 gotit = True
-                start_id = i+1
                 break
+
         if gotit == False:
             print(scene_file)
     out_path = os.path.join(scene_dir, "scene_to_mesh.json")
     with open(out_path, 'w') as f:
         f.write(json.dumps(scene_to_mesh, indent=4))
+        
+def offline_render():
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
+    render = rendering.OffscreenRenderer(640, 480)
+    image = vis.capture_screen_float_buffer(False)
             
-def vis_result(sr_mesh_dir, scene_dir):
+def vis_result(sr_mesh_dir, scene_dir, export_img = True, out_path=None):
     scene_to_mesh_path = os.path.join(scene_dir, "scene_to_mesh.json")
     with open(scene_to_mesh_path, 'r') as f:
         scene_to_mesh = json.load(f)
@@ -86,12 +107,19 @@ def vis_result(sr_mesh_dir, scene_dir):
     # Create a visualization window
     vis = o3d.visualization.Visualizer()
     vis.create_window()
+    
+    camera_parameters = o3d.io.read_pinhole_camera_parameters("./utils/camera_param.json")
+
+    # Set the camera parameters for the current frame
+    ctr = vis.get_view_control()
+    ctr.convert_from_pinhole_camera_parameters(camera_parameters)
 
     # Add the point cloud to the visualization window
     vis.add_geometry(current_pcd)
     vis.add_geometry(current_mesh)
     # Callback function for animation
     iterator = iter(scene_to_mesh.items())
+    counter = 0
     def load_next(vis):
         nonlocal iterator, current_pcd, current_mesh
         try:
@@ -111,6 +139,9 @@ def vis_result(sr_mesh_dir, scene_dir):
         vis.add_geometry(current_pcd)
         vis.add_geometry(current_mesh)
         # o3d.visualization.draw_geometries([current_pcd, current_mesh])
+        
+        image = vis.capture_screen_float_buffer(False)
+        plt.imsave(os.path.join(out_path, '{:05d}.png'.format(counter)), np.asarray(image), dpi=1)
 
         return False
     vis.register_animation_callback(load_next)
@@ -141,6 +172,6 @@ if __name__ == '__main__':
     scene_dir = "/home/lab4dv/data/bags/test/backup/test_1/merged_pcd_filter/cam3"
     # single_test()
 
-    time_synchronization(sr_mesh_dir, scene_dir)
-    # vis_result(sr_mesh_dir, scene_dir)
+    # time_synchronization(sr_mesh_dir, scene_dir)
+    vis_result(sr_mesh_dir, scene_dir)
     
