@@ -10,6 +10,7 @@ import matplotlib.pylab as plt
 
 def camera_param_init():
     camera_param = {
+        "class_name" : "PinholeCameraParameters",
         "intrinsic": {},
     }
     return camera_param
@@ -20,7 +21,7 @@ def ros_camera_info_to_camera_param(camera_info):
     camera_param["intrinsic"] = camera_info["K"]
     camera_param["width"] = camera_info["width"]
     camera_param["height"] = camera_info["height"]
-    camera_param["distortion"] = camera_info["D"]
+    # camera_param["distortion"] = camera_info["D"]
     return camera_param
 
 
@@ -92,9 +93,9 @@ def tf_to_mat(tf):
 def viz_project_object_to_2d(data_dir, object_name, pose_dir, cam_index, frame_id=0):
 
     camera_param_path = os.path.join(pose_dir, "camera_param.json")
-    print(camera_param_path)
+    # print(camera_param_path)
     camera_param = load_camera_param(data_dir, cam_index)
-    print(camera_param)
+    # print(camera_param)
     o3d_params = cvt_to_o3d_camera_param(camera_param)
     json.dump(o3d_params, open(camera_param_path, "w"), indent=4)
         
@@ -107,7 +108,7 @@ def viz_project_object_to_2d(data_dir, object_name, pose_dir, cam_index, frame_i
     # lose poses
     pose = np.loadtxt(os.path.join(pose_dir, "pose.txt"))
     pose = pose.reshape([4,4])
-    print(pose)
+    # print(pose)
     
     mesh = mesh.transform(pose)
     
@@ -121,7 +122,7 @@ def viz_project_object_to_2d(data_dir, object_name, pose_dir, cam_index, frame_i
     
     # merge two images
     background_img = plt.imread(os.path.join(data_dir, f"cam{cam_index}", "rgb/image_raw", f"{frame_id}.png"))
-    print(np.array(image).shape)
+    # print(np.array(image).shape)
     merged_img = np.asarray(background_img) * 0.6 + np.asarray(image) * 0.4
     
     plt.imsave(os.path.join(pose_dir, f"output.png"), merged_img, dpi=1)
@@ -131,7 +132,7 @@ def viz_project_object_to_2d(data_dir, object_name, pose_dir, cam_index, frame_i
 
 if __name__ == "__main__":
 
-    data_folder = "/Users/yumeng/Working/data/CollectedDataset/test_1_obj_pose"
+    data_folder = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209"
     pose_dir = os.path.join(data_folder, "pose_labeling")
 
-    viz_project_object_to_2d(data_folder, "yogurt", pose_dir, cam_index=3)
+    viz_project_object_to_2d(data_folder, "yogurt", pose_dir, cam_index=0)

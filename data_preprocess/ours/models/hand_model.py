@@ -11,10 +11,14 @@ from utils.urdf_util import load_mesh_from_urdf
 
 if __name__ == '__main__':
     urdf_path = "../../data_process/bimanual_srhand_ur.urdf"
-    prefix = "/home/lab4dv/yumeng/ShadowHand"
+    # prefix = "/home/lab4dv/yumeng/ShadowHand"
+    prefix ="/Users/yumeng/Working/data/ShadowHand/description/"
     struct_file = "./kintree/srhand_ur.json"
-    tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
-    out_path = "/home/lab4dv/yumeng/results/srhand_ur_meshes/test_1"
+    # tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
+    tf_data_dir = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/TF"
+    # out_path = "/home/lab4dv/yumeng/results/srhand_ur_meshes/test_1"
+    out_path = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/srhand_ur_meshes/"
+    
     os.makedirs(out_path, exist_ok=True)
     
     with open(struct_file, 'r') as f:

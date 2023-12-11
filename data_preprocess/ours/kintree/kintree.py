@@ -139,11 +139,12 @@ def load_sequence(tf_data_dir, tf_info_file):
         out_dict[time_stamp] = global_tf
     out_file = os.path.join(tf_data_dir, "global_tf_all_in_one.npy")
     np.save(out_file, out_dict)
-    
 
 
 if __name__ == "__main__":
-    tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
+    # tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
+    tf_data_dir = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/TF"
+    
     tf_info_file = "./kintree/srhand_ur.json"
 
     with open(tf_info_file, 'r') as f:
