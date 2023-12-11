@@ -169,29 +169,11 @@ def single_test():
     o3d.visualization.draw_geometries([segmented_scene_pcd])
 
 def compute_global_tf(tf_data_dir, out_path):
-    urdf_path = "../../data_process/bimanual_srhand_ur.urdf"
-    # prefix = "/home/lab4dv/yumeng/ShadowHand"
-    prefix ="/Users/yumeng/Working/data/ShadowHand/description/"
-    struct_file = "./assets/srhand_ur.json"
-    # tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
-    tf_data_dir = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/TF"
-    # out_path = "/home/lab4dv/yumeng/results/srhand_ur_meshes/test_1"
-    out_path = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/srhand_ur_meshes/"
-    
     os.makedirs(out_path, exist_ok=True)
-    
-    with open(struct_file, 'r') as f:
-        # Load the JSON data
-        sr_struct = json.load(f)
         
-    link_list = sr_struct['node_names']
-    mesh_dict = load_mesh_from_urdf(urdf_path,link_list, prefix)
-    print(mesh_dict.keys())
-
     tf_data_file = os.path.join(tf_data_dir, "global_tf_all_in_one.npy")
     tf_data_all_in_one = np.load(tf_data_file, allow_pickle=True)
     tf_data_all_in_one = tf_data_all_in_one.item()
-    
     
     for time in tf_data_all_in_one:
         updated_meshes = {}
@@ -211,6 +193,7 @@ def compute_global_tf(tf_data_dir, out_path):
 
         combined_mesh = trimesh.util.concatenate(updated_meshes.values())
         combined_mesh.export(os.path.join(out_path, f"{time}.ply"))
+
 
 if __name__ == '__main__':
     sr_mesh_dir = "/home/lab4dv/yumeng/results/srhand_ur_meshes/test_1"
