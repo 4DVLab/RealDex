@@ -61,7 +61,7 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
         Path(
             f"tracking_result/tolet_cleaning_sprayer_6_20231209_cam_index_3_tracking_result.txt")
     tranform_matrixs = load_seven_num_pose(pose_path)
-    mesh_to_save_folder_path = Path(bag_folder_path) / Path("object_pose_in_every_frame_with_icp")
+    mesh_to_save_folder_path = Path(bag_folder_path) / Path("object_pose_in_every_frame")
     if not os.path.exists(mesh_to_save_folder_path):
         os.makedirs(mesh_to_save_folder_path)
     # with ProcessPoolExecutor() as executor:
@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     transform_obj2result_pose(bag_folder_path, model_name,
                               transform_mesh_interval,
-                              None,
+                              cam0_rgb_camera_link2world,
                               cam_index)
 
 
