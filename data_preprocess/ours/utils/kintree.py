@@ -114,7 +114,7 @@ def read_tf_file(file, cname):
     return tf_data_list
     
 
-def rearrange_tf(tf_data_dir, tf_info):
+def rearrange_hand_tf(tf_data_dir, tf_info):
     link_list = tf_info['link']
     tf_data_list = []
     for link in link_list:
@@ -145,12 +145,12 @@ if __name__ == "__main__":
     # tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
     tf_data_dir = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/TF"
     
-    tf_info_file = "./kintree/srhand_ur.json"
+    tf_info_file = "./assets/srhand_ur.json"
 
     with open(tf_info_file, 'r') as f:
         tf_info = json.load(f)
 
-    rearrange_tf(tf_data_dir, tf_info)
+    rearrange_hand_tf(tf_data_dir, tf_info)
     load_sequence(tf_data_dir, tf_info_file)
 
 
