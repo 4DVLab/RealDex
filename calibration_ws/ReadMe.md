@@ -50,10 +50,10 @@ call yaxun by +86 18307331878
    ```
    roslaunch multicam drive4cam.launch
    ```
-4. exit and `soruce ~/.zshrc` then `source devel/setup.zsh`
+4. exit and `source ~/.zshrc` then `source devel/setup.zsh`
 5. wait for showhand ready
 6. recheck by rviz the comment the rviz line in `/home/lab4dv/IntelligentHand/calibration_ws/src/multicam/launch/driveCamera/drive4cam.launch`
-7. reroslaunch by ` roslaunch multicam driver_withoutnodelet.launch`
+7. reroslaunch by ` roslaunch multicam drivecam_withnodlet.launch`
 8. begin data collection
 
 # Data collection

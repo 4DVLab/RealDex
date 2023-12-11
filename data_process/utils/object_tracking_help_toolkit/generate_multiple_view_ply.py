@@ -153,18 +153,18 @@ class gen_merge_pcd_ply:
 
         time_index_length = len(self.all_cams_time_stamp_index[0])
         # for time_index in self.all_cams_time_stamp_index[0]:
-        for cam_index in np.arange(4):
-            cam_data_save_folder_path = self.merge_pcd_save_folder / \
-                f"cam{cam_index}"
-            os.makedirs(cam_data_save_folder_path,exist_ok=True)
-        os.makedirs(self.merge_pcd_save_folder / f"TEMP",exist_ok=True)
+        # for cam_index in np.arange(4):
+        #     cam_data_save_folder_path = self.merge_pcd_save_folder / \
+        #         f"cam{cam_index}"
+        #     os.makedirs(cam_data_save_folder_path,exist_ok=True)
+        # os.makedirs(self.merge_pcd_save_folder / f"TEMP",exist_ok=True)
         for index in np.arange(constrain_bound[0],constrain_bound[1]):
             merge_pcd.clear()
             if index >= time_index_length:
                 return
             time_index = self.all_cams_time_stamp_index[0][index]
 
-            for cam_index in np.arange(1):
+            for cam_index in np.arange(4):
                 pcd = self.gen_pcd_with_depth_and_rgb_paths(
                     self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
                 # o3d.io.write_point_cloud(str(
@@ -174,14 +174,14 @@ class gen_merge_pcd_ply:
                 pcd = self.filter_pcd(pcd)
 
                 
-                o3d.io.write_point_cloud(str(
-                    self.merge_pcd_save_folder / f"TEMP/cam{cam_index}_index{index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
-            #     merge_pcd += pcd
-            #     # merge_pcd.remove_duplicated_points()
+                # o3d.io.write_point_cloud(str(
+                #     self.merge_pcd_save_folder / f"TEMP/cam{cam_index}_index{index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
+                merge_pcd += pcd
+                merge_pcd.remove_duplicated_points()
             # # o3d.visualization.draw_geometries([merge_pcd])
 
-            # o3d.io.write_point_cloud(str(
-            #     self.merge_pcd_save_folder / f"merge_pcd_{time_index}.ply"), merge_pcd, write_ascii=False, compressed=False, print_progress=True)
+            o3d.io.write_point_cloud(str(
+                self.merge_pcd_save_folder / f"merge_pcd_{time_index}.ply"), merge_pcd, write_ascii=False, compressed=False, print_progress=True)
 
     def init_merge_pcd_timestamp(self):
         shutil.copy2(
@@ -297,13 +297,16 @@ def mint():
 
 if __name__ == "__main__":
     four_cam_intrisics_extrisics_save_folder = Path(
-        "/home/tony/mine/Projects/ArmHandVis/git_hand_arm/IntelligentHand/calibration_ws/calibration_process/data")
-    
-    root_path = Path("/media/tony/新加卷/test_data/test/test_1")
+        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
 
+
+
+    root_path = Path("/home/lab4dv/data/sda/sprayer/sprayer_1_20231209")
+
+    pcd_index = 150
     
-    
-    constrain_bound = [0,2000]
+
+    constrain_bound = [pcd_index,pcd_index]
     gen_pcd_for_annotate(
         root_path, 
         four_cam_intrisics_extrisics_save_folder, constrain_bound)
