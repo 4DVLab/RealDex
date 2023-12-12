@@ -90,7 +90,7 @@ def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, save_seg=False):
                                         "ratio": seg_points_ratio, 
                                         "distance":distance}, refresh=True)
 
-            if seg_points_ratio > 0.064:
+            if seg_points_ratio > 0.05:
                 metric = seg_points_ratio - 50 * distance
                 potential_list.append((i, metric, scene_idx_list))
             elif len(potential_list) > 0:
