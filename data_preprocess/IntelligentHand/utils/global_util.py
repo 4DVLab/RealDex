@@ -8,13 +8,14 @@ import json
 import open3d as o3d
 import open3d.visualization.rendering as rendering
 import matplotlib.pyplot as plt
+from scipy.spatial.transform import Rotation
 
 
-def segment_scene_point_cloud(scene_pcd, object_mesh):
-    distance_threshold = 0.005
+
+def segment_scene_point_cloud(scene_pcd, sr_mesh):
     scene_pcd_tree = o3d.geometry.KDTreeFlann(scene_pcd)
     
-    mesh_pcd = object_mesh.sample_points_poisson_disk(number_of_points=4000)
+    mesh_pcd = sr_mesh.sample_points_poisson_disk(number_of_points=4000)
     mesh_pcd.estimate_normals()
     
 
@@ -22,7 +23,7 @@ def segment_scene_point_cloud(scene_pcd, object_mesh):
     distance = 0
     counter = 0
     for point in mesh_pcd.points:
-        [_, idx, _] = scene_pcd_tree.search_radius_vector_3d(point, distance_threshold)
+        [_, idx, _] = scene_pcd_tree.search_radius_vector_3d(point, radius=0.01)
         if len(idx) > 0:
             closet_pt = scene_pcd.points[idx[0]]
             distance += np.linalg.norm(point - closet_pt)
@@ -43,7 +44,7 @@ def extract_id(filename):
         return int(match.group(1))
     return None  # return a default value if no id is found
 
-def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, save_seg=False):
+def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, save_seg=False, ratio_threshold = 0.06):
     scene_file_list = []
     '''Sort the file list based on the id number'''
     pattern = re.compile(r'^\d+\.ply$')
@@ -90,7 +91,7 @@ def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, save_seg=False):
                                         "ratio": seg_points_ratio, 
                                         "distance":distance}, refresh=True)
 
-            if seg_points_ratio > 0.05:
+            if seg_points_ratio > ratio_threshold and len(potential_list) < 3:
                 metric = seg_points_ratio - 50 * distance
                 potential_list.append((i, metric, scene_idx_list))
             elif len(potential_list) > 0:
@@ -193,16 +194,175 @@ def single_test():
 
     o3d.io.write_point_cloud(os.path.join(scene_dir, "264_seg.ply"), segmented_scene_pcd)
     o3d.visualization.draw_geometries([segmented_scene_pcd])
+    
+def pairwise_icp(source, target, threshold=0.02):
+    icp_result = o3d.pipelines.registration.registration_icp(
+        source, target, threshold, np.identity(4),
+        o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2000)
+    )
+    return icp_result.transformation
+
+def merge_scene_pcd(data_dir, scene_id, scene_to_mesh):
+    os.makedirs(os.path.join(data_dir, "merged"), exist_ok=True)
+    '''Load scence pcd files'''
+    pcd_list = []
+    for i in range(4):
+        scene_file = os.path.join(data_dir, f"cam{i}", "pcd", f"{scene_id}.ply")
+        scene_pcd = o3d.io.read_point_cloud(scene_file)
+        pcd_list.append(scene_pcd)
+    
+    '''Load hand meshes'''
+    mesh_file = os.path.join(data_dir, "srhand_ur_meshes", scene_to_mesh[f"{scene_id}.ply"])
+    sr_mesh = o3d.io.read_triangle_mesh(mesh_file)
+    mesh_pcd = sr_mesh.sample_points_poisson_disk(number_of_points=4000)
+    
+    '''Segment pcd'''
+    seg_scene_pcd_list = []
+    tf_icp_list = []
+    for i, scene_pcd in enumerate(pcd_list):
+        pcd_tree = o3d.geometry.KDTreeFlann(scene_pcd)
+        segmented_scene_pcd = o3d.geometry.PointCloud() 
+        for point in mesh_pcd.points:
+            [_, idx, _] = pcd_tree.search_radius_vector_3d(point, radius=0.01)
+            if len(idx) > 0:
+                segmented_scene_pcd.points.extend(np.asarray(scene_pcd.points)[idx])
+                segmented_scene_pcd.colors.extend(np.asarray(scene_pcd.colors)[idx])
+        seg_scene_pcd_list.append(segmented_scene_pcd)
+        
+        transformation_icp = pairwise_icp(segmented_scene_pcd, mesh_pcd)
+        tf_icp_list.append(transformation_icp)
+        
+        o3d.io.write_point_cloud(os.path.join(data_dir, "merged", f"seg_cam{i}_{scene_id}.ply"), segmented_scene_pcd)
+        segmented_scene_pcd.transform(transformation_icp)
+        o3d.io.write_point_cloud(os.path.join(data_dir, "merged", f"seg_trans_cam{i}_{scene_id}.ply"), segmented_scene_pcd)
+        
+    
+    merged = o3d.geometry.PointCloud() 
+    for i, tf in enumerate(tf_icp_list):
+        scene_pcd = pcd_list[i]
+        scene_pcd.transform(tf)
+        merged.points.extend(np.asarray(scene_pcd.points))
+        merged.colors.extend(np.asarray(scene_pcd.colors))
+    o3d.io.write_point_cloud(os.path.join(data_dir, "merged", f"merged_{scene_id}.ply"), merged)
+
+def tf_to_mat(tf):
+    transl = tf[:3]
+    rot = Rotation.from_quat(tf[3:])
+    mat = np.zeros((4, 4))
+    mat[:3, :3] = rot.as_matrix()
+    mat[:3, -1] = transl
+    mat[-1, -1] = 1
+    return mat
+
+def vis_hand_object(cam_pose, tracking_file, obj_mesh_file, scene_to_mesh, out_path):    
+    '''Load object mesh'''
+    obj_tf = np.loadtxt(tracking_file)
+    
+    obj_mesh = o3d.io.read_triangle_mesh(obj_mesh_file)
+    
+    '''Init the animation setting'''
+    current_obj_mesh = o3d.geometry.TriangleMesh()
+    current_hand_mesh = o3d.geometry.TriangleMesh()
+    current_obj_mesh.triangles = o3d.utility.Vector3iVector(np.asarray(obj_mesh.triangles))
+    
+    # Create a visualization window
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
+    
+    # Add the point cloud to the visualization window
+    vis.add_geometry(current_obj_mesh)
+    vis.add_geometry(current_hand_mesh)
+    # Callback function for animation
+    iterator = iter(scene_to_mesh.items())
+    counter = 0
+    camera_parameters = o3d.io.read_pinhole_camera_parameters("./utils/camera_param.json")
+    
+    def load_next(vis):
+        nonlocal iterator, current_obj_mesh, current_hand_mesh, counter, camera_parameters
+        try:
+            scene_file, mesh_file = next(iterator)
+        except StopIteration:
+            return True
+        scene_id = int(scene_file.split('.')[0])
+        scene_file = os.path.join(scene_dir, scene_file)
+        mesh_file = os.path.join(sr_mesh_dir, mesh_file)
+        
+
+        # Load the next hand mesh and object pose
+        obj_poses_mat = tf_to_mat(obj_tf[scene_id])
+        obj_poses_mat = cam_pose @ obj_poses_mat
+        current_obj_mesh.vertices =o3d.utility.Vector3dVector(np.asarray(obj_mesh.vertices))
+        current_obj_mesh.transform(obj_poses_mat)
+        current_obj_mesh.compute_vertex_normals()
+        
+        current_hand_mesh = o3d.io.read_triangle_mesh(mesh_file)
+        current_hand_mesh.compute_vertex_normals()
+
+        # Clear the old geometries and add the new ones
+        vis.clear_geometries()
+        vis.add_geometry(current_obj_mesh)
+        vis.add_geometry(current_hand_mesh)
+        
+        # Set the camera parameters for the current frame
+        ctr = vis.get_view_control()
+        ctr.convert_from_pinhole_camera_parameters(camera_parameters)
+        
+        image = vis.capture_screen_float_buffer(False)
+        plt.imsave(os.path.join(out_path, '{:05d}.png'.format(counter)), np.asarray(image), dpi=1)
+        counter += 1
+
+        return False
+    
+    vis.register_animation_callback(load_next)
+    
+    
+    vis.run()
+    vis.destroy_window()
 
 
 if __name__ == '__main__':
     # sr_mesh_dir = "/home/lab4dv/yumeng/results/srhand_ur_meshes/test_1"
-    sr_mesh_dir = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/srhand_ur_meshes"
-    # scene_dir = "/home/lab4dv/data/bags/test/backup/test_1/merged_pcd_filter/cam3"
-    scene_dir = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/cam3/pcd"
+    # sr_mesh_dir = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/srhand_ur_meshes"
+    sr_mesh_dir = "/Users/yumeng/Working/data/CollectedDataset/yogurt/yogurt_1_20231207/srhand_ur_meshes/"
     
+    # scene_dir = "/home/lab4dv/data/bags/test/backup/test_1/merged_pcd_filter/cam3"
+    scene_dir = "/Users/yumeng/Working/data/CollectedDataset/yogurt/yogurt_1_20231207/cam3/pcd"
+    
+    data_dir = "/Users/yumeng/Working/data/CollectedDataset/yogurt/yogurt_1_20231207"
+
+    #<------------------------->#
     # single_test()
-    out_path = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/time_sync_vis/cam3"
-    time_synchronization(sr_mesh_dir, scene_dir, scene_start=265)
+    
+    #<------------------------->#
+    # time_synchronization(sr_mesh_dir, scene_dir, scene_start=115, ratio_threshold=0.09)
+    
+    #<------------------------->#
+    # out_path=os.path.join(data_dir, "time_sync_vis-cam3")
+    # os.makedirs(out_path, exist_ok=True)
     # vis_result(sr_mesh_dir, scene_dir, out_path=out_path)
+    
+    #<------------------------->#
+    # scene_to_mesh_path = os.path.join(scene_dir, "scene_to_mesh.json")
+    # with open(scene_to_mesh_path, 'r') as f:
+    #     scene_to_mesh = json.load(f)
+    
+    # merge_scene_pcd(data_dir, scene_id=0, scene_to_mesh=scene_to_mesh)
+    
+    #<---------------------------#
+    tracking_file = os.path.join(os.path.dirname(data_dir), "tracking_result/yogurt_1.txt")
+    scene_to_mesh_path = os.path.join(scene_dir, "scene_to_mesh.json")
+    with open(scene_to_mesh_path, 'r') as f:
+        scene_to_mesh = json.load(f)
+    obj_mesh_file = "/Users/yumeng/Working/data/CollectedDataset/yogurt/yogurt.obj"
+    
+    global_pose_file = os.path.join(data_dir, "global_name_position/0.txt")
+    global_pose = json.load(open(global_pose_file, 'r'))
+    cam_pose = np.asarray(global_pose["cam0_rgb_camera_link"])
+    print(cam_pose)
+    out_path = os.path.join(data_dir, "hand_obj_vis")
+    os.makedirs(out_path, exist_ok=True)
+    vis_hand_object(cam_pose,tracking_file, obj_mesh_file, scene_to_mesh, out_path)
+        
+    
     

@@ -232,7 +232,8 @@ def gen_pcd_for_annotate(root_path, cam_param_dir, start, end=None):
 if __name__ == "__main__":
     cam_param_dir = "../../calibration_ws/calibration_process/data"
     
-    root_path = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/"
+    # root_path = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/"
+    root_path = "/Users/yumeng/Working/data/CollectedDataset/yogurt/yogurt_1_20231207"
 
     gen_pcd_for_annotate(root_path, cam_param_dir, start=0, end=None)
 
