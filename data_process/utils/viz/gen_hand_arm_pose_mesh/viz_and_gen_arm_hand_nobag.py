@@ -1,4 +1,4 @@
-import rosbagdfs_position_update
+
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from cv_bridge import CvBridge
@@ -574,7 +574,7 @@ if __name__ == "__main__":
 
     ros_prefix_path = "/home/lab4dv/data/bags/config_data/hand_arm_mesh"
     configuration_path = "/home/lab4dv/data/bags/config_data"
-    bag_folder = "/home/lab4dv/data/bags/test/test_3"
+    bag_folder = "/home/lab4dv/data/bags/yangtao/yangtao_1_20231210"
     # gen_one_stamp_all_tf(bag_folder,1015)
 
     # bag_folder = "/media/tony/T7/camera_data/banana/"

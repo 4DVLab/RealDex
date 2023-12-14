@@ -121,7 +121,7 @@ if __name__ == '__main__':
             out_dict['link'].append({'parent': parent_dict[node], 'child': node})
     json_string = json.dumps(out_dict, indent=4)
 
-    out_path = "./kintree/srhand_ur.json"
+    out_path = "./assets/srhand_ur.json"
     with open(out_path, 'w') as outfile:
         outfile.write(json_string)
     print(json_string)

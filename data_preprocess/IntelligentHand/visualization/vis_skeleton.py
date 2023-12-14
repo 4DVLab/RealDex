@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import animation
 
-from ours.kintree.kintree import Kintree
+from data_preprocess.ours.utils.kintree import Kintree
 import json
 
 def draw_skeleton(joints3D, link_table, ax=None, with_numbers=True):
@@ -75,7 +75,7 @@ def test_skeleton():
 
 def test_animation(ax, time):
     # N = 10
-    file_list = list(json.load(open("data_preprocess/kintree/file_filter.txt")))
+    file_list = list(json.load(open("data_preprocess/assets/file_filter.txt")))
     N = len(file_list)
     # file_list = file_list[:N]
     tree = Kintree(file_list[0])

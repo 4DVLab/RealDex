@@ -50,7 +50,7 @@ def transform_mesh_with_matrix(transform_matrix,mesh):
 
 def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interval = [0,99999], cam2world_transform=None,cam_index=0):
 
-    mesh_path = Path(bag_folder_path) / Path("models") /  Path(model_name + ".obj")
+    mesh_path = Path(bag_folder_path).parent / Path("models") /  Path(model_name + ".obj")
     bag_name = bag_folder_path.split('/')[-1] #[:-9]
     mesh = o3d.io.read_triangle_mesh(str(mesh_path))
     # mesh = simplify_mesh(mesh)
@@ -59,7 +59,7 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
     # pose_path = Path(bag_folder_path) / Path(f"tracking_result/{bag_name}_cam_index_{cam_index}_tracking_result.txt")
     pose_path = Path(bag_folder_path) / \
         Path(
-            f"tracking_result/test_1_cam_index_0_tracking_result.txt")
+            f"tracking_result/tolet_cleaning_sprayer_6_20231209_cam_index_3_tracking_result.txt")
     tranform_matrixs = load_seven_num_pose(pose_path)
     mesh_to_save_folder_path = Path(bag_folder_path) / Path("object_pose_in_every_frame")
     if not os.path.exists(mesh_to_save_folder_path):
@@ -84,11 +84,11 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
 
 
 if __name__ == "__main__":
-    bag_folder_path = "/media/tony/新加卷/test_data/test/test_1"
-    model_name = "simplified_yogurt"
+    bag_folder_path = "/home/lab4dv/data/ssd/tolet_cleaning_sprayer/tolet_cleaning_sprayer_6_20231209"
+    model_name = "tolet_cleaning_sprayer"
     cam_index = 0
     transforms = json.load(open(str(Path(bag_folder_path) / Path("global_name_position/0.txt")),"r"))
-    cam0_rgb_camera_link2world = np.array(transforms["cam0_rgb_camera_link"])
+    cam0_rgb_camera_link2world = np.array(transforms["cam3_rgb_camera_link"])
     #simplify_persentage = 0.9
     transform_mesh_interval = [0,2000]
 

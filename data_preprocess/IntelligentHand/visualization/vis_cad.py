@@ -5,7 +5,7 @@ sys.path.append("..")
 # os.chdir("/remote-home/liuym/Project/IntelligentHand")
 
 from models.hand_model import ShadowHandModel
-from ours.kintree.kintree import Kintree
+from data_preprocess.ours.utils.kintree import Kintree
 from scipy.spatial.transform import Rotation
 import numpy as np
 

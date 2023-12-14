@@ -1,9 +1,9 @@
 import json
 import numpy as np
-from scipy.spatial.transform import Rotation
 from typing import Callable
 from functools import lru_cache, wraps
 import os
+from global_util import tf_to_mat
 
 class Node(object):
     def __init__(self, name):
@@ -91,16 +91,6 @@ class Kintree(object):
         return out_dict
 
 
-
-def tf_to_mat(tf):
-    transl = tf[:3]
-    rot = Rotation.from_quat(tf[3:])
-    mat = np.zeros((4, 4))
-    mat[:3, :3] = rot.as_matrix()
-    mat[:3, -1] = transl
-    mat[-1, -1] = 1
-    return mat
-
 def read_tf_file(file, cname):
     with open(file, 'r') as f:
         lines = f.readlines()
@@ -114,7 +104,7 @@ def read_tf_file(file, cname):
     return tf_data_list
     
 
-def rearrange_tf(tf_data_dir, tf_info):
+def rearrange_hand_tf(tf_data_dir, tf_info):
     link_list = tf_info['link']
     tf_data_list = []
     for link in link_list:
@@ -139,17 +129,18 @@ def load_sequence(tf_data_dir, tf_info_file):
         out_dict[time_stamp] = global_tf
     out_file = os.path.join(tf_data_dir, "global_tf_all_in_one.npy")
     np.save(out_file, out_dict)
-    
 
 
 if __name__ == "__main__":
-    tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
-    tf_info_file = "./kintree/srhand_ur.json"
+    # tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
+    tf_data_dir = "/Users/yumeng/Working/data/CollectedDataset/yogurt/yogurt_1_20231207/TF"
+    
+    tf_info_file = "./assets/srhand_ur.json"
 
     with open(tf_info_file, 'r') as f:
         tf_info = json.load(f)
 
-    rearrange_tf(tf_data_dir, tf_info)
+    rearrange_hand_tf(tf_data_dir, tf_info)
     load_sequence(tf_data_dir, tf_info_file)
 
 

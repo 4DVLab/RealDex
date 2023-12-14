@@ -37,14 +37,15 @@ if __name__ == "__main__":
     # folder_path = args.folder_path
     # bag_name = args.bag_name
     # camera_param_path = args.camera_param_path
-    root_folder = "/home/lab4dv/data/bags/"
+    root_folder = "/home/lab4dv/data/bags"
     for folder in os.listdir(root_folder):
+        folder = "purple_car"
         # if "urdf" in folder or "config_data" in folder or "hand_arm_mesh" in folder or "lost+found" in folder or "wd40" not in folder:
         #     continue
         # else:
         #     print(folder)
         try:
-            middle_folder = Path(root_folder) / Path("test")
+            middle_folder = Path(root_folder) / Path(folder)
             # middle_folder = Path(root_folder) / Path(folder)
             for file in os.listdir(middle_folder):
                 if file.endswith(".bag") :
