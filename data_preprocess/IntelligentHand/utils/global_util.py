@@ -255,17 +255,32 @@ def tf_to_mat(tf):
     mat[-1, -1] = 1
     return mat
 
-def vis_hand_object(cam_pose, tracking_file, obj_mesh_file, scene_to_mesh, out_path):    
+def vis_hand_object(data_dir, tracking_file, obj_mesh_file, scene_to_mesh, out_path):    
     '''Load object mesh'''
     obj_tf = np.loadtxt(tracking_file)
     
     obj_mesh = o3d.io.read_triangle_mesh(obj_mesh_file)
+    obj_center = np.asarray(obj_mesh.get_center())
+    obj_mesh.vertices = o3d.utility.Vector3dVector(np.asarray(obj_mesh.vertices)-obj_center)
     
-    '''Init the animation setting'''
+    
+    '''Load Object Mesh'''
     current_obj_mesh = o3d.geometry.TriangleMesh()
     current_hand_mesh = o3d.geometry.TriangleMesh()
     current_obj_mesh.triangles = o3d.utility.Vector3iVector(np.asarray(obj_mesh.triangles))
+    obj_meshes_list = []
+    for scene_file in scene_to_mesh:
+        # Load the object pose
+        scene_id = int(scene_file.split('.')[0])
+        obj_poses_mat = tf_to_mat(obj_tf[scene_id])
+        current_obj_mesh.vertices = o3d.utility.Vector3dVector(np.asarray(obj_mesh.vertices))
+        current_obj_mesh.transform(obj_poses_mat)
+        current_obj_mesh.compute_vertex_normals()
+        obj_meshes_list.append(current_obj_mesh)
+        
+        o3d.io.write_triangle_mesh(os.path.join(data_dir, "obj_mesh", f"{scene_id}.ply"), current_obj_mesh)
     
+    '''Init the animation setting'''
     # Create a visualization window
     vis = o3d.visualization.Visualizer()
     vis.create_window()
@@ -279,22 +294,17 @@ def vis_hand_object(cam_pose, tracking_file, obj_mesh_file, scene_to_mesh, out_p
     camera_parameters = o3d.io.read_pinhole_camera_parameters("./utils/camera_param.json")
     
     def load_next(vis):
-        nonlocal iterator, current_obj_mesh, current_hand_mesh, counter, camera_parameters
+        nonlocal iterator, current_obj_mesh, current_hand_mesh, counter, camera_parameters, obj_meshes_list
         try:
             scene_file, mesh_file = next(iterator)
+            scene_id = int(scene_file.split('.')[0])  
         except StopIteration:
             return True
-        scene_id = int(scene_file.split('.')[0])
         scene_file = os.path.join(scene_dir, scene_file)
         mesh_file = os.path.join(sr_mesh_dir, mesh_file)
         
-
-        # Load the next hand mesh and object pose
-        obj_poses_mat = tf_to_mat(obj_tf[scene_id])
-        obj_poses_mat = cam_pose @ obj_poses_mat
-        current_obj_mesh.vertices =o3d.utility.Vector3dVector(np.asarray(obj_mesh.vertices))
-        current_obj_mesh.transform(obj_poses_mat)
-        current_obj_mesh.compute_vertex_normals()
+        # obj_poses_mat = cam_pose @ obj_poses_mat
+        current_obj_mesh = obj_meshes_list[scene_id]
         
         current_hand_mesh = o3d.io.read_triangle_mesh(mesh_file)
         current_hand_mesh.compute_vertex_normals()
@@ -319,6 +329,7 @@ def vis_hand_object(cam_pose, tracking_file, obj_mesh_file, scene_to_mesh, out_p
     
     vis.run()
     vis.destroy_window()
+    
 
 
 if __name__ == '__main__':
@@ -359,10 +370,10 @@ if __name__ == '__main__':
     global_pose_file = os.path.join(data_dir, "global_name_position/0.txt")
     global_pose = json.load(open(global_pose_file, 'r'))
     cam_pose = np.asarray(global_pose["cam0_rgb_camera_link"])
-    print(cam_pose)
+    # print(cam_pose)
     out_path = os.path.join(data_dir, "hand_obj_vis")
     os.makedirs(out_path, exist_ok=True)
-    vis_hand_object(cam_pose,tracking_file, obj_mesh_file, scene_to_mesh, out_path)
+    vis_hand_object(data_dir,tracking_file, obj_mesh_file, scene_to_mesh, out_path)
         
     
     
