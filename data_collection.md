@@ -9,7 +9,7 @@
 |cream_cake|1|21|done|done|
 |croissant|4|?|done|done||
 |duck_toy|5|107|done|done|||
-|dust_cleanning_spreyer|6|105|done|done||||||y|
+|dust_cleanning_sprayer|6|105|done|done||||||y|
 |fat_toy(pangding)|1|17|done|done||
 |flower_cake(flower_bread)|4|94|done|done||||||y?|
 |girl_toy|3|55|done|done||
@@ -63,7 +63,7 @@ done: 0
 |croissant|4|||done||
 |dinosaur_toy||||
 |duck_toy||||||||
-|dust_cleanning_spreyer|6|105||||||||y|
+|dust_cleanning_spreyar|6|105||||||||y|
 |fat_toy|1|17||||
 |flower_cake||||||||||y?|
 |girl_toy|3|55||||
@@ -96,7 +96,7 @@ done: 0
 |strawberry_cake|||||||
 |tea_jar|||||
 |thunder_toy|5|97||done
-|tolet_cleaning_sprayer|||||||
+|toilet_cleaning_sprayer|||||||
 |wd40|6|110||||
 |xbox|6|117|||||
 |yangtao| 6|103 | |done| done|done| |||y| 

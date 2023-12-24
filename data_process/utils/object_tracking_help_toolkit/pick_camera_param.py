@@ -6,10 +6,10 @@ import open3d as o3d
 def save_camera_parameters(vis):
     parameters = vis.get_view_control().convert_to_pinhole_camera_parameters()
     o3d.io.write_pinhole_camera_parameters(
-        "/media/tony/新加卷/test_data/test/test_1/camera_param.json", parameters)
+        "/home/lab4dv/data/bags/hammer_toy/hammer_toy_2/merged_pcd_filter/camera_param.json", parameters)
 
 
-bag_path = "/media/tony/新加卷/test_data/test/test_1/merged_pcd_filter/cam0/cam0_index0.ply"
+bag_path = "/home/lab4dv/data/bags/hammer_toy/hammer_toy_2/merged_pcd_filter/merge_pcd_0.ply"
 mesh = o3d.io.read_point_cloud(bag_path)
 
 vis = o3d.visualization.VisualizerWithKeyCallback()

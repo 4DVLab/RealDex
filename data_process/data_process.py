@@ -39,14 +39,14 @@ if __name__ == "__main__":
     # camera_param_path = args.camera_param_path
     root_folder = "/home/lab4dv/data/bags"
     for folder in os.listdir(root_folder):
-        folder = "purple_car"
+        folder = "small_sprayer"
         # if "urdf" in folder or "config_data" in folder or "hand_arm_mesh" in folder or "lost+found" in folder or "wd40" not in folder:
         #     continue
         # else:
         #     print(folder)
         try:
             middle_folder = Path(root_folder) / Path(folder)
-            # middle_folder = Path(root_folder) / Path(folder)
+            print(middle_folder)
             for file in os.listdir(middle_folder):
                 if file.endswith(".bag") :
                     bag_name = file[:-4]
@@ -64,7 +64,7 @@ if __name__ == "__main__":
                     extract_everything_from_bag(middle_folder,bag_name)
                     shutil.move(str(file_transfer_path), str(file_origin_path))
                     # os.remove(Path(file_transfer_path))
-                
+            break
             # shutil.move(str(middle_folder), str(Path("/home/lab4dv/data/ssd") / Path(folder)))
         except PermissionError:
             print("PermissionError")
