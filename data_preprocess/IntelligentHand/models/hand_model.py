@@ -15,9 +15,9 @@ if __name__ == '__main__':
     prefix ="/Users/yumeng/Working/data/ShadowHand/description/"
     struct_file = "./assets/srhand_ur.json"
     # tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
-    tf_data_dir = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/TF"
+    tf_data_dir = "/Users/yumeng/Working/data/CollectedDataset/yogurt/yogurt_1_20231207/TF"
     # out_path = "/home/lab4dv/yumeng/results/srhand_ur_meshes/test_1"
-    out_path = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/srhand_ur_meshes/"
+    out_path = "/Users/yumeng/Working/data/CollectedDataset/yogurt/yogurt_1_20231207/srhand_ur_meshes/"
     
     os.makedirs(out_path, exist_ok=True)
     

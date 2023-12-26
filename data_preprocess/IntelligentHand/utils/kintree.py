@@ -1,9 +1,9 @@
 import json
 import numpy as np
-from scipy.spatial.transform import Rotation
 from typing import Callable
 from functools import lru_cache, wraps
 import os
+from global_util import tf_to_mat
 
 class Node(object):
     def __init__(self, name):
@@ -91,16 +91,6 @@ class Kintree(object):
         return out_dict
 
 
-
-def tf_to_mat(tf):
-    transl = tf[:3]
-    rot = Rotation.from_quat(tf[3:])
-    mat = np.zeros((4, 4))
-    mat[:3, :3] = rot.as_matrix()
-    mat[:3, -1] = transl
-    mat[-1, -1] = 1
-    return mat
-
 def read_tf_file(file, cname):
     with open(file, 'r') as f:
         lines = f.readlines()
@@ -143,7 +133,7 @@ def load_sequence(tf_data_dir, tf_info_file):
 
 if __name__ == "__main__":
     # tf_data_dir = "/home/lab4dv/data/bags/test/backup/test_1/TF"
-    tf_data_dir = "/Users/yumeng/Working/data/CollectedDataset/sprayer_1_20231209/TF"
+    tf_data_dir = "/Users/yumeng/Working/data/CollectedDataset/yogurt/yogurt_1_20231207/TF"
     
     tf_info_file = "./assets/srhand_ur.json"
 
