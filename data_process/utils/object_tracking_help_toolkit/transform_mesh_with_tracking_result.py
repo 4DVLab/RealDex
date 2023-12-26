@@ -86,8 +86,8 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
 
 
 if __name__ == "__main__":
-    bag_folder_path = "/media/lab4dv/新加卷/bags/banana/banana_7_20231209"
-    model_name = "banana"
+    bag_folder_path = "/home/lab4dv/data/ssd/shower_cleaner/shower_cleaner_4"
+    model_name = "shower_cleaner"
     
     cam_index = 0
 

@@ -22,6 +22,7 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path,constrain_bound):
     os.makedirs(image_save_folder, exist_ok=True)
     hand_arm_mesh_folder_path = Path(bag_folder_path) / Path("arm_hand_mesh")
     object_mesh_folder  = Path(bag_folder_path) /Path("object_pose_in_every_frame")
+    # object_mesh.compute_vertex_normals()
     for index in np.arange(constrain_bound[0],min(constrain_bound[1],pcd_length)):
         print(index)
         env_pcd = o3d.io.read_point_cloud(
@@ -31,7 +32,6 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path,constrain_bound):
         # hand_arm_mesh.compute_vertex_normals()
 
         object_mesh = o3d.io.read_triangle_mesh(str(object_mesh_folder / Path(f"{index}.ply")))
-        object_mesh.compute_vertex_normals()
         object_mesh.paint_uniform_color([0,1,0])
         if index != 0:
             vis.clear_geometries()
@@ -48,8 +48,17 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path,constrain_bound):
     vis.destroy_window()
 
 if __name__ == "__main__":
-    bag_folder_path = "/home/lab4dv/data/bags/hammer_toy/hammer_toy_2"
-    viz_camera_info_path = "/home/lab4dv/data/bags/hammer_toy/hammer_toy_2/camera_param.json"
+
+    # os.environ['DISPLAY'] = ':0'  # 指定显示器编号
+    bag_folder_path = "/home/lab4dv/data/ssd/shower_cleaner/shower_cleaner_4"
     
-    constrain_bound = [200,2000]
+    
+    
+    
+    viz_camera_info_path = "/home/lab4dv/data/ssd/camera_param.json"
+    
+    constrain_bound = [0,2000]
+    
+    
+    
     show_obj_env_pcd(bag_folder_path, viz_camera_info_path,constrain_bound)

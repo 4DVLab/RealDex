@@ -164,10 +164,10 @@ class gen_merge_pcd_ply:
                 futures = [executor.submit(self.process_camera, cam_index, time_index, merge_pcd) for cam_index in range(4)]
                 for future in futures:
                     future.result()
-
-            o3d.io.write_point_cloud(str(
-                self.merge_pcd_save_folder / f"merge_pcd_{index}.ply"),
-                merge_pcd, write_ascii=False, compressed=False, print_progress=True)
+                o3d.io.write_point_cloud(str(
+                    self.merge_pcd_save_folder / f"merge_pcd_{index}.ply"),
+                    merge_pcd, write_ascii=False, compressed=False, print_progress=True)
+                merge_pcd.clear()
         return len(batch_range)
 
     def merge_pcd_and_filter(self,constrain_bound):
@@ -182,7 +182,7 @@ class gen_merge_pcd_ply:
         total_indices = len(self.all_cams_time_stamp_index[0])
 
         # Define the batch size (e.g., 2000)
-        batch_size = 6
+        batch_size = 32
         batches = [range(i, min(i + batch_size, total_indices)) for i in range(constrain_bound[0], constrain_bound[1], batch_size)]
 
         results = []
@@ -347,13 +347,13 @@ def mint():
 if __name__ == "__main__":
     four_cam_intrisics_extrisics_save_folder = Path(
         "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")    
-    pcd_index = 387
+    pcd_index = 0
 
-    root_path = Path("/media/lab4dv/新加卷/bags/banana/banana_7_20231209")
+    root_path = Path("/home/lab4dv/data/bags/persimmon/persimmon_3_20231210")
     
 
-    constrain_bound = [0,2000]
-    # constrain_bound = [pcd_index,pcd_index]
+    # constrain_bound = [0,2000]
+    constrain_bound = [pcd_index,pcd_index]
 
 
     gen_pcd_for_annotate(
