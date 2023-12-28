@@ -38,20 +38,20 @@ def load_camera_intrics(folder_path, cam_index=0):
     return camera_param
 
 
-def load_camera_extrinsic(folder_path):
+def load_camera_extrinsic(folder_path,cam_index):
     global_name_postion_path = Path(
         folder_path) / Path("global_name_position/0.txt")
     global_name_postion = None
     with open(global_name_postion_path, "r") as json_file:
         global_name_postion = json.load(json_file)
-    return global_name_postion["cam0_rgb_camera_link"]
+    return global_name_postion[f"cam{cam_index}_rgb_camera_link"]
 
 
 def load_camera_param(folder_path, cam_index=0):
     # load_intrisics
     camera_param = load_camera_intrics(folder_path, cam_index)
     camera_param["extrinsic"] = np.linalg.inv(
-        load_camera_extrinsic(folder_path))
+        load_camera_extrinsic(folder_path,cam_index))
     return camera_param
 
 
@@ -81,14 +81,14 @@ def change_o3d_camera_param(o3d_camera_param_path, mine_camera_param):
     return o3d_camera_param
 
 
-def viz_project_object_to_2d(object_folder,my_cam=True):
-
+def viz_project_object_to_2d(object_folder,my_cam=True,cam_index = 0):
+    
     vis = o3d.visualization.Visualizer()
     vis.create_window()
     camera_param_path = object_folder / \
         Path("camera_param.json")
     if my_cam:
-        camera_param = load_camera_param(object_folder)
+        camera_param = load_camera_param(object_folder,cam_index)
         o3d_params = change_o3d_camera_param(camera_param_path, camera_param)
         json.dump(o3d_params, open(camera_param_path, "w"), indent=4)
         print("use own camera pram")
@@ -112,7 +112,7 @@ def viz_project_object_to_2d(object_folder,my_cam=True):
         vis.poll_events()
         vis.update_renderer()
         image = vis.capture_screen_float_buffer(False)
-        print(np.array(image).shape)
+
         plt.imsave(image_save_folder /
                    Path(f"{object_index}.png"), np.asarray(image), dpi=1)
 
@@ -124,7 +124,7 @@ def viz_project_object_to_2d(object_folder,my_cam=True):
 # 也需要只有一个arm_hand_mesh的
 if __name__ == "__main__":
 
-    folder_path = Path("/media/tony/新加卷/test_data/test/test_1")
+    folder_path = Path("/home/lab4dv/data/bags/yangtao/yangtao_3_20231210")
 
-    viz_project_object_to_2d(folder_path)
+    viz_project_object_to_2d(folder_path,3)
 

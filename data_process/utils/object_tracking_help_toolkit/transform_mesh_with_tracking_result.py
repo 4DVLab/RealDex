@@ -59,7 +59,7 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
     # pose_path = Path(bag_folder_path) / Path(f"tracking_result/{bag_name}_cam_index_{cam_index}_tracking_result.txt")
     pose_path = Path(bag_folder_path) / \
         Path(
-            f"tracking_result/tolet_cleaning_sprayer_6_20231209_cam_index_3_tracking_result.txt")
+            f"tracking_result/tracking_result.txt")
     tranform_matrixs = load_seven_num_pose(pose_path)
     mesh_to_save_folder_path = Path(bag_folder_path) / Path("object_pose_in_every_frame")
     if not os.path.exists(mesh_to_save_folder_path):
@@ -74,28 +74,34 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
         pose = tranform_matrixs[index]
         # obj_under_world_pose = pose
         temp_mesh = deepcopy(mesh)
+
         temp_mesh.transform(pose)
         if cam2world_transform is not None:
             temp_mesh.transform(cam2world_transform)
         # mesh_to_save = transform_mesh_with_matrix(obj_under_world_pose,deepcopy(pcd))
         mesh_save_path = mesh_to_save_folder_path / Path(str(index) + ".ply")
-        
+        # o3d.visualization.draw_geometries([temp_mesh])
         o3d.io.write_triangle_mesh(str(mesh_save_path), temp_mesh)
 
 
+
 if __name__ == "__main__":
-    bag_folder_path = "/home/lab4dv/data/ssd/tolet_cleaning_sprayer/tolet_cleaning_sprayer_6_20231209"
-    model_name = "tolet_cleaning_sprayer"
+    bag_folder_path = "/home/lab4dv/data/ssd/shower_cleaner/shower_cleaner_4"
+    model_name = "shower_cleaner"
+    
     cam_index = 0
-    transforms = json.load(open(str(Path(bag_folder_path) / Path("global_name_position/0.txt")),"r"))
-    cam0_rgb_camera_link2world = np.array(transforms["cam3_rgb_camera_link"])
-    #simplify_persentage = 0.9
+
+    # transforms = json.load(open(str(Path(bag_folder_path) / Path("global_name_position/0.txt")),"r"))
+    # cam0_rgb_camera_link2world = np.array(transforms["cam3_rgb_camera_link"])
+    # #simplify_persentage = 0.9
+    
+    
+    
     transform_mesh_interval = [0,2000]
 
     transform_obj2result_pose(bag_folder_path, model_name,
                               transform_mesh_interval,
-                              cam0_rgb_camera_link2world,
-                              cam_index)
+                              None)
 
 
 
