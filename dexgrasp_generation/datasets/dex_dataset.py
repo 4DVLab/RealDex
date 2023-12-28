@@ -100,6 +100,7 @@ class DFCDataset(Dataset):
                                             self.splits_data,
                                             self.splits,
                                             self.categories)
+        
 
     def __len__(self):
         return len(self.file_list)
@@ -213,6 +214,16 @@ class DFCDataset(Dataset):
                     num_samples=self.num_hand_points
                 ).type(torch.float32).squeeze()  # torch.tensor: [NH, 3]
                 ret_dict["observed_hand_pc"] = pert_hand_pc
+                
+        elif self.cfg["network_type"] == "affordance_cvae":
+            direc, angle = transforms3d.axangles.mat2axangle(global_rotation_mat)
+            ret_dict = {
+                "obj_pc": obj_pc,
+                "hand_qpos": qpos,
+                "rotation": angle * direc,
+                "translation": global_translation
+            }
+            
         else:
             print("WARNING: entered undefined dataset type!")
             ret_dict = {

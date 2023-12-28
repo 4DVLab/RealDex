@@ -27,6 +27,7 @@ class Meshdata(Dataset):
         
         self.object_list = []
         for object_code in self.object_code_list:
+            mesh_path = os.path.join(self.data_root_path, object_code, "coacd/decomposed.obj")
             pose_matrices = np.load(os.path.join(self.data_root_path, object_code, 'poses.npy'))
             pcs_table = np.load(os.path.join(self.data_root_path, object_code, 'pcs_table.npy'))
             for scale in [0.06, 0.08, 0.1, 0.12, 0.15]:
@@ -34,7 +35,7 @@ class Meshdata(Dataset):
                 for index in indices:
                     pose_matrix = pose_matrices[index]
                     pose_matrix[:2, 3] = 0
-                    self.object_list.append((object_code, pcs_table[index], scale, pose_matrix))
+                    self.object_list.append((object_code, pcs_table[index], scale, pose_matrix, mesh_path))
     
     
     def __len__(self):
@@ -42,7 +43,7 @@ class Meshdata(Dataset):
         return len(self.object_list)
     
     def __getitem__(self, idx):
-        object_code, pcs_table, scale, pose_matrix = self.object_list[idx]
+        object_code, pcs_table, scale, pose_matrix, mesh_path = self.object_list[idx]
         object_pc = torch.from_numpy(scale * (pcs_table @ pose_matrix[:3, :3].T + pose_matrix[:3, 3]))
         plane = torch.zeros_like(torch.from_numpy(pose_matrix[2]))
         plane[2] = 1
@@ -53,6 +54,8 @@ class Meshdata(Dataset):
             "obj_pc": object_pc,
             "plane": plane,
             "scale": scale,
+            "mesh_path": mesh_path,
+            "pose_matrix": pose_matrix
         }
         return ret_dict
 
