@@ -23,6 +23,21 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_msgs
   ur_msgs
+  interactive_markers
+  moveit_core
+  moveit_ros_planning
+  moveit_ros_planning_interface
+  moveit_ros_perception
+  rviz_visual_tools
+  moveit_visual_tools
+  pluginlib
+  geometric_shapes
+  pcl_ros
+  pcl_conversions
+  rosbag
+  tf2_ros
+  tf2_eigen
+  tf2_geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
