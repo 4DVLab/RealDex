@@ -6,7 +6,7 @@ Description: Generate object point clouds with table
 
 import os
 
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
+# os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 import argparse
 import numpy as np
@@ -17,24 +17,29 @@ import pytorch3d.ops
 import pytorch3d.structures
 import sapien.core as sapien
 from multiprocessing import Pool, current_process
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
 
 def sample_projected(_):
-    args, object_code, idx = _
+    args, object_name, idx = _
 
-    worker = current_process()._identity[0]
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_list[(worker - 1) % len(args.gpu_list)]
-    # print(idx)
+    # worker = current_process()._identity[0]
+    # os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_list[(worker - 1) % len(args.gpu_list)]
+    print(idx)
 
-    object_path = os.path.join(args.data_root_path, object_code, 'coacd', 'decomposed.obj')
+    object_path = os.path.join(args.data_root_path, object_name + ".ply")
+    print(object_path)
 
     # set simulator
-
     engine = sapien.Engine()
+    print("set engine done")
+    
     engine.set_log_level('critical')
-    renderer = sapien.VulkanRenderer(offscreen_only=True)
+    renderer = sapien.VulkanRenderer(offscreen_only=False)
+    print("set renderer done")
+    
     engine.set_renderer(renderer)
+    print("set renderer to engine done")
 
     scene = engine.create_scene()
 
@@ -83,7 +88,10 @@ def sample_projected(_):
 
     # load poses
 
-    pose_matrices = np.load(os.path.join(args.data_root_path, object_code, 'poses.npy'))
+    pose_path = os.path.join(args.data_root_path, object_name, 'poses.npy')
+    print(pose_path)
+    pose_matrices = np.load(pose_path)
+    print(pose_matrices)
     pose_matrices = pose_matrices if len(pose_matrices) <= args.n_poses else pose_matrices[:args.n_poses]
 
     # sample pc
@@ -157,14 +165,14 @@ def sample_projected(_):
         # print(f'n_points: {len(pc)}')
 
     pcs = np.stack(pcs)
-
-    np.save(os.path.join(args.data_root_path, object_code, 'pcs_table.npy'), pcs)
+    print(object_name)
+    np.save(os.path.join(args.data_root_path, object_name, 'pcs_table.npy'), pcs)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # experiments settings
-    parser.add_argument('--data_root_path', type=str, default='data/DFCData/meshes')
+    parser.add_argument('--data_root_path', type=str, default='/remote-home/share/yumeng/GRAB-Unidexgrasp-data/tools/object_meshes/contact_meshes/')
     parser.add_argument('--n_poses', type=int, default=100)
     parser.add_argument('--max_n_points', type=int, default=9000)
     parser.add_argument('--num_samples', type=int, default=3000)
@@ -175,7 +183,7 @@ if __name__ == '__main__':
     # parser.add_argument('--n_cameras', type=int, default=6)
     # parser.add_argument('--theta', type=float, default=np.pi / 4)
     parser.add_argument('--scale', type=float, default=0.1)
-    parser.add_argument('--gpu_list', type=str, nargs='*', default=['0', '1', '2', '3'])
+    parser.add_argument('--gpu_list', type=str, nargs='*', default=['0', '1', '2', '3', '4', '5', '6', '7'])
     # camera settings
     parser.add_argument('--camera_distance', type=float, default=0.5)
     parser.add_argument('--camera_height', type=float, default=0.05)
@@ -185,18 +193,16 @@ if __name__ == '__main__':
     parser.add_argument('--far', type=float, default=100)
     args = parser.parse_args()
 
-    object_category_list = os.listdir(args.data_root_path)
-    object_code_list = []
-    for object_category in object_category_list:
-        object_code_list += [os.path.join(object_category, object_code) for object_code in sorted(os.listdir(os.path.join(args.data_root_path, object_category)))]
-    # object_code_list = [object_code for object_code in object_code_list if not os.path.exists(os.path.join(args.data_root_path, object_code, 'pcs.npy'))]
-
-    # object_code_list = object_code_list[:1]
+    object_file_list = os.listdir(args.data_root_path)
 
     parameters = []
-    for idx, object_code in enumerate(object_code_list):
-        parameters.append((args, object_code, idx))
+    for idx, object_file in enumerate(object_file_list):
+        object_name = object_file.split('.')[0]
+        parameters.append((args, object_name, idx))
     
-    with Pool(args.n_cpu) as p:
-        it = tqdm(p.imap(sample_projected, parameters), desc='sampling', total=len(parameters))
-        list(it)
+    for i in trange(len(parameters)):
+        sample_projected(parameters[i])
+    
+    # with Pool(args.n_cpu) as p:
+    #     it = tqdm(p.imap(sample_projected, parameters), desc='sampling', total=len(parameters))
+    #     list(it)

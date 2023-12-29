@@ -47,8 +47,8 @@ def main(cfg, result_file):
 
 
     """ DataLoaders """
-    # test_loader = get_mesh_dataloader(cfg, "test")
-    test_loader = get_grab_mesh_dataloader(cfg, "test")
+    test_loader = get_mesh_dataloader(cfg, "test")
+    # test_loader = get_grab_mesh_dataloader(cfg, "train")
 
     """ Trainer """
     trainers = []
@@ -205,14 +205,16 @@ def vis_result(filename, device, result_path):
         hand_mesh = trimesh.Trimesh(vertices=hand_verts[i], faces=hand_faces)
         hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
         obj_pc.export(os.path.join(result_path, f"test_obj_{i}.ply"))
-        obj_mesh = result['obj_mesh'][i]
-        (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
+        
+        if 'obj_mesh' in result.keys():
+            obj_mesh = result['obj_mesh'][i]
+            (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
 
 
 if __name__ == "__main__":
     args = parse_args()
-    # config_name= "configs_baseline"
-    config_name= "configs_grab_mesh"
+    config_name= "configs_baseline"
+    # config_name= "configs_grab_mesh"
     
     initialize(version_base=None, config_path="../" + config_name, job_name="train")
     if args.exp_dir is None:
@@ -220,11 +222,11 @@ if __name__ == "__main__":
     else:
         cfg = compose(config_name=args.config_name, overrides=[f"exp_dir={args.exp_dir}"])
     
-    result_path = "/home/liuym/results/unidexgrasp_test_"+config_name
+    result_path = "/home/liuym/results/unidexgrasp_test_full_set_"+config_name
     if not os.path.exists(result_path):
         os.makedirs(result_path)
     results_file = os.path.join(result_path, "result_test_set_orig_ckpt.pt")
     main(cfg, results_file)
     
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    vis_result(results_file, device, result_path)
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # vis_result(results_file, device, result_path)

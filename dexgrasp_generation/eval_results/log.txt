@@ -1,0 +1,17 @@
+2023-12-26 19:50:53,420 - EvalModel - INFO - Resume from epoch 29
+2023-12-26 20:04:58,583 - EvalModel - INFO - Resume from epoch 29
+2023-12-26 20:20:28,476 - EvalModel - INFO - Resume from epoch 29
+2023-12-26 20:27:58,878 - EvalModel - INFO - Resume from epoch 29
+2023-12-26 20:36:11,424 - EvalModel - INFO - Resume from epoch 29
+2023-12-26 20:40:30,867 - EvalModel - INFO - Resume from epoch 29
+2023-12-26 20:49:30,956 - EvalModel - INFO - Resume from epoch 29
+2023-12-26 20:54:32,361 - EvalModel - INFO - Resume from epoch 29
+2023-12-26 21:01:01,612 - EvalModel - INFO - Resume from epoch 29
+2023-12-27 08:13:30,767 - EvalModel - INFO - Resume from epoch 29
+2023-12-27 08:21:38,622 - EvalModel - INFO - Resume from epoch 29
+2023-12-27 08:27:06,628 - EvalModel - INFO - Resume from epoch 29
+2023-12-28 02:16:50,103 - EvalModel - INFO - Resume from epoch 49
+2023-12-28 11:04:14,087 - EvalModel - INFO - Resume from epoch 20
+2023-12-28 11:11:31,088 - EvalModel - INFO - Resume from epoch 20
+2023-12-28 12:24:31,660 - EvalModel - INFO - Resume from epoch 16
+2023-12-28 12:29:54,849 - EvalModel - INFO - Resume from epoch 17

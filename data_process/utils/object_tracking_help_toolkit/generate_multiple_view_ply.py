@@ -17,7 +17,7 @@ from typing import Dict, List, TypedDict
 from scipy.spatial.transform import Rotation
 
 from collections import defaultdict
-
+from concurrent.futures import ThreadPoolExecutor,ProcessPoolExecutor
 
 def seven_num2matrix(translation, roatation):  # translation x,y,z rotation x,y,z,w
     transform_matrix = np.identity(4)
@@ -144,7 +144,53 @@ class gen_merge_pcd_ply:
 
         return all_cams_align_to_cam0_rgb_time_index
 
+
+    def process_camera(self, cam_index, time_index, merge_pcd):
+        pcd = self.gen_pcd_with_depth_and_rgb_paths(
+            self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
+        pcd.transform(self.four_cams_to_world_frame[cam_index])
+        pcd = self.filter_pcd(pcd)
+        with threading.Lock():  # Ensure thread-safe operation on the merge_pcd object
+            merge_pcd += pcd
+            merge_pcd.remove_duplicated_points()
+
+    def process_batch(self, batch_range):
+        print(f"in batch{batch_range}")
+        merge_pcd = o3d.geometry.PointCloud()
+        for index in batch_range:
+            time_index = self.all_cams_time_stamp_index[0][index]
+
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                futures = [executor.submit(self.process_camera, cam_index, time_index, merge_pcd) for cam_index in range(4)]
+                for future in futures:
+                    future.result()
+                o3d.io.write_point_cloud(str(
+                    self.merge_pcd_save_folder / f"merge_pcd_{index}.ply"),
+                    merge_pcd, write_ascii=False, compressed=False, print_progress=True)
+                merge_pcd.clear()
+        return len(batch_range)
+
     def merge_pcd_and_filter(self,constrain_bound):
+        constrain_bound[1] += 1
+        if constrain_bound is None:
+            constrain_bound = [0,np.inf]
+        self.all_cams_time_stamp_index = self.gen_cams_time_stamp()
+        
+        
+        merge_pcd = o3d.geometry.PointCloud()
+
+        total_indices = len(self.all_cams_time_stamp_index[0])
+
+        # Define the batch size (e.g., 2000)
+        batch_size = 32
+        batches = [range(i, min(i + batch_size, total_indices)) for i in range(constrain_bound[0], constrain_bound[1], batch_size)]
+
+        results = []
+        with ProcessPoolExecutor() as executor:
+            results = list(executor.map(self.process_batch, batches))
+
+
+    def old_merge_pcd_and_filter(self,constrain_bound):
         constrain_bound[1] += 1
         if constrain_bound is None:
             constrain_bound = [0,np.inf]
@@ -164,21 +210,24 @@ class gen_merge_pcd_ply:
                 return
             time_index = self.all_cams_time_stamp_index[0][index]
 
-            for cam_index in np.arange(4):
-                pcd = self.gen_pcd_with_depth_and_rgb_paths(
-                    self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
-                # o3d.io.write_point_cloud(str(
-                #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
-                pcd.transform(self.four_cams_to_world_frame[cam_index])
+            # for cam_index in np.arange(4):
+            #     pcd = self.gen_pcd_with_depth_and_rgb_paths(
+            #         self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
+            #     # o3d.io.write_point_cloud(str(
+            #     #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
+            #     pcd.transform(self.four_cams_to_world_frame[cam_index])
                 
-                pcd = self.filter_pcd(pcd)
-
+            #     pcd = self.filter_pcd(pcd)
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                futures = [executor.submit(self.process_camera, cam_index, time_index, merge_pcd) for cam_index in range(4)]
+                for future in futures:
+                    future.result()  # Wait for all threads to complete
                 
-                # o3d.io.write_point_cloud(str(
-                #     self.merge_pcd_save_folder / f"TEMP/cam{cam_index}_index{index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
-                merge_pcd += pcd
-                merge_pcd.remove_duplicated_points()
-            # # o3d.visualization.draw_geometries([merge_pcd])
+            #     # o3d.io.write_point_cloud(str(
+            #     #     self.merge_pcd_save_folder / f"TEMP/cam{cam_index}_index{index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
+            #     merge_pcd += pcd
+            #     merge_pcd.remove_duplicated_points()
+            # # # o3d.visualization.draw_geometries([merge_pcd])
 
             o3d.io.write_point_cloud(str(
                 self.merge_pcd_save_folder / f"merge_pcd_{time_index}.ply"), merge_pcd, write_ascii=False, compressed=False, print_progress=True)
@@ -297,18 +346,17 @@ def mint():
 
 if __name__ == "__main__":
     four_cam_intrisics_extrisics_save_folder = Path(
-        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
+        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")    
+    pcd_index = 0
 
-
-
-    root_path = Path("/home/lab4dv/data/sda/sprayer/sprayer_1_20231209")
-
-    pcd_index = 150
+    root_path = Path("/home/lab4dv/data/bags/persimmon/persimmon_3_20231210")
     
 
+    # constrain_bound = [0,2000]
     constrain_bound = [pcd_index,pcd_index]
+
+
     gen_pcd_for_annotate(
         root_path, 
         four_cam_intrisics_extrisics_save_folder, constrain_bound)
-
 
