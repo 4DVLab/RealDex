@@ -19,7 +19,7 @@ wandb_debug_mode: True  # and only program error will be reported
 # frequency
 freq:
     step_epoch: 100
-    save: 100  # per iter
+    save: 10000  # per iter
     plot: 100  # per iter
     test: 50000 # per iter
 
@@ -48,7 +48,7 @@ cuda_id: 0
 
 # data loader
 num_workers: 8
-batch_size: 256
+batch_size: 32
 
 # hydra
 hydra:

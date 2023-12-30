@@ -213,25 +213,25 @@ class AffordanceModel(BaseModel):
         self.net = AffordanceCVAE(cfg, self.contact_net).to(self.device)
         self.normalize_factor=cfg['model']['tta']['normalize_factor']
         
-        ckpt_dir = pjoin(contact_cfg['exp_dir'], 'ckpt')
-        model_name = get_last_model(ckpt_dir)
+        # ckpt_dir = pjoin(contact_cfg['exp_dir'], 'ckpt')
+        # model_name = get_last_model(ckpt_dir)
         
-        if model_name:
-            print(model_name)
-            ckpt = torch.load(model_name)['model']
-            new_ckpt = OrderedDict()
-            for name in ckpt.keys():
-                new_name = name.replace('net.', '')
-                if new_name.startswith('backbone.'):
-                    new_name = new_name.replace('backbone.', '')
-                new_ckpt[new_name] = ckpt[name]
+        # if model_name:
+        #     print(model_name)
+        #     ckpt = torch.load(model_name)['model']
+        #     new_ckpt = OrderedDict()
+        #     for name in ckpt.keys():
+        #         new_name = name.replace('net.', '')
+        #         if new_name.startswith('backbone.'):
+        #             new_name = new_name.replace('backbone.', '')
+        #         new_ckpt[new_name] = ckpt[name]
             
-            self.contact_net.load_state_dict(new_ckpt)
-            self.contact_net = self.contact_net.to(cfg['device'])
-        else:
-            print("Didn't find the contact net ckpt")
+        #     self.contact_net.load_state_dict(new_ckpt)
+        #     self.contact_net = self.contact_net.to(cfg['device'])
+        # else:
+        #     print("Didn't find the contact net ckpt")
             
-        self.contact_net.eval()
+        # self.contact_net.eval()
         
         
     def compute_loss(self):
@@ -271,7 +271,7 @@ class AffordanceModel(BaseModel):
             'rotation_loss': rotation_loss,
             'verts_loss': verts_loss,
             'KLD': KLD_loss,
-            # 'cmap_loss': cmap_loss,
+            'cmap_loss': cmap_loss,
             # 'penetr_loss': penetr_loss   
         }
         self.summarize_losses(loss_dict)

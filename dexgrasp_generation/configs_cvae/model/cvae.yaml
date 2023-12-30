@@ -8,10 +8,10 @@ network:
 
 loss_weight:
   qpos_loss: 1
-  transl_loss: 10
+  transl_loss: 100
   rotation_loss: 10
   verts_loss: 1
-  KLD: 1000
+  KLD: 1
   cmap_loss: 10
   penetr_loss: 1
 

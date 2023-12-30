@@ -9,6 +9,7 @@ import numpy as np
 import torch.nn.functional as F
 from network.models.backbones.pointnet_encoder import PointNetEncoder
 from utils.hand_model import HandModel
+from pytorch3d.transforms import matrix_to_axis_angle
 
 
 class VAE(nn.Module):
@@ -42,8 +43,8 @@ class VAE(nn.Module):
 
         std = torch.exp(0.5 * log_var)
         eps = torch.randn([batch_size, self.latent_size], device=means.device)
-        # z = eps * std + means
-        z = means
+        z = eps * std + means
+        # z = means
         
 
         recon_x = self.decoder(z, c)
@@ -199,7 +200,8 @@ class AffordanceCVAE(nn.Module):
         obj_glb_feature, _, _ = self.obj_encoder(obj_pc.transpose(1, 2)) # [B, 1024]
         
         # get the new recon hand
-        input = torch.cat([transl, rotation, qpos], dim=-1)
+        with torch.no_grad():
+            input = torch.cat([transl, rotation, qpos], dim=-1)
 
         recon, mean, log_var, z = self.cvae(input, obj_glb_feature) # recon: [B, 28]
         recon = recon.contiguous().view(B, 6 + qpos_dim)
@@ -215,7 +217,7 @@ class AffordanceCVAE(nn.Module):
         discretized_cmap_pred = discretized_cmap_pred['contact_map'].detach().exp()# [B, N, 10]
         
         arange = (torch.arange(0, discretized_cmap_pred.shape[-1], dtype=discretized_cmap_pred.dtype, device=discretized_cmap_pred.device)+0.5)
-        cmap_pred = torch.mean(discretized_cmap_pred * arange, dim=-1).detach()
+        cmap_pred = torch.mean(discretized_cmap_pred * arange, dim=-1)
         
         ret_dict = {
                 "translation": recon[:, :3],
@@ -228,7 +230,7 @@ class AffordanceCVAE(nn.Module):
                 "z": z,
                 "pen_dist": recon_hand['penetration'],
                 "cmap_pred": cmap_pred,
-                "o2h_dist": recon_hand['distances']
+                "o2h_dist": gt_hand['distances']
                 
             }
         return ret_dict
