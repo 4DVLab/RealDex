@@ -20,3 +20,7 @@
 2023-12-29 08:30:47,639 - EvalModel - INFO - Resume from epoch 270
 2023-12-30 08:43:46,379 - EvalModel - INFO - Resume from epoch 1157
 2023-12-30 08:55:30,370 - EvalModel - INFO - Resume from epoch 1157
+2023-12-30 13:12:54,390 - EvalModel - INFO - Resume from epoch 201
+2023-12-31 06:03:33,732 - EvalModel - INFO - Resume from epoch 1672
+2023-12-31 06:12:05,243 - EvalModel - INFO - Resume from epoch 1672
+2023-12-31 06:18:41,059 - EvalModel - INFO - Resume from epoch 1672

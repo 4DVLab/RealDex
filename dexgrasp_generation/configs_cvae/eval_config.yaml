@@ -49,7 +49,7 @@ cuda_id: 2
 
 # data loader
 num_workers: 0
-batch_size: 256
+batch_size: 8
 n_samples: 100
 
 # hydra

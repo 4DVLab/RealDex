@@ -128,21 +128,24 @@ class AffordanceCVAE(nn.Module):
         super(AffordanceCVAE, self).__init__()
 
         self.obj_inchannel = cfg["model"]["obj_inchannel"]
-        self.cvae_encoder_sizes = cfg["model"]["cvae_encoder_sizes"]
-        print("cvae encoder size:", self.cvae_encoder_sizes, type(self.cvae_encoder_sizes))
+        
+        self.num_obj_feature = cfg["model"]["obj_feature_dim"]
+        self.num_hand_points = cfg["dataset"]["num_obj_points"]
+        
+        self.cvae_encoder_sizes = cfg["model"]["cvae_encoder_size"]
         self.cvae_latent_size = cfg["model"]["cvae_latent_size"]
         self.cvae_decoder_sizes = cfg["model"]["cvae_decoder_sizes"]
-        self.num_hand_points = cfg["dataset"]["num_obj_points"]
         
         if cfg['model']['network']['type'] == 'pointnet':
             self.obj_encoder = PointNetEncoder(global_feat=True, feature_transform=False, channel=3, use_stn=True)
+            self.hand_encoder = PointNetEncoder(global_feat=True, feature_transform=False, channel=3, use_stn=True)
         else:
             raise NotImplementedError(f"backbone {cfg['model']['network']['type']} not implemented")
 
         self.cvae = VAE(encoder_layer_sizes=self.cvae_encoder_sizes,
                         latent_size=self.cvae_latent_size,
                         decoder_layer_sizes=self.cvae_decoder_sizes,
-                        condition_size=self.num_hand_points)
+                        condition_size=self.num_obj_feature)
         
         # self.num_obj_points = cfg['dataset']['num_obj_points']
         self.device = cfg['device']
@@ -156,13 +159,21 @@ class AffordanceCVAE(nn.Module):
         )
         self.cmap_func = contact_net.forward
         
+        self.data_info = torch.load("./assets/DFCData/pose_mean_std.pt")
+        
+        
         
     def inference(self, obj_pc):
         B = obj_pc.shape[0]
         obj_glb_feature, _, _ = self.obj_encoder(obj_pc) # [B, 1024]
         #hand_glb_feature, _, _ = self.hand_encoder(hand_xyz) # [B, 1024]
-
+        
+        pose_mean = self.data_info['pose_mean'].to(self.device)
+        pose_std = self.data_info['pose_std'].to(self.device)
+        
         recon = self.cvae.inference(B, obj_glb_feature)
+        recon = recon * pose_std + pose_mean
+        
         recon = recon.contiguous().view(B, -1)
         
         ret_dict = {
@@ -198,13 +209,15 @@ class AffordanceCVAE(nn.Module):
         obj_center = torch.mean(obj_pc, dim=1).detach() #[B, 3]
         # canon_obj_pc = obj_pc - obj_center[:, None, :]
         obj_glb_feature, _, _ = self.obj_encoder(obj_pc.transpose(1, 2)) # [B, 1024]
+        hand_glb_feature, _, _ = self.hand_encoder(gt_hand['surface_points'].transpose(1,2)) # [B, 1024]
         
         # get the new recon hand
-        with torch.no_grad():
-            input = torch.cat([transl, rotation, qpos], dim=-1)
-
-        recon, mean, log_var, z = self.cvae(input, obj_glb_feature) # recon: [B, 28]
+        recon, mean, log_var, z = self.cvae(hand_glb_feature, obj_glb_feature) # recon: [B, 28]
+        
+        pose_mean = self.data_info['pose_mean'].to(self.device)
+        pose_std = self.data_info['pose_std'].to(self.device)
         recon = recon.contiguous().view(B, 6 + qpos_dim)
+        recon = recon * pose_std + pose_mean
         
         recon_hand = self.hand_model(recon, obj_pc, with_penetration=True, with_surface_points=True, with_contact_candidates=True)
         

@@ -1,7 +1,9 @@
 obj_inchannel: 3
-cvae_encoder_sizes: [28, 512, 256]
+cvae_encoder_sizes: [1024, 512, 256]
 cvae_decoder_sizes: [1024, 256, 28]
 cvae_latent_size: 64
+obj_feature_dim: 1024
+hand_feature_dim: 1024
 
 network:
   type: pointnet

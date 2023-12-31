@@ -31,7 +31,7 @@ wandb_debug_mode: true
 resume_epoch: -1
 cuda_id: 2
 num_workers: 0
-batch_size: 256
+batch_size: 8
 n_samples: 100
 dataset:
   root_path: data

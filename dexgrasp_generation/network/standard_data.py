@@ -29,7 +29,8 @@ from pytorch3d import transforms as pttf
 from network.models.model import get_model
 from collections import OrderedDict
 from pytorch3d.transforms import rotation_6d_to_matrix, matrix_to_axis_angle
-import numpy as np
+
+import json
 
 def vis_result(hand, data, result_path):
     num_hand = hand['vertices'].shape[0]
@@ -124,6 +125,7 @@ def compute_data_mean_std(cfg):
     running_mean = 0
     running_var = 0
     batch_count = 0
+    count = 0
     for _, data in enumerate(tqdm(train_loader)):
         rotation = data['rotation'].to(device)
         # rotation = matrix_to_axis_angle(rotation)
@@ -134,14 +136,23 @@ def compute_data_mean_std(cfg):
         # running_mean, running_var, batch_count = update_stats(hand_pose, running_mean, running_var, batch_count)
         # batch_count += hand_pose.shape[0]
         pose_list.append(hand_pose)
+        count += 1
+        if count > 10:
+            break
         
     
     all_pose = torch.cat(pose_list, dim=0)
     pose_mean = torch.mean(all_pose, dim=0)
     pose_std = torch.std(all_pose, dim=0)
-    data_info = {'pose_mean': pose_mean.cpu().numpy(), 'pose_std': pose_std.cpu().numpy()}
-    out_path = "./assets/DFCData/pose_mean_std.txt"
-    np.savetxt(out_path, data_info)
+    data_info = {'pose_mean': pose_mean.cpu(), 'pose_std': pose_std.cpu()}
+    print(data_info)
+    
+    out_path = "./assets/DFCData/pose_mean_std.pt"
+
+    # with open(out_path, 'w') as outfile:
+    #     json.dump(data_info, outfile)
+        
+    torch.save(data_info, out_path)
     
 
 def get_file_list(root_dir, splits_data, splits, categories):
@@ -197,5 +208,5 @@ if __name__ == "__main__":
     else:
         cfg = compose(config_name=args.config_name, overrides=[f"exp_dir={args.exp_dir}"])
         
-    vis_dex_data(cfg)
-    # compute_data_mean_std(cfg)
+    # vis_dex_data(cfg)
+    compute_data_mean_std(cfg)
