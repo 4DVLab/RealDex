@@ -132,7 +132,7 @@ class AffordanceCVAE(nn.Module):
         self.num_obj_feature = cfg["model"]["obj_feature_dim"]
         self.num_hand_points = cfg["dataset"]["num_obj_points"]
         
-        self.cvae_encoder_sizes = cfg["model"]["cvae_encoder_size"]
+        self.cvae_encoder_sizes = cfg["model"]["cvae_encoder_sizes"]
         self.cvae_latent_size = cfg["model"]["cvae_latent_size"]
         self.cvae_decoder_sizes = cfg["model"]["cvae_decoder_sizes"]
         
@@ -243,7 +243,7 @@ class AffordanceCVAE(nn.Module):
                 "z": z,
                 "pen_dist": recon_hand['penetration'],
                 "cmap_pred": cmap_pred,
-                "o2h_dist": gt_hand['distances']
+                "o2h_dist": recon_hand['distances']
                 
             }
         return ret_dict
