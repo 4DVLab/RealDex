@@ -19,7 +19,7 @@ using json = nlohmann::json;
 
 #define IF_TEST false
 #define IF_CONFIG false
-#define IF_HAND_ONLY true
+#define IF_HAND_ONLY false
 
 
  void back_to_initial(std::string PLANNING_GROUP, std::vector<double> goal_joint_positions)
@@ -105,6 +105,62 @@ int  readCommand(std::string file_path, std::vector<double>& timestamp_vector, s
     return points_num;
 }
 
+trajectory_msgs::JointTrajectory formCommand(std::string type, std::vector<double> positions, int seq)
+{
+  trajectory_msgs::JointTrajectory command;
+  command.header.frame_id="";
+  command.header.seq =seq;
+  command.header.stamp = ros::Time::now();
+  if (type=="rh")
+  {
+    command.joint_names = {"rh_FFJ4","rh_FFJ3","rh_FFJ2","rh_FFJ1","rh_LFJ5","rh_LFJ4","rh_LFJ3","rh_LFJ2","rh_LFJ1",
+    "rh_MFJ4","rh_MFJ3","rh_MFJ2","rh_MFJ1","rh_RFJ4","rh_RFJ3","rh_RFJ2","rh_RFJ1","rh_THJ5","rh_THJ4","rh_THJ3","rh_THJ2","rh_THJ1" };
+  }
+  else if (type=="rh_wr")
+  {
+    command.joint_names = {"rh_WRJ2", "rh_WRJ1" };
+  }
+  else if (type=="ra")
+  {
+    command.joint_names = {"ra_shoulder_pan_joint", "ra_shoulder_lift_joint", "ra_elbow_joint", "ra_wrist_1_joint","ra_wrist_2_joint", "ra_wrist_3_joint" };
+  }
+  
+  std::vector<trajectory_msgs::JointTrajectoryPoint> points;
+  trajectory_msgs::JointTrajectoryPoint point;
+  
+  point.positions = positions;
+  if (type =="rh_wr" || type=="ra")
+  {
+    point.time_from_start.fromNSec(8000000);
+  }
+  else if (type =="rh")
+  {
+    point.time_from_start.fromNSec(5000000);
+  }
+ 
+  points.push_back(point);
+  command.points = points;
+
+  return command;
+}
+
+void fake_publish_command(trajectory_msgs::JointTrajectory command)
+{
+   std::cout<<"header.frame_id "<<command.header.frame_id<<std::endl<<
+                "header.seq "<<command.header.seq<<std::endl
+                <<"header.stamp "<<command.header.stamp<<std::endl
+                <<"joint_names ";
+                for(int i=0; i<command.joint_names.size(); i++)
+                std::cout << command.joint_names[i] <<" ";
+                std::cout <<std::endl<< "positions ";
+                for(int i=0; i<command.points.size(); i++)
+                {
+                  std::cout<< command.points[i]<<" ";
+                }
+                std::cout<<std::endl;
+
+}
+
 int main(int argc, char **argv)
 {
 
@@ -173,95 +229,49 @@ int main(int argc, char **argv)
 
     int ra_seq =1, rh_wr_seq = 1, rh_seq =1;
 
-         while(ros::ok())
+    while(ros::ok())
     {
       if (IF_HAND_ONLY)
       {
-        trajectory_msgs::JointTrajectory rh_command;
-        rh_command.header.frame_id="";
-        rh_command.header.seq =rh_seq++;
-        rh_command.header.stamp = ros::Time::now();
-        rh_command.joint_names = {"rh_FFJ4","rh_FFJ3","rh_FFJ2","rh_FFJ1","rh_LFJ5","rh_LFJ4","rh_LFJ3","rh_LFJ2","rh_LFJ1",
-        "rh_MFJ4","rh_MFJ3","rh_MFJ2","rh_MFJ1","rh_RFJ4","rh_RFJ3","rh_RFJ2","rh_RFJ1","rh_THJ5","rh_THJ4","rh_THJ3","rh_THJ2","rh_THJ1" };
-        std::vector<trajectory_msgs::JointTrajectoryPoint> rh_points;
-        trajectory_msgs::JointTrajectoryPoint rh_point;
         
-        rh_point.positions = rh_point_vector[rh_current_points];
+        trajectory_msgs::JointTrajectory rh_command = formCommand("rh",rh_point_vector[rh_current_points] ,rh_seq++);
         rh_current_points = (rh_current_points + 1) % rh_points_num;
-        rh_point.time_from_start.fromNSec(5000000);
-        rh_points.push_back(rh_point);
-        rh_command.points = rh_points;
         if(!rh_current_points)
         {
            std::vector<double> goal_joint_positions;
-           goal_joint_positions.insert(goal_joint_positions.end(),ra_point_vector[0].begin(), ra_point_vector[ra_current_points].end());
-           goal_joint_positions.insert(goal_joint_positions.end(), rh_wr_point_vector[0].begin(), rh_wr_point_vector[rh_wr_current_points].end());
-           goal_joint_positions.insert(goal_joint_positions.end(), rh_point_vector[0].begin(), rh_point_vector[rh_current_points].end());
+           goal_joint_positions.insert(goal_joint_positions.end(),ra_point_vector[0].begin(), ra_point_vector[0].end());
+           goal_joint_positions.insert(goal_joint_positions.end(), rh_wr_point_vector[0].begin(), rh_wr_point_vector[0].end());
+           goal_joint_positions.insert(goal_joint_positions.end(), rh_point_vector[0].begin(), rh_point_vector[0].end());
            back_to_initial("right_arm_and_hand", goal_joint_positions);
         }
-
+    
         if(IF_TEST)
         {
-           //fake rh_wr_command_pub
-                std::cout<<"rh_command_pub:"<<rh_command_pub.getTopic()<<std::endl
-                <<"header.frame_id "<<rh_command.header.frame_id<<std::endl<<
-                "header.seq "<<rh_command.header.seq<<std::endl
-                <<"header.stamp "<<rh_command.header.stamp<<std::endl
-                <<"joint_names ";
-                for(int i=0; i<rh_command.joint_names.size(); i++)
-                std::cout << rh_command.joint_names[i] <<" ";
-                std::cout <<std::endl<< "positions ";
-                for(int i=0; i<rh_command.points.size(); i++)
-                {
-                  std::cout<< rh_command.points[i]<<" ";
-                }
-                std::cout<<std::endl;
+           //fake command_pub
+            std::cout<<"rh_command_pub: " <<std::endl;
+            fake_publish_command(rh_command);
 
         }
         else
         {
           rh_command_pub.publish(rh_command);
         }
-
+        
       }
       else
       {
-              trajectory_msgs::JointTrajectory ra_command;
-              ra_command.header.frame_id="";
-              ra_command.header.seq =ra_seq++;
-              ra_command.header.stamp = ros::Time::now();
-              ra_command.joint_names = {"ra_shoulder_pan_joint", "ra_shoulder_lift_joint", "ra_elbow_joint", "ra_wrist_1_joint","ra_wrist_2_joint", "ra_wrist_3_joint" };
-              std::vector<trajectory_msgs::JointTrajectoryPoint> ra_points;
-              trajectory_msgs::JointTrajectoryPoint ra_point;
-              
-              ra_point.positions = ra_point_vector[ra_current_points];
+              trajectory_msgs::JointTrajectory ra_command = formCommand("ra",ra_point_vector[ra_current_points], ra_seq++ );
               ra_current_points = (ra_current_points + 1) % ra_points_num;
 
-              ra_point.time_from_start.fromNSec(8000000);
-              ra_points.push_back(ra_point);
-              ra_command.points = ra_points;
-
-              trajectory_msgs::JointTrajectory rh_wr_command;
-              rh_wr_command.header.frame_id="";
-              rh_wr_command.header.seq =rh_wr_seq++;
-              rh_wr_command.header.stamp = ros::Time::now();
-              rh_wr_command.joint_names = {"rh_WRJ2", "rh_WRJ1" };
-              std::vector<trajectory_msgs::JointTrajectoryPoint> rh_wr_points;
-              trajectory_msgs::JointTrajectoryPoint rh_wr_point;
-              
-              rh_wr_point.positions = rh_wr_point_vector[rh_wr_current_points];
+              trajectory_msgs::JointTrajectory rh_wr_command = formCommand("rh_wr", rh_wr_point_vector[rh_wr_current_points], rh_wr_seq++);
               rh_wr_current_points = (rh_wr_current_points + 1) % rh_wr_points_num;
-
-              rh_wr_point.time_from_start.fromNSec(8000000);
-              rh_wr_points.push_back(rh_wr_point);
-              rh_wr_command.points = rh_wr_points;
 
               if (!ra_current_points || !rh_wr_current_points )
               {
                 std::vector<double> goal_joint_positions;
-                goal_joint_positions.insert(goal_joint_positions.end(),ra_point_vector[0].begin(), ra_point_vector[ra_current_points].end());
-                goal_joint_positions.insert(goal_joint_positions.end(), rh_wr_point_vector[0].begin(), rh_wr_point_vector[rh_wr_current_points].end());
-                goal_joint_positions.insert(goal_joint_positions.end(), rh_point_vector[0].begin(), rh_point_vector[rh_current_points].end());
+                goal_joint_positions.insert(goal_joint_positions.end(),ra_point_vector[0].begin(), ra_point_vector[0].end());
+                goal_joint_positions.insert(goal_joint_positions.end(), rh_wr_point_vector[0].begin(), rh_wr_point_vector[0].end());
+                goal_joint_positions.insert(goal_joint_positions.end(), rh_point_vector[0].begin(), rh_point_vector[0].end());
                 back_to_initial("right_arm_and_hand", goal_joint_positions);
               }
 
@@ -269,40 +279,16 @@ int main(int argc, char **argv)
               {
 
                 //fake ra_command_pub
-                std::cout<<"ra_command_pub:"<<ra_command_pub.getTopic()<<std::endl
-                <<"header.frame_id "<<ra_command.header.frame_id<<std::endl<<
-                "header.seq "<<ra_command.header.seq<<std::endl
-                <<"header.stamp "<<ra_command.header.stamp<<std::endl
-                <<"joint_names ";
-                for(int i=0; i<ra_command.joint_names.size(); i++)
-                std::cout << ra_command.joint_names[i] <<" ";
-                std::cout <<std::endl<< "positions ";
-                for(int i=0; i<ra_command.points.size(); i++)
-                {
-                  std::cout<< ra_command.points[i]<<" ";
-                }
-                std::cout<<std::endl;
-
+                std::cout<<"ra_command_pub:" <<std::endl;
+                fake_publish_command(ra_command);
                 //fake rh_wr_command_pub
-                std::cout<<"rh_wr_command_pub:"<<rh_wr_command_pub.getTopic()<<std::endl
-                <<"header.frame_id "<<rh_wr_command.header.frame_id<<std::endl<<
-                "header.seq "<<rh_wr_command.header.seq<<std::endl
-                <<"header.stamp "<<rh_wr_command.header.stamp<<std::endl
-                <<"joint_names ";
-                for(int i=0; i<rh_wr_command.joint_names.size(); i++)
-                std::cout << rh_wr_command.joint_names[i] <<" ";
-                std::cout <<std::endl<< "positions ";
-                for(int i=0; i<rh_wr_command.points.size(); i++)
-                {
-                  std::cout<< rh_wr_command.points[i]<<" ";
-                }
-                std::cout<<std::endl;
+                std::cout<<"rh_wr_command_pub: "<<std::endl;
+                fake_publish_command(rh_wr_command);
 
               }
               else{
                 ra_command_pub.publish(ra_command);
                 rh_wr_command_pub.publish(rh_wr_command);
-
               }
 
       }
