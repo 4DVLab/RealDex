@@ -118,7 +118,7 @@ int main(int argc, char **argv)
     ros::Publisher rh_wr_command_pub = n.advertise<trajectory_msgs::JointTrajectory>("/rh_wr_trajectory_controller/command", 1000, true);
     ros::Publisher rh_command_pub = n.advertise<trajectory_msgs::JointTrajectory>("/rh_trajectory_controller/command", 1000, true);
     
-    ros::Rate loop_rate(100);
+    ros::Rate loop_rate(50);
   std::vector<std::vector<double>> ra_point_vector;
   std::vector<double> ra_timestamp_vector;
 
