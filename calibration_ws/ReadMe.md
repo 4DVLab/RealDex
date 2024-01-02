@@ -2,9 +2,17 @@
 # Checklist
 
 - kill remote server
+  ```
+  rosnode kill /server_record
+  ```
 - close rviz
-- use driver_withoutnodelet.launch
+
+  
 - use remote ROS_MASTER
+  ```echo $ROS_MASTER_URI```
+
+-check whether cam0-3  launched, if not re-launch 4 cameras (by the above command).
+```rostopic list | grep cam ``` 
 
 
 
@@ -42,10 +50,10 @@ call yaxun by +86 18307331878
    ```
    roslaunch multicam drive4cam.launch
    ```
-4. exit and `soruce ~/.zshrc` then `source devel/setup.zsh`
+4. exit and `source ~/.zshrc` then `source devel/setup.zsh`
 5. wait for showhand ready
 6. recheck by rviz the comment the rviz line in `/home/lab4dv/IntelligentHand/calibration_ws/src/multicam/launch/driveCamera/drive4cam.launch`
-7. reroslaunch by ` roslaunch multicam drive4cam.launch`
+7. reroslaunch by ` roslaunch multicam drivecam_withnodlet.launch`
 8. begin data collection
 
 # Data collection
@@ -60,7 +68,9 @@ sudo mount /dev/sda sda
 ```
 mkdir example
 cd example
-vim example.md
+gedit example.md
+rosbag record
+rosbag info
 ```
 
 5. calculate all number and write into `data_collection.md`

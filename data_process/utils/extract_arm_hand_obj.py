@@ -31,7 +31,7 @@ class path_data_class:
         self.urdf_path = self.root_path/ Path("urdf") / Path("bimanual_srhand_ur.urdf")
         self.bag_path = self.folder_path / Path(self.bag_name) / Path(str(self.bag_name) + ".bag")
         self.output_folder = self.folder_path/ Path(self.bag_name)  / Path("output")
-        self.ros_path_prefix = Path("/home/lab4dv/youzhuo_work_playground/hand_arm_mesh/")#如果搬运到另一台电脑上，要修改这个文件名
+        self.ros_path_prefix = Path("/home/lab4dv/data/hand_arm_mesh/")#如果搬运到另一台电脑上，要修改这个文件名
         self.rgb_timestamp_path = self.folder_path / Path(self.bag_name) 
         self.merge_mesh_output_folder = self.folder_path/ Path(self.bag_name)  / Path("merge_mesh/")
         self.gobal_position_folder = self.folder_path / Path(self.bag_name)  / Path("global_name_position/")

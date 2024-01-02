@@ -50,13 +50,16 @@ def transform_mesh_with_matrix(transform_matrix,mesh):
 
 def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interval = [0,99999], cam2world_transform=None,cam_index=0):
 
-    mesh_path = Path(bag_folder_path) / Path("models") /  Path(model_name + ".obj")
+    mesh_path = Path(bag_folder_path).parent / Path("models") /  Path(model_name + ".obj")
     bag_name = bag_folder_path.split('/')[-1] #[:-9]
     mesh = o3d.io.read_triangle_mesh(str(mesh_path))
     # mesh = simplify_mesh(mesh)
-    pcd = mesh.sample_points_poisson_disk(9000)#don't use mesh simplify, but the sample points
+    # pcd = mesh.sample_points_poisson_disk(9000)#don't use mesh simplify, but the sample points
     print("simple mesh done")
-    pose_path = Path(bag_folder_path) / Path(f"tracking_result/{bag_name}_cam_index_{cam_index}_tracking_result.txt")
+    # pose_path = Path(bag_folder_path) / Path(f"tracking_result/{bag_name}_cam_index_{cam_index}_tracking_result.txt")
+    pose_path = Path(bag_folder_path) / \
+        Path(
+            f"tracking_result/tracking_result.txt")
     tranform_matrixs = load_seven_num_pose(pose_path)
     mesh_to_save_folder_path = Path(bag_folder_path) / Path("object_pose_in_every_frame")
     if not os.path.exists(mesh_to_save_folder_path):
@@ -70,29 +73,35 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
     for index in np.arange(transform_mesh_interval[0],transform_mesh_interval[1]):
         pose = tranform_matrixs[index]
         # obj_under_world_pose = pose
-        temp_pcd = deepcopy(pcd)
-        temp_pcd.transform(pose)
+        temp_mesh = deepcopy(mesh)
+
+        temp_mesh.transform(pose)
         if cam2world_transform is not None:
-            temp_pcd.transform(cam2world_transform)
+            temp_mesh.transform(cam2world_transform)
         # mesh_to_save = transform_mesh_with_matrix(obj_under_world_pose,deepcopy(pcd))
         mesh_save_path = mesh_to_save_folder_path / Path(str(index) + ".ply")
-        
-        o3d.io.write_point_cloud(str(mesh_save_path),temp_pcd)
+        # o3d.visualization.draw_geometries([temp_mesh])
+        o3d.io.write_triangle_mesh(str(mesh_save_path), temp_mesh)
+
 
 
 if __name__ == "__main__":
-    bag_folder_path = "/home/lab4dv/data/sda/yogurt/original/yogurt_1_20231105"
-    model_name = "yogurt"
+    bag_folder_path = "/home/lab4dv/data/ssd/shower_cleaner/shower_cleaner_4"
+    model_name = "shower_cleaner"
+    
     cam_index = 0
-    transforms = json.load(open(str(Path(bag_folder_path) / Path("global_name_position/0.txt")),"r"))
-    cam0_rgb_camera_link2world = np.array(transforms["cam0_rgb_camera_link"])
-    #simplify_persentage = 0.9
+
+    # transforms = json.load(open(str(Path(bag_folder_path) / Path("global_name_position/0.txt")),"r"))
+    # cam0_rgb_camera_link2world = np.array(transforms["cam3_rgb_camera_link"])
+    # #simplify_persentage = 0.9
+    
+    
+    
     transform_mesh_interval = [0,2000]
 
     transform_obj2result_pose(bag_folder_path, model_name,
                               transform_mesh_interval,
-                              cam0_rgb_camera_link2world,
-                              cam_index)
+                              None)
 
 
 

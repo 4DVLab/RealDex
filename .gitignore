@@ -1,4 +1,6 @@
 # added by yumeng
+.history/
+.vscode/
 */.DS_Store
 /__pycache__
 /out_json
@@ -21,7 +23,8 @@ devel/
 *.ply
 *.pcd
 data_preprocess/ours/assets/*
-
+result
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
