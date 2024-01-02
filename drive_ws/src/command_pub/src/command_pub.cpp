@@ -17,13 +17,16 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 using json = nlohmann::json;
 
+#define LOOP_RATE 50
+
 #define IF_TEST false
 #define IF_CONFIG false
-#define IF_HAND_ONLY false
 
 
  void back_to_initial(std::string PLANNING_GROUP, std::vector<double> goal_joint_positions)
 {
+  if(IF_TEST)
+  return;
    // before move following command, use moveit! to initialize pose
 
   moveit::planning_interface::MoveGroupInterface move_group_interface(PLANNING_GROUP);
@@ -146,6 +149,7 @@ trajectory_msgs::JointTrajectory formCommand(std::string type, std::vector<doubl
 
 void fake_publish_command(trajectory_msgs::JointTrajectory command)
 {
+  return;
    std::cout<<"header.frame_id "<<command.header.frame_id<<std::endl<<
                 "header.seq "<<command.header.seq<<std::endl
                 <<"header.stamp "<<command.header.stamp<<std::endl
@@ -163,7 +167,8 @@ void fake_publish_command(trajectory_msgs::JointTrajectory command)
 
 int main(int argc, char **argv)
 {
-
+  if(LOOP_RATE >100)
+  return -1;
 
     ros::init(argc, argv, "command_pub");
     ros::NodeHandle n;
@@ -174,7 +179,7 @@ int main(int argc, char **argv)
     ros::Publisher rh_wr_command_pub = n.advertise<trajectory_msgs::JointTrajectory>("/rh_wr_trajectory_controller/command", 1000, true);
     ros::Publisher rh_command_pub = n.advertise<trajectory_msgs::JointTrajectory>("/rh_trajectory_controller/command", 1000, true);
     
-    ros::Rate loop_rate(50);
+    ros::Rate loop_rate(LOOP_RATE);
   std::vector<std::vector<double>> ra_point_vector;
   std::vector<double> ra_timestamp_vector;
 
@@ -224,16 +229,37 @@ int main(int argc, char **argv)
     back_to_initial("right_arm_and_hand", goal_joint_positions);
 
   }
+  
+  //storge the nearest index of arm points
+  std::vector<double> nearest_index;
+  int rh_prt =0;
+  for (int ra_prt=0; ra_prt<ra_timestamp_vector.size(); ra_prt++)
+  {
+      while(rh_timestamp_vector[rh_prt]<ra_timestamp_vector[ra_prt] && rh_prt<rh_timestamp_vector.size())
+        rh_prt++;
+      if(rh_prt == 0 || abs(rh_timestamp_vector[rh_prt] - ra_timestamp_vector[ra_prt]) < abs(rh_timestamp_vector[rh_prt-1] - ra_timestamp_vector[ra_prt]))
+      {
+        nearest_index.push_back(rh_prt);
+      }
+      else{
+        nearest_index.push_back(rh_prt - 1);
+      }
+      if(ra_prt> nearest_index[ra_prt])
+      {
+        std::cout<<ra_prt<<" "<<rh_prt<<std::endl;
+        return -1;
+      }
+  }
 
-
-
+//   for(int i=0; i<nearest_index.size();i++)
+//   std::cout<<i<<" "<<nearest_index[i]<<std::endl;
+// return 0;
     int ra_seq =1, rh_wr_seq = 1, rh_seq =1;
-
+    rh_points_num = nearest_index[ra_points_num - 1];
     while(ros::ok())
     {
-      if (IF_HAND_ONLY)
+      if(rh_current_points<nearest_index[ra_current_points])
       {
-        
         trajectory_msgs::JointTrajectory rh_command = formCommand("rh",rh_point_vector[rh_current_points] ,rh_seq++);
         rh_current_points = (rh_current_points + 1) % rh_points_num;
         if(!rh_current_points)
@@ -243,6 +269,7 @@ int main(int argc, char **argv)
            goal_joint_positions.insert(goal_joint_positions.end(), rh_wr_point_vector[0].begin(), rh_wr_point_vector[0].end());
            goal_joint_positions.insert(goal_joint_positions.end(), rh_point_vector[0].begin(), rh_point_vector[0].end());
            back_to_initial("right_arm_and_hand", goal_joint_positions);
+           rh_current_points =  ra_current_points  = rh_wr_current_points = 1;
         }
     
         if(IF_TEST)
@@ -256,23 +283,22 @@ int main(int argc, char **argv)
         {
           rh_command_pub.publish(rh_command);
         }
-        
       }
-      else
+      if(rh_current_points >= nearest_index[ra_current_points] )
       {
               trajectory_msgs::JointTrajectory ra_command = formCommand("ra",ra_point_vector[ra_current_points], ra_seq++ );
               ra_current_points = (ra_current_points + 1) % ra_points_num;
 
               trajectory_msgs::JointTrajectory rh_wr_command = formCommand("rh_wr", rh_wr_point_vector[rh_wr_current_points], rh_wr_seq++);
               rh_wr_current_points = (rh_wr_current_points + 1) % rh_wr_points_num;
-
-              if (!ra_current_points || !rh_wr_current_points )
+               if(!rh_wr_current_points)
               {
                 std::vector<double> goal_joint_positions;
                 goal_joint_positions.insert(goal_joint_positions.end(),ra_point_vector[0].begin(), ra_point_vector[0].end());
                 goal_joint_positions.insert(goal_joint_positions.end(), rh_wr_point_vector[0].begin(), rh_wr_point_vector[0].end());
                 goal_joint_positions.insert(goal_joint_positions.end(), rh_point_vector[0].begin(), rh_point_vector[0].end());
                 back_to_initial("right_arm_and_hand", goal_joint_positions);
+                ra_current_points = rh_wr_current_points = 0;
               }
 
               if(IF_TEST)
@@ -297,7 +323,7 @@ int main(int argc, char **argv)
      
       ros::spinOnce();
       loop_rate.sleep();
-      ROS_INFO("ra:%d, rh_wr:%d, rh:%d", ra_current_points, rh_wr_current_points, rh_current_points);
+      ROS_INFO("ra:%d, rh_wr:%d, rh:%d", ra_current_points -1, rh_wr_current_points -1, rh_current_points -1);
       
     }
      
