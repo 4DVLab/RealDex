@@ -567,6 +567,15 @@ def gen_one_stamp_all_tf(bag_folder, stamp_index_begin, stamp_index_end=None):
 
     # vis.run()  # 这将显示mesh并允许交互直到用户按'q' 用来与用户交互的
 
+def gen_arm_hand_mesh(bag_folder_path):
+    ros_prefix_path = "/home/lab4dv/data/bags/config_data/hand_arm_mesh"
+    configuration_path = "/home/lab4dv/data/bags/config_data"
+    bag_folder = bag_folder_path
+    # gen_one_stamp_all_tf(bag_folder,1015)
+
+    # bag_folder = "/media/tony/T7/camera_data/banana/"
+    gen_on_stamp_hand_arm_mesh(configuration_path,bag_folder,ros_prefix_path,stamp_index_begin=0,stamp_index_end=50000)
+ 
 
 
 # 也需要只有一个arm_hand_mesh的
@@ -574,7 +583,7 @@ if __name__ == "__main__":
 
     ros_prefix_path = "/home/lab4dv/data/bags/config_data/hand_arm_mesh"
     configuration_path = "/home/lab4dv/data/bags/config_data"
-    bag_folder = "/home/lab4dv/data/ssd/toilet_cleaning_sprayer/toilet_cleaning_sprayer_6_20231209"
+    bag_folder = "/home/lab4dv/data/ssd/yogurt/yogurt_1_20231207"
     # gen_one_stamp_all_tf(bag_folder,1015)
 
     # bag_folder = "/media/tony/T7/camera_data/banana/"

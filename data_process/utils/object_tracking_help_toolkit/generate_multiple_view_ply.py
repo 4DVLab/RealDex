@@ -1,6 +1,5 @@
 import os
-from sensor_msgs.msg import PointCloud2
-from sensor_msgs import point_cloud2
+
 import open3d as o3d
 import numpy as np
 import struct
@@ -150,9 +149,12 @@ class gen_merge_pcd_ply:
             self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
         pcd.transform(self.four_cams_to_world_frame[cam_index])
         pcd = self.filter_pcd(pcd)
+        os.makedirs(self.merge_pcd_save_folder / f"cam{cam_index}",exist_ok=True)
+        # o3d.io.write_point_cloud(str(self.merge_pcd_save_folder / f"cam{cam_index}/{time_index}.ply"),
+        #         pcd, write_ascii=False, compressed=False, print_progress=True)
         with threading.Lock():  # Ensure thread-safe operation on the merge_pcd object
             merge_pcd += pcd
-            merge_pcd.remove_duplicated_points()
+            # merge_pcd.remove_duplicated_points()
 
     def process_batch(self, batch_range):
         print(f"in batch{batch_range}")
@@ -300,6 +302,7 @@ class gen_merge_pcd_ply:
 
         pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
             np.array([0.868298, -0.431623, 0.850648], np.float64), np.array([1.6193, 0.519053, 3], np.float64)))
+        # pcd = pcd.voxel_down_sample(0.002)
         # pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
         #     np.array([-0.5, -0.8, 0], np.float64), np.array([2, 0.8, 1.5], np.float64)))
 
@@ -334,29 +337,41 @@ def gen_pcd_for_annotate(root_path: Path, four_cam_intrisics_extrisics_save_fold
         print(root_path)
         return
 
-def mint():
-    bag_folder = Path("/home/lab4dv/data/sda/banana/original/banana_1_20231027")
-    four_cam_intrisics_extrisics_save_folder = Path(
-        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
-    gen_merge_pcd = gen_merge_pcd_ply(
-        bag_folder, four_cam_intrisics_extrisics_save_folder)
-    gen_merge_pcd.merge_pcd_and_filter(2)
 
 
-
-if __name__ == "__main__":
+def gen_mvp(bag_folder_path):
     four_cam_intrisics_extrisics_save_folder = Path(
         "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")    
     pcd_index = 0
 
-    root_path = Path("/home/lab4dv/data/bags/persimmon/persimmon_3_20231210")
+    root_path = Path(bag_folder_path)
     
 
-    # constrain_bound = [0,2000]
-    constrain_bound = [pcd_index,pcd_index]
+    constrain_bound = [0,2000]
+    # constrain_bound = [pcd_index,pcd_index]
 
 
     gen_pcd_for_annotate(
         root_path, 
         four_cam_intrisics_extrisics_save_folder, constrain_bound)
+
+
+if __name__ == "__main__":
+
+    root_path = Path("/home/lab4dv/data/bags/apple/apple_1_20231207")
+
+
+
+    four_cam_intrisics_extrisics_save_folder = Path(
+        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")    
+
+    pcd_index = 0
+    constrain_bound = [0,2000]
+    # constrain_bound = [pcd_index,pcd_index]
+
+
+    gen_pcd_for_annotate(
+        root_path, 
+        four_cam_intrisics_extrisics_save_folder, constrain_bound)
+
 

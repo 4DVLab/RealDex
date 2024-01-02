@@ -1,5 +1,0 @@
-network:
-  out_channel: 10
-
-loss_weight:
-  contact_map: 1.0
