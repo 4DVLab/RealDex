@@ -1,0 +1,25 @@
+obj_inchannel: 3
+cvae_encoder_sizes: [1024, 512, 256]
+cvae_decoder_sizes: [1024, 256, 28]
+cvae_latent_size: 64
+obj_feature_dim: 1024
+hand_feature_dim: 1024
+
+network:
+  type: pointnet
+
+loss_weight:
+  qpos_loss: 1
+  transl_loss: 100
+  rotation_loss: 10
+  verts_loss: 1
+  KLD: 1
+  cmap_loss: 10
+  penetr_loss: 1
+
+contact_net:
+  type: cm_net
+  ckpt_path: ./checkpoints/ContactNet/exp_tmp
+
+tta:
+  normalize_factor: 60

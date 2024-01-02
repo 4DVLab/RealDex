@@ -10,7 +10,7 @@ from network.affordanceNet_obman_mano_param import affordanceNet
 import numpy as np
 import random
 from utils.loss_coarsenet import Coarsenet_cvae_loss, loss_cnet, CVAE_loss_mano
-from pytorch3d.loss import chamfer_distance
+# from pytorch3d.loss import chamfer_distance
 import mano
 
 

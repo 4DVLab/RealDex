@@ -23,7 +23,8 @@ devel/
 *.ply
 *.pcd
 data_preprocess/ours/assets/*
-
+result
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

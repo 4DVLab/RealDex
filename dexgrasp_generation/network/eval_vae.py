@@ -3,7 +3,7 @@ import logging
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from data.dataset import get_mesh_dataloader
+from data.dataset import get_mesh_dataloader, get_dex_dataloader
 from data.dataset import get_grab_mesh_dataloader, feature_to_color
 from trainer import Trainer
 # from trainer_grab import Trainer
@@ -26,7 +26,9 @@ from utils.visualize import visualize
 from utils.hand_model import HandModel
 import trimesh
 from pytorch3d import transforms as pttf
-
+from network.models.model import get_model
+from collections import OrderedDict
+from pytorch3d.transforms import rotation_6d_to_matrix, matrix_to_axis_angle
 
 
 def main(cfg, result_file):
@@ -64,12 +66,21 @@ def main(cfg, result_file):
     contact_cfg = compose(f"{cfg['tta']['contact_net']['type']}_config")
     with open_dict(contact_cfg):
         contact_cfg['device'] = cfg['device']
-        
-    tta_trainer = Trainer(contact_cfg, logger)
-    tta_trainer.resume()
-    contact_net = tta_trainer.model.net
-    # contact_net = ContactMapNet(contact_cfg).to(cfg['device'])
+    contact_net = ContactMapNet(contact_cfg)
+    ckpt_dir = pjoin(contact_cfg['exp_dir'], 'ckpt')
+    model_name = get_model(ckpt_dir, contact_cfg.get('resume_epoch', None))
+    ckpt = torch.load(model_name)['model']
+    new_ckpt = OrderedDict()
+    for name in ckpt.keys():
+        new_name = name.replace('net.', '')
+        if new_name.startswith('backbone.'):
+            new_name = new_name.replace('backbone.', '')
+        new_ckpt[new_name] = ckpt[name]
+    
+    contact_net.load_state_dict(new_ckpt)
+    contact_net = contact_net.to(cfg['device'])
     contact_net.eval()
+    
     tta_loss = AdditionalLoss(cfg['tta'], 
                               cfg['device'], 
                               cfg['dataset']['num_obj_points'], 
@@ -82,41 +93,40 @@ def main(cfg, result_file):
         loader = result_to_loader(result, cfg) if result else test_loader
         result = []
         for _, data in enumerate(tqdm(loader)):
-            for i in range(cfg['models'][key]['sample_num']):
-                pred_dict, _ = trainer.test(data)
-                data.update(pred_dict)
-                result.append({k: v.cpu() if type(v) == torch.Tensor else v for k, v in data.items()})
+            pred_dict, _ = trainer.test(data)
+            data.update(pred_dict)
+            result.append({k: v.cpu() if type(v) == torch.Tensor else v for k, v in data.items()})
     
     # tta
-    loader = result_to_loader(result, cfg, cfg['tta']['batch_size'])
-    result = []
-    for i, data in enumerate(tqdm(loader)):
-        points = data['canon_obj_pc'].cuda()
-        hand_pose = torch.cat([data['canon_translation'], torch.zeros_like(data['canon_translation']), data['hand_qpos']], dim=-1)
-        old_hand_pose = hand_pose.clone()
-        data['hand_pose'] = add_rotation_to_hand_pose(old_hand_pose, data['sampled_rotation'])
-        plane_parameters = data['canon_plane'].cuda()
+    # loader = result_to_loader(result, cfg, cfg['tta']['batch_size'])
+    # result = []
+    # for i, data in enumerate(tqdm(loader)):
+    #     points = data['canon_obj_pc'].cuda()
+    #     hand_pose = torch.cat([data['canon_translation'], torch.zeros_like(data['canon_translation']), data['qpos']], dim=-1)
+    #     old_hand_pose = hand_pose.clone()
+    #     data['hand_pose'] = add_rotation_to_hand_pose(old_hand_pose, data['sampled_rotation'])
+    #     plane_parameters = data['canon_plane'].cuda()
 
-        hand_pose = hand_pose.cuda()
-        hand = tta_loss.hand_model(hand_pose, with_surface_points=True)
-        discretized_cmap_pred = tta_loss.cmap_func(dict(canon_obj_pc=points, observed_hand_pc=hand['surface_points']))['contact_map'].exp()
-        # cmap_pred = (torch.argmax(discretized_cmap_pred, dim=-1) + 0.5) / discretized_cmap_pred.shape[-1]
-        arange = (torch.arange(0, discretized_cmap_pred.shape[-1], dtype=discretized_cmap_pred.dtype, device=discretized_cmap_pred.device)+0.5)
-        cmap_pred = torch.mean(discretized_cmap_pred * arange, dim=-1).detach()
-        # print(cmap_pred.shape)
-        # print(discretized_cmap_pred.shape)
-        data['cmap_pred'] = cmap_pred
+    #     hand_pose = hand_pose.cuda()
+    #     hand = tta_loss.hand_model(hand_pose, with_surface_points=True)
+    #     discretized_cmap_pred = tta_loss.cmap_func(dict(canon_obj_pc=points, observed_hand_pc=hand['surface_points']))['contact_map'].exp()
+    #     # cmap_pred = (torch.argmax(discretized_cmap_pred, dim=-1) + 0.5) / discretized_cmap_pred.shape[-1]
+    #     arange = (torch.arange(0, discretized_cmap_pred.shape[-1], dtype=discretized_cmap_pred.dtype, device=discretized_cmap_pred.device)+0.5)
+    #     cmap_pred = torch.mean(discretized_cmap_pred * arange, dim=-1).detach()
+    #     # print(cmap_pred.shape)
+    #     # print(discretized_cmap_pred.shape)
+    #     data['cmap_pred'] = cmap_pred
         
-        hand_pose.requires_grad_()
-        optimizer = torch.optim.Adam([hand_pose], lr=cfg['tta']['lr'])
-        for t in range(cfg['tta']['iterations']):
-            optimizer.zero_grad()
-            loss = tta_loss.tta_loss(hand_pose, points, cmap_pred, plane_parameters)
-            loss.backward()
-            optimizer.step()
+    #     hand_pose.requires_grad_()
+    #     optimizer = torch.optim.Adam([hand_pose], lr=cfg['tta']['lr'])
+    #     for t in range(cfg['tta']['iterations']):
+    #         optimizer.zero_grad()
+    #         loss = tta_loss.tta_loss(hand_pose, points, cmap_pred, plane_parameters)
+    #         loss.backward()
+    #         optimizer.step()
 
-        data['tta_hand_pose'] = add_rotation_to_hand_pose(hand_pose.detach().cpu(), data['sampled_rotation'])
-        result.append(data)
+    #     data['tta_hand_pose'] = add_rotation_to_hand_pose(hand_pose.detach().cpu(), data['sampled_rotation'])
+    #     result.append(data)
         
     torch.save(data, result_file)
 
@@ -179,13 +189,12 @@ def parse_args():
     parser.add_argument("--exp-dir", type=str, help="E.g., './eval_result'.")
     return parser.parse_args()
 
-
-def vis_result(filename, device, result_path):
+def vis_test_result(filename, device, result_path):
     result = torch.load(filename)
     print(result.keys())
     print(len(result))
     
-    hand_pose = result['tta_hand_pose'].to(device)
+    hand_pose = result['hand_pose'].to(device)
     hand_model = HandModel(
             mjcf_path='data/mjcf/shadow_hand.xml',
             mesh_path='data/mjcf/meshes',
@@ -195,25 +204,39 @@ def vis_result(filename, device, result_path):
         )
     hand_pose = hand_pose.float()
     hand = hand_model(hand_pose=hand_pose, object_pc=result['obj_pc'].to(device), with_meshes=True)
+    vis_result(hand, result, result_path)
+    
+def vis_result(hand, data, result_path):
     num_hand = hand['vertices'].shape[0]
     hand_verts = hand['vertices'].cpu()
     hand_faces = hand['faces'].cpu()
-    print(hand_verts.shape, hand_faces.shape)
+    # print(hand_verts.shape, hand_faces.shape)
     for i in range(num_hand):
-        colors = feature_to_color(result['cmap_pred'][i].cpu())
-        obj_pc = trimesh.PointCloud(vertices=result['obj_pc'][i], colors=colors)
+        # colors = feature_to_color(result['cmap_pred'][i].cpu())
+        obj_pc = data['obj_pc'][i].cpu()
+        obj_pc = trimesh.PointCloud(vertices=obj_pc) #, colors=colors)
         hand_mesh = trimesh.Trimesh(vertices=hand_verts[i], faces=hand_faces)
         hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
         obj_pc.export(os.path.join(result_path, f"test_obj_{i}.ply"))
         
-        if 'obj_mesh' in result.keys():
-            obj_mesh = result['obj_mesh'][i]
+        if 'obj_mesh' in data.keys():
+            obj_mesh = data['obj_mesh'][i]
+            (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
+        if 'mesh_path' in data.keys():
+            mesh_path = data['mesh_path'][i]
+            obj_mesh = trimesh.load(mesh_path)
+            scale = data['scale'][i].cpu()
+            pose_matrix = data['pose_matrix'][i].cpu()
+            verts = torch.from_numpy(obj_mesh.vertices).float()
+            new_verts = scale * ( verts @ pose_matrix[:3, :3].T + pose_matrix[:3, 3])
+            obj_mesh.vertices = new_verts
+            
             (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
 
 
 if __name__ == "__main__":
     args = parse_args()
-    config_name= "configs_baseline"
+    config_name= "configs_cvae"
     # config_name= "configs_grab_mesh"
     
     initialize(version_base=None, config_path="../" + config_name, job_name="train")
@@ -221,12 +244,13 @@ if __name__ == "__main__":
         cfg = compose(config_name=args.config_name)
     else:
         cfg = compose(config_name=args.config_name, overrides=[f"exp_dir={args.exp_dir}"])
+        
     
-    result_path = "/home/liuym/results/unidexgrasp_test_full_set_"+config_name
+    result_path = "/home/liuym/results/unidexgrasp_train_set_"+config_name
     if not os.path.exists(result_path):
         os.makedirs(result_path)
-    results_file = os.path.join(result_path, "result_test_set_orig_ckpt.pt")
+    results_file = os.path.join(result_path, "result_train_set_orig_ckpt.pt")
     main(cfg, results_file)
     
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # vis_result(results_file, device, result_path)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    vis_test_result(results_file, device, result_path)

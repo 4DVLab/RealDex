@@ -2,11 +2,11 @@ joint_training: True
 
 rotation_net:
   type: ipdf
-  ckpt_path: runs/ipdf_train/ckpt/model_000301.pt
+  ckpt_path: ./checkpoints/RotationNet/PNRot
 
 contact_net:
   type: cm_net
-  ckpt_path: runs/cm_net_train_gpu5/ckpt/model_000101.pt
+  ckpt_path: ./checkpoints/ContactNet/exp_tmp
 
 network:
   type: pointnet

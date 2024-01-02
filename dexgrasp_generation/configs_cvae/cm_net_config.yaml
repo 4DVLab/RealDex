@@ -10,7 +10,8 @@ use_DFCData: True
 use_Shadow: True
 
 # dirs
-exp_dir: ./runs/ContactNet/
+exp_dir: ./checkpoints/ContactNet/exp_tmp
+# exp_dir: ./runs/cm_net_train/
 
 # wandb
 wandb_offline: True
@@ -47,8 +48,8 @@ resume_epoch: -1
 cuda_id: 5
 
 # data loader
-num_workers: 8
-batch_size: 64
+num_workers: 2
+batch_size: 8
 
 # hydra
 hydra:

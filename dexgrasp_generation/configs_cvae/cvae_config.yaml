@@ -1,16 +1,16 @@
 defaults:
     - _self_
-    - model: cm_net
-    - dataset: cm_net_data
+    - model: cvae
+    - dataset: cvae_data
     - override hydra/hydra_logging: none
     - override hydra/job_logging: none
 
-network_type: cm_net
+network_type: affordance_cvae
 use_DFCData: True
 use_Shadow: True
 
 # dirs
-exp_dir: ./runs/ContactNet/
+exp_dir: ./runs/cvae_train
 
 # wandb
 wandb_offline: True
@@ -26,7 +26,7 @@ freq:
 # optimization options
 optimizer: Adam
 weight_decay: 0.0001
-learning_rate: 0.001
+learning_rate: 0.0005
 lr_policy: step
 lr_gamma: 0.5 # lr decay rate
 lr_step_size: 40
@@ -44,11 +44,11 @@ total_epoch: 250
 resume_epoch: -1
 
 # device
-cuda_id: 5
+cuda_id: 0
 
 # data loader
 num_workers: 8
-batch_size: 64
+batch_size: 32
 
 # hydra
 hydra:

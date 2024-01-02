@@ -59,7 +59,8 @@ def main(cfg):
     writer = SummaryWriter(pjoin(log_dir, "tensorboard"))
 
     """ DataLoaders """
-    train_loader = get_dex_dataloader(cfg, "train")
+    # train_loader = get_dex_dataloader(cfg, "train")
+    train_loader = get_dex_dataloader(cfg, "test")
     test_loader = get_dex_dataloader(cfg, "test")
 
     """ Trainer """
@@ -126,7 +127,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    initialize(version_base=None, config_path="../configs", job_name="train")
+    initialize(version_base=None, config_path="../configs_cvae", job_name="train")
     if args.exp_dir is None:
         cfg = compose(config_name=args.config_name)
     else:
