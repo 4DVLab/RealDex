@@ -3,7 +3,7 @@ import numpy as np
 from typing import Callable
 from functools import lru_cache, wraps
 import os
-from global_util import tf_to_mat
+from utils.global_util import tf_to_mat
 
 class Node(object):
     def __init__(self, name):
@@ -113,12 +113,16 @@ def rearrange_hand_tf(tf_data_dir, tf_info):
         tf_data_list += read_tf_file(os.path.join(tf_data_dir, f"{pname}-{cname}.txt"), cname)
     tf_data_list = sorted(tf_data_list, key=lambda x:x[0])
     tf_data_list = np.array(tf_data_list, dtype=object)
-    np.save(os.path.join(tf_data_dir, "tf.npy"),tf_data_list)
+    # np.save(os.path.join(tf_data_dir, "tf.npy"),tf_data_list)
+    return tf_data_list
 
 
 def load_sequence(tf_data_dir, tf_info_file):
-    data_file = os.path.join(tf_data_dir, "tf.npy")
-    data = np.load(data_file, allow_pickle=True)
+    
+    with open(tf_info_file, 'r') as f:
+        tf_info = json.load(f)
+    
+    data = rearrange_hand_tf(tf_data_dir, tf_info)
     ktree = Kintree(tf_info_file)
     out_dict = {}
     for link_data in data:
@@ -127,8 +131,9 @@ def load_sequence(tf_data_dir, tf_info_file):
         ktree.forward_kinematic(root=ktree.root)
         global_tf = ktree.output('global_tf')
         out_dict[time_stamp] = global_tf
-    out_file = os.path.join(tf_data_dir, "global_tf_all_in_one.npy")
-    np.save(out_file, out_dict)
+    # out_file = os.path.join(tf_data_dir, "global_tf_all_in_one.npy")
+    # np.save(out_file, out_dict)
+    return out_dict
 
 
 if __name__ == "__main__":
