@@ -92,7 +92,7 @@ class DataProcesser():
             
             
     def align_scene_handmesh(self, scene_id = 0, cam_index=3, ratio_threshold = 0.06):
-        scene_pcd = pcd_generator.gen_pcd(scene_id, cam_index)
+        scene_pcd = self.pcd_generator.gen_pcd(scene_id, cam_index)
         
         sr_time_list = self.tf_data_all_in_one.keys()
         progress_bar = tqdm(sorted(sr_time_list), desc="Processing items", unit="item")
@@ -117,17 +117,16 @@ class DataProcesser():
     
     def time_sync(self, start_scene_id=0):
         start_time_scene = self.scene_time_list[start_scene_id]
-        sr_mesh_dir = os.path.join(data_dir, "srhand_ur_meshes")
+        start_time_sr = self.align_scene_handmesh(scene_id=start_scene_id)
         out_path = os.path.join(data_dir, "scene_to_mesh.json")
         ret_dict = {}
         
-        sr_mesh_file_list = os.listdir(sr_mesh_dir)
-        sr_time_list = [int(x.split('.')[0]) for x in sr_mesh_file_list]
+        sr_time_list = self.tf_data_all_in_one.keys()
         sr_time_list = sorted(sr_time_list)
         
         for i, time_scene in enumerate(self.scene_time_list):
             delta_t = int(time_scene - start_time_scene)
-            approx_sr_time = self.start_time_sr + delta_t
+            approx_sr_time = start_time_sr + delta_t
             sr_time = find_closest(sr_time_list, approx_sr_time)
             ret_dict[i] = f"{sr_time}.ply"
         
@@ -164,34 +163,11 @@ if __name__ == '__main__':
         path = os.path.join(base_dir, model_name)
         for exp_code in os.listdir(path):
             subpath = os.path.join(path, exp_code)
-            if os.path.isdir(subpath) and re.match(r'model_\d+', exp_code):
+            if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
                 data_dir = os.path.join(base_dir, model_name, exp_code)
-                tf_data_dir = os.path.join(data_dir, "TF")
-                
-                pcd_generator = PCDGenerator(data_dir, cam_param_dir)
-                
-                # gen_hand_mesh()
-                
-                sr_mesh_dir = os.path.join(data_dir, "srhand_ur_meshes")
-                scene_dir = os.path.join(data_dir, "cam3/pcd")
-                scene_to_mesh = time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, scene_end=1, ratio_threshold=0.04)
-                print(scene_to_mesh)
-                
-                extract_hand_mesh(data_dir, start_time_sr=scene_to_mesh[0], start_scene_id=0)
-                out_dir = os.path.join(data_dir, "temp_result")
-                os.makedirs(out_dir, exist_ok=True)
-                # export_meshes(sr_mesh_dir, scene_dir, out_dir, os.path.join(data_dir, "scene_to_mesh_by_step.json"))
-
-                
-                # scene_to_mesh_path = os.path.join(data_dir, "scene_to_mesh_by_step.json")
-                # vis_result(sr_mesh_dir, scene_dir, scene_to_mesh_path)
-                
-                remove_hand_mesh()
-    
-    
-    model_name = "crisps"
-    exp_code = "crisps_2"
-    
+                print(data_dir)
+                data_processer = DataProcesser(data_dir, cam_param_dir)
+                data_processer.time_sync()
     
     
     
