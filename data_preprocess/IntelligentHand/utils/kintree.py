@@ -38,7 +38,7 @@ class Kintree(object):
         # optional, added for test
         self.arm_root = self.root
         self.hand_root = self.nodes["rh_forearm"]
-        self.print_tree(self.root)
+        # self.print_tree(self.root)
 
     def print_tree(self, root, level=0):
         print("\t"*level+repr(root.name)+"\n")

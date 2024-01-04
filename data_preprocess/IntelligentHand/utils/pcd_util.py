@@ -68,6 +68,7 @@ class PCDGenerator:
             self.extrics, self.cam0_transform_to_world)
 
         self.cam_time_aligned_list = []
+        self.gen_cams_time_stamp()
 
     def read_intrisics_from_ros_data(self,cam_index):
         intrisics_path = self.bag_folder / f"cam{cam_index}/rgb/camera_info"
@@ -130,15 +131,17 @@ class PCDGenerator:
         self.cam_time_aligned_list = cam_time_aligned_list
         return cam_time_aligned_list
 
-    def gen_pcd(self, index, cam_index=0):
-        print(index)
-        cam_data_dir = os.path.join(self.bag_folder, f"cam{cam_index}", "pcd")
+    def gen_pcd(self, index, cam_index=0, export=True):
         time_index = self.cam_time_aligned_list[0][index]
         pcd = self.gen_pcd_with_depth_and_rgb_paths(self.cam_time_aligned_list[cam_index][time_index], cam_index)
         pcd.transform(self.four_cams_to_world_frame[cam_index])
         pcd = self.filter_pcd(pcd)
-        o3d.io.write_point_cloud(os.path.join(cam_data_dir, f"{index}.ply"), 
-                                pcd, write_ascii=False, compressed=False, print_progress=True)
+        if export:
+            out_dir = os.path.join(self.bag_folder, f"cam{cam_index}", "pcd")
+            os.makedirs(out_dir, exist_ok=True)
+            o3d.io.write_point_cloud(os.path.join(out_dir, f"{index}.ply"), 
+                                    pcd, write_ascii=False, compressed=False, print_progress=True)
+        return pcd
 
     def get_all_cams_to_world_frame(self, cams_inter_transform, cam0_to_world_transform):
         four_cams_to_world_frame = [cam0_to_world_transform @

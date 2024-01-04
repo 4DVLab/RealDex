@@ -35,12 +35,12 @@ class DataProcesser():
         print(self.mesh_dict.keys())
         
         '''Load TF Data'''
-        tf_data_file = os.path.join(tf_data_dir, "global_tf_all_in_one.npy")
+        tf_data_file = os.path.join(self.tf_data_dir, "global_tf_all_in_one.npy")
         if os.path.exists(tf_data_file): 
             tf_data_all_in_one = np.load(tf_data_file, allow_pickle=True)
             tf_data_all_in_one = tf_data_all_in_one.item()
         else:
-            tf_data_all_in_one = load_sequence(tf_data_dir, struct_file)
+            tf_data_all_in_one = load_sequence(self.tf_data_dir, struct_file)
             np.save(tf_data_file, tf_data_all_in_one)
         self.tf_data_all_in_one = tf_data_all_in_one
         self.num_tf = len(self.tf_data_all_in_one)
@@ -70,7 +70,13 @@ class DataProcesser():
         combined_mesh = list(updated_meshes.values())
         combined_mesh = trimesh.util.concatenate(combined_mesh)
         
-        return combined_mesh
+        # Create an Open3D mesh
+        o3d_mesh = o3d.geometry.TriangleMesh()
+        # Assign vertices and faces to Open3D mesh
+        o3d_mesh.vertices = o3d.utility.Vector3dVector(combined_mesh.vertices)
+        o3d_mesh.triangles = o3d.utility.Vector3iVector(combined_mesh.faces)
+        
+        return o3d_mesh
 
     def gen_hand_mesh(self):
         '''Set out path'''
@@ -91,12 +97,13 @@ class DataProcesser():
             print(f"Error: {error.strerror}")
             
             
-    def align_scene_handmesh(self, scene_id = 0, cam_index=3, ratio_threshold = 0.06):
+    def align_scene_handmesh(self, scene_id, max_search, cam_index=3, ratio_threshold = 0.07):
         scene_pcd = self.pcd_generator.gen_pcd(scene_id, cam_index)
         
         sr_time_list = self.tf_data_all_in_one.keys()
         progress_bar = tqdm(sorted(sr_time_list), desc="Processing items", unit="item")
         potential_list = []
+        count = 0
         for sr_time in progress_bar:
             sr_mesh = self.gen_single_hand_mesh(sr_time)
             seg_points_ratio, distance, scene_idx_list = segment_scene_point_cloud(scene_pcd, sr_mesh)
@@ -111,16 +118,32 @@ class DataProcesser():
             elif len(potential_list) > 0:
                 potential_list = sorted(potential_list, key=lambda x: x[1], reverse=True) # the higher the better
                 selected_id, metric, scene_idx_list = potential_list[0]
-                break   
+                break 
+            
+            if count > max_search:
+                return None  
+            
+            count += 1
             
         return selected_id
     
-    def time_sync(self, start_scene_id=0):
-        start_time_scene = self.scene_time_list[start_scene_id]
-        start_time_sr = self.align_scene_handmesh(scene_id=start_scene_id)
+    def time_sync(self):
+        '''Check if this data is processed'''
         out_path = os.path.join(data_dir, "scene_to_mesh.json")
+        if os.path.exists(out_path):
+            print("Already Done!")
+            return
+        
+        '''Find the first pair that can be aligned'''
+        num_scene = len(self.scene_time_list)
+        for start_scene_id in trange(num_scene):
+            start_time_scene = self.scene_time_list[start_scene_id]
+            start_time_sr = self.align_scene_handmesh(scene_id=start_scene_id, max_search=20)
+            if start_time_sr is not None:
+                break
         ret_dict = {}
         
+        '''Align the remain pairs'''
         sr_time_list = self.tf_data_all_in_one.keys()
         sr_time_list = sorted(sr_time_list)
         
