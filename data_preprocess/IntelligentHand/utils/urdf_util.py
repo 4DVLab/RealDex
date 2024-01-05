@@ -96,12 +96,20 @@ def load_visible_link_from_urdf(urdf_path):
             link_list.append(link.attrib['name'])
     return link_list
         
-def global_tf_to_joint_angle(global_tf, kintree):
+def global_tf_to_joint_angle(urdf_path, global_tf=None, kintree=None):
     # TODO: convert the tf matrix to a single joint angle
+    urdf_tree = ET.parse(urdf_path)
+    root = urdf_tree.getroot()
+    for joint in root.findall('joint'):
+        axis = joint.find('axis')
+        if axis is not None:
+            joint_name = joint.get('name')
+            if joint_name.startswith('rh_'):
+                print(joint_name, axis.get('xyz'))
     pass
 
 if __name__ == '__main__':
-    urdf_path = "../../data_process/bimanual_srhand_ur.urdf"
+    urdf_path = "./assets/bimanual_srhand_ur.urdf"
     urdf_tree = ET.parse(urdf_path)
     node_list = load_visible_link_from_urdf(urdf_path)
     parent_dict = load_parent_link_from_urdf(urdf_path, node_list)
@@ -125,6 +133,8 @@ if __name__ == '__main__':
     with open(out_path, 'w') as outfile:
         outfile.write(json_string)
     print(json_string)
+    
+    global_tf_to_joint_angle(urdf_path)
     
     # prefix = "/remote-home/liuym/ShadowHand/description"
     # struct_file = "/home/liuym/Project/IntelligentHand/data_preprocess/ours/assets/shadow_hand/srhand_ur_chain.json"

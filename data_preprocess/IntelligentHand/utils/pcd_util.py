@@ -3,16 +3,10 @@ import os
 # from sensor_msgs import point_cloud2
 import open3d as o3d
 import numpy as np
-import struct
-import ctypes
 import cv2
 import json
 from pathlib import Path
 import json
-import copy
-import threading
-import shutil
-import filecmp
 from typing import Dict, List, TypedDict
 from scipy.spatial.transform import Rotation
 
@@ -73,7 +67,8 @@ class PCDGenerator:
         self.four_cams_to_world_frame = self.get_all_cams_to_world_frame(
             self.extrics, self.cam0_transform_to_world)
 
-        self.all_cams_time_stamp_index = []
+        self.cam_time_aligned_list = []
+        self.gen_cams_time_stamp()
 
     def read_intrisics_from_ros_data(self,cam_index):
         intrisics_path = self.bag_folder / f"cam{cam_index}/rgb/camera_info"
@@ -122,38 +117,31 @@ class PCDGenerator:
         pass
 
     def gen_cams_time_stamp(self):
-        all_cams_time_stamp_list = []
+        cams_time_list = []
         for cam_index in np.arange(4):
             cam_time_stamp = np.loadtxt(os.path.join(self.bag_folder, f"cam{cam_index}/rgb/image_raw/info.txt"))
-            all_cams_time_stamp_list.append(cam_time_stamp)
-        all_cams_align_to_cam0_rgb_time_index = [
-            list(range(all_cams_time_stamp_list[0].shape[0])), [], [], []]
+            cams_time_list.append(cam_time_stamp)
+        cam_time_aligned_list = [
+            list(range(cams_time_list[0].shape[0])), [], [], []]
         for cam_index in np.arange(1, 4):
-            for cam_time_stamp in all_cams_time_stamp_list[0]:
+            for cam_time_stamp in cams_time_list[0]:
                 index = find_time_closet(
-                    cam_time_stamp, all_cams_time_stamp_list[cam_index])
-                all_cams_align_to_cam0_rgb_time_index[cam_index].append(index)
+                    cam_time_stamp, cams_time_list[cam_index])
+                cam_time_aligned_list[cam_index].append(index)
+        self.cam_time_aligned_list = cam_time_aligned_list
+        return cam_time_aligned_list
 
-        return all_cams_align_to_cam0_rgb_time_index
-
-    def gen_pcd(self, start=0, end=None):
-        
-        self.all_cams_time_stamp_index = self.gen_cams_time_stamp()
-        time_index_length = len(self.all_cams_time_stamp_index[0])
-        if end is None or end > time_index_length:
-            end = time_index_length
-        
-        for cam_index in range(4):
-            cam_data_dir = os.path.join(self.bag_folder, f"cam{cam_index}", "pcd")
-            if not os.path.exists(cam_data_dir):
-                os.makedirs(cam_data_dir)
-            for index in tqdm(np.arange(start, end)):
-                time_index = self.all_cams_time_stamp_index[0][index]
-                pcd = self.gen_pcd_with_depth_and_rgb_paths(self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
-                pcd.transform(self.four_cams_to_world_frame[cam_index])
-                pcd = self.filter_pcd(pcd)
-                o3d.io.write_point_cloud(os.path.join(cam_data_dir, f"{index}.ply"), 
-                                        pcd, write_ascii=False, compressed=False, print_progress=True)
+    def gen_pcd(self, index, cam_index=0, export=True):
+        time_index = self.cam_time_aligned_list[0][index]
+        pcd = self.gen_pcd_with_depth_and_rgb_paths(self.cam_time_aligned_list[cam_index][time_index], cam_index)
+        pcd.transform(self.four_cams_to_world_frame[cam_index])
+        pcd = self.filter_pcd(pcd)
+        if export:
+            out_dir = os.path.join(self.bag_folder, f"cam{cam_index}", "pcd")
+            os.makedirs(out_dir, exist_ok=True)
+            o3d.io.write_point_cloud(os.path.join(out_dir, f"{index}.ply"), 
+                                    pcd, write_ascii=False, compressed=False, print_progress=True)
+        return pcd
 
     def get_all_cams_to_world_frame(self, cams_inter_transform, cam0_to_world_transform):
         four_cams_to_world_frame = [cam0_to_world_transform @
@@ -208,9 +196,14 @@ class PCDGenerator:
             cam_param_dir, cam_index) for cam_index in np.arange(1, 4, 1)}
         return cam_intrisics, cam_extrisics
 
-    def filter_pcd(self, pcd):  
+    def filter_pcd(self, pcd):
+        
         pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
             np.array([-0.3, -0.6, 0.5], np.float64), np.array([2, 0.5, 1.4], np.float64)))
+        
+        _, pt_map = pcd.hidden_point_removal([0, 0, 0], 10000)
+        pcd = pcd.select_by_index(pt_map)  
+        pcd = pcd.voxel_down_sample(0.005)
 
         return pcd    
 
@@ -221,12 +214,21 @@ def gen_pcd_for_annotate(root_path, cam_param_dir, start, end=None):
         if "TF" in os.listdir(root_path):
             print(root_path)
             gen_merge_pcd = PCDGenerator(root_path, cam_param_dir)
-            gen_merge_pcd.gen_pcd(start, end)
+            gen_merge_pcd.gen_pcd(start, end, cam_index=3)
             return 
     except PermissionError:
         print(root_path)
         return
 
+
+# def down_sample_pcd(ply_files, voxel_size=0.002):
+#     for ply_file in ply_files:
+#         file_path = os.path.join(pcd_dir, ply_file)
+#         point_cloud = o3d.io.read_point_cloud(file_path)
+
+#         downsampled_point_cloud = point_cloud.voxel_down_sample(voxel_size)
+
+#         o3d.io.write_point_cloud(file_path, downsampled_point_cloud)
 
 
 if __name__ == "__main__":
