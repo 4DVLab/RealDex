@@ -150,8 +150,8 @@ class gen_merge_pcd_ply:
         pcd.transform(self.four_cams_to_world_frame[cam_index])
         pcd = self.filter_pcd(pcd)
         os.makedirs(self.merge_pcd_save_folder / f"cam{cam_index}",exist_ok=True)
-        # o3d.io.write_point_cloud(str(self.merge_pcd_save_folder / f"cam{cam_index}/{time_index}.ply"),
-        #         pcd, write_ascii=False, compressed=False, print_progress=True)
+        o3d.io.write_point_cloud(str(self.merge_pcd_save_folder / f"cam{cam_index}/{time_index}.ply"),
+                pcd, write_ascii=False, compressed=False, print_progress=True)
         with threading.Lock():  # Ensure thread-safe operation on the merge_pcd object
             merge_pcd += pcd
             # merge_pcd.remove_duplicated_points()
@@ -166,14 +166,14 @@ class gen_merge_pcd_ply:
                 futures = [executor.submit(self.process_camera, cam_index, time_index, merge_pcd) for cam_index in range(4)]
                 for future in futures:
                     future.result()
-                o3d.io.write_point_cloud(str(
-                    self.merge_pcd_save_folder / f"merge_pcd_{index}.ply"),
-                    merge_pcd, write_ascii=False, compressed=False, print_progress=True)
+                # o3d.io.write_point_cloud(str(
+                #     self.merge_pcd_save_folder / f"merge_pcd_{index}.ply"),
+                #     merge_pcd, write_ascii=False, compressed=False, print_progress=True)
                 merge_pcd.clear()
         return len(batch_range)
 
     def merge_pcd_and_filter(self,constrain_bound):
-        constrain_bound[1] += 1
+        constrain_bound[1] += 1 
         if constrain_bound is None:
             constrain_bound = [0,np.inf]
         self.all_cams_time_stamp_index = self.gen_cams_time_stamp()
@@ -192,47 +192,47 @@ class gen_merge_pcd_ply:
             results = list(executor.map(self.process_batch, batches))
 
 
-    def old_merge_pcd_and_filter(self,constrain_bound):
-        constrain_bound[1] += 1
-        if constrain_bound is None:
-            constrain_bound = [0,np.inf]
-        self.all_cams_time_stamp_index = self.gen_cams_time_stamp()
-        merge_pcd = o3d.geometry.PointCloud()
+    # def old_merge_pcd_and_filter(self,constrain_bound):
+    #     constrain_bound[1] += 1
+    #     if constrain_bound is None:
+    #         constrain_bound = [0,np.inf]
+    #     self.all_cams_time_stamp_index = self.gen_cams_time_stamp()
+    #     merge_pcd = o3d.geometry.PointCloud()
 
-        time_index_length = len(self.all_cams_time_stamp_index[0])
-        # for time_index in self.all_cams_time_stamp_index[0]:
-        # for cam_index in np.arange(4):
-        #     cam_data_save_folder_path = self.merge_pcd_save_folder / \
-        #         f"cam{cam_index}"
-        #     os.makedirs(cam_data_save_folder_path,exist_ok=True)
-        # os.makedirs(self.merge_pcd_save_folder / f"TEMP",exist_ok=True)
-        for index in np.arange(constrain_bound[0],constrain_bound[1]):
-            merge_pcd.clear()
-            if index >= time_index_length:
-                return
-            time_index = self.all_cams_time_stamp_index[0][index]
+    #     time_index_length = len(self.all_cams_time_stamp_index[0])
+    #     # for time_index in self.all_cams_time_stamp_index[0]:
+    #     # for cam_index innp.arange(4):
+    #     #     cam_data_save_folder_path = self.merge_pcd_save_folder / \
+    #     #         f"cam{cam_index}"
+    #     #     os.makedirs(cam_data_save_folder_path,exist_ok=True)
+    #     # os.makedirs(self.merge_pcd_save_folder / f"TEMP",exist_ok=True)
+    #     for index in np.arange(constrain_bound[0],constrain_bound[1]):
+    #         merge_pcd.clear()
+    #         if index >= time_index_length:
+    #             return
+    #         time_index = self.all_cams_time_stamp_index[0][index]
 
-            # for cam_index in np.arange(4):
-            #     pcd = self.gen_pcd_with_depth_and_rgb_paths(
-            #         self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
-            #     # o3d.io.write_point_cloud(str(
-            #     #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
-            #     pcd.transform(self.four_cams_to_world_frame[cam_index])
+    #         # for cam_index in np.arange(4):
+    #         #     pcd = self.gen_pcd_with_depth_and_rgb_paths(
+    #         #         self.all_cams_time_stamp_index[cam_index][time_index], cam_index)
+    #         #     # o3d.io.write_point_cloud(str(
+    #         #     #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
+    #         #     pcd.transform(self.four_cams_to_world_frame[cam_index])
                 
-            #     pcd = self.filter_pcd(pcd)
-            with ThreadPoolExecutor(max_workers=4) as executor:
-                futures = [executor.submit(self.process_camera, cam_index, time_index, merge_pcd) for cam_index in range(4)]
-                for future in futures:
-                    future.result()  # Wait for all threads to complete
+    #         #     pcd = self.filter_pcd(pcd)
+    #         with ThreadPoolExecutor(max_workers=4) as executor:
+    #             futures = [executor.submit(self.process_camera, cam_index, time_index, merge_pcd) for cam_index in range(4)]
+    #             for future in futures:
+    #                 future.result()  # Wait for all threads to complete
                 
-            #     # o3d.io.write_point_cloud(str(
-            #     #     self.merge_pcd_save_folder / f"TEMP/cam{cam_index}_index{index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
-            #     merge_pcd += pcd
-            #     merge_pcd.remove_duplicated_points()
-            # # # o3d.visualization.draw_geometries([merge_pcd])
+    #         #     # o3d.io.write_point_cloud(str(
+    #         #     #     self.merge_pcd_save_folder / f"TEMP/cam{cam_index}_index{index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
+    #         #     merge_pcd += pcd
+    #         #     merge_pcd.remove_duplicated_points()
+    #         # # # o3d.visualization.draw_geometries([merge_pcd])
 
-            o3d.io.write_point_cloud(str(
-                self.merge_pcd_save_folder / f"merge_pcd_{time_index}.ply"), merge_pcd, write_ascii=False, compressed=False, print_progress=True)
+    #         o3d.io.write_point_cloud(str(
+    #             self.merge_pcd_save_folder / f"merge_pcd_{time_index}.ply"), merge_pcd, write_ascii=False, compressed=False, print_progress=True)
 
     def init_merge_pcd_timestamp(self):
         shutil.copy2(
@@ -358,7 +358,7 @@ def gen_mvp(bag_folder_path):
 
 if __name__ == "__main__":
 
-    root_path = Path("/home/lab4dv/data/bags/apple/apple_1_20231207")
+    root_path = Path("/media/lab4dv/HighSpeed/crisps/crisps_1")
 
 
 
