@@ -286,6 +286,29 @@ def tf_to_mat(tf):
     mat[-1, -1] = 1
     return mat
 
+def check_rotation_axis(mat, axis):
+    '''Normalize the axis to make sure it's a unit vector'''
+    axis = axis / np.linalg.norm(axis)
+    # Apply the rotation matrix to the rotation axis
+    axis_rotated = mat @ axis
+
+    # Check if v_rotated is the same as v (within a tolerance)
+    if np.allclose(axis_rotated, axis, atol=1e-6):
+        # print("The axis is an eigenvector of the rotation matrix with eigenvalue 1.")
+        # print("The rotation matrix R corresponds to a rotation around the given axis.")
+        return True
+    else:
+        print("The rotation matrix R does not correspond to a rotation around the given axis.") 
+        return False
+
+def compute_joint_angle(rot_mat, axis):
+    '''Normalize the axis to make sure it's a unit vector'''
+    axis = axis / np.linalg.norm(axis)
+    rot = Rotation.from_matrix(rot_mat)
+    angle_axis = rot.as_rotvec() # angle * axis
+    angle = np.dot(axis, angle_axis)
+    return angle
+
 def vis_hand_object(data_dir, tracking_file, obj_mesh_file, scene_to_mesh, out_path):    
     '''Load object mesh'''
     obj_tf = np.loadtxt(tracking_file)

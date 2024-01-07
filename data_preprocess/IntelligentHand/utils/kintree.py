@@ -3,7 +3,7 @@ import numpy as np
 from typing import Callable
 from functools import lru_cache, wraps
 import os
-from utils.global_util import tf_to_mat
+from utils.global_util import tf_to_mat, check_rotation_axis, compute_joint_angle
 
 class Node(object):
     def __init__(self, name):
@@ -64,13 +64,30 @@ class Kintree(object):
             if self.nodes[name].parent is None:
                 self.root.add_child(name)
                 self.nodes[name].parent = self.root
+                
+    def compute_angle(self, tf_mat, cname):
+        hand_info = self.info['hand_info']
+        axis = hand_info[cname]['axis'].split()
+        axis = [float(number) for number in axis]
+        # joint_name = hand_info[cname]['joint_name']
+        axis= np.array(axis)
+
+        if check_rotation_axis(tf_mat[:3, :3], axis):
+            angle = compute_joint_angle(tf_mat[:3,:3], axis)
+            
+        return angle
 
     def update_joints(self, tf_data, cname):
         try:
             cnode = self.nodes[cname]
         except (ValueError):
             print(f"Couldn't find a node named {cname}")
-        cnode.transform = tf_to_mat(tf_data)
+        mat = tf_to_mat(tf_data)
+        cnode.transform = mat
+        
+        # if cname in self.info['hand_info']:
+        #     angle = self.compute_angle(mat, cname)
+        #     cnode.set_value('joint_angle', angle)
             
     def forward_kinematic(self, root, base_tf=None):
         if base_tf is None:
@@ -87,7 +104,8 @@ class Kintree(object):
         out_dict = {}
         for node_name in self.nodes:
             node:Node = self.nodes[node_name]
-            out_dict[node_name] = node.value[key] if key in node.value else None
+            if key in node.value:
+                out_dict[node_name] = node.value[key]
         return out_dict
 
 
@@ -116,8 +134,20 @@ def rearrange_hand_tf(tf_data_dir, tf_info):
     # np.save(os.path.join(tf_data_dir, "tf.npy"),tf_data_list)
     return tf_data_list
 
+def load_joint_angle_sequence(tf_data_dir, tf_info_file):
+    with open(tf_info_file, 'r') as f:
+        tf_info = json.load(f)
+    data = rearrange_hand_tf(tf_data_dir, tf_info)
+    ktree = Kintree(tf_info_file)
+    out_dict = {}
+    for link_data in data:
+        time_stamp, tf_data, cname = link_data
+        ktree.update_joints(tf_data, cname)
+        joint_angle = ktree.output('joint_angle')
+        out_dict[time_stamp] = joint_angle
+    return out_dict 
 
-def load_sequence(tf_data_dir, tf_info_file):
+def load_global_tf_sequence(tf_data_dir, tf_info_file):
     
     with open(tf_info_file, 'r') as f:
         tf_info = json.load(f)
@@ -146,7 +176,7 @@ if __name__ == "__main__":
         tf_info = json.load(f)
 
     rearrange_hand_tf(tf_data_dir, tf_info)
-    load_sequence(tf_data_dir, tf_info_file)
+    load_global_tf_sequence(tf_data_dir, tf_info_file)
 
 
         

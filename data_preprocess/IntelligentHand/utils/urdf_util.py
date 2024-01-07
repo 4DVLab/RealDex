@@ -5,6 +5,24 @@ import trimesh
 from scipy.spatial.transform import Rotation as R
 import json
 
+tf_link_names = [
+                # 'WRJ1', 'WRJ0',
+                'rh_ffknuckle', 'rh_ffproximal', 'rh_ffmiddle', 'rh_ffdistal',
+                'rh_mfknuckle', 'rh_mfproximal', 'rh_mfmiddle', 'rh_mfdistal',
+                'rh_rfknuckle', 'rh_rfproximal', 'rh_rfmiddle', 'rh_rfdistal',
+                'rh_lfmetacarpal', 'rh_lfknuckle', 'rh_lfproximal', 'rh_lfmiddle', 'rh_lfdistal',
+                'rh_thbase', 'rh_thproximal', 'rh_thhub', 'rh_thmiddle', 'rh_thdistal',
+]
+
+joint_names = [
+                # 'WRJ1', 'WRJ0',
+                'FFJ3', 'FFJ2', 'FFJ1', 'FFJ0',
+                'MFJ3', 'MFJ2', 'MFJ1', 'MFJ0',
+                'RFJ3', 'RFJ2', 'RFJ1', 'RFJ0',
+                'LFJ4', 'LFJ3', 'LFJ2', 'LFJ1', 'LFJ0',
+                'THJ4', 'THJ3', 'THJ2', 'THJ1', 'THJ0',
+                ]
+
 def relative_to_absolute_path(rel_path, abs_prefix):
     parts = rel_path.split('/')
     parts[-1] = parts[-1].replace(".dae", ".obj")
@@ -95,18 +113,24 @@ def load_visible_link_from_urdf(urdf_path):
         if len(link_visuals)>0:
             link_list.append(link.attrib['name'])
     return link_list
-        
-def global_tf_to_joint_angle(urdf_path, global_tf=None, kintree=None):
-    # TODO: convert the tf matrix to a single joint angle
+
+# TODO: convert the tf matrix to a single joint angle
+
+
+def load_hand_info_from_urdf(urdf_path):
+    hand_info = {}
     urdf_tree = ET.parse(urdf_path)
     root = urdf_tree.getroot()
     for joint in root.findall('joint'):
         axis = joint.find('axis')
+        child = joint.find('child')
         if axis is not None:
             joint_name = joint.get('name')
             if joint_name.startswith('rh_'):
-                print(joint_name, axis.get('xyz'))
-    pass
+                print(joint_name, axis.get('xyz'), child.get('link'))
+                hand_info[child.get('link')] = {'joint': joint_name, 'axis':axis.get('xyz')}
+    return hand_info
+                
 
 if __name__ == '__main__':
     urdf_path = "./assets/bimanual_srhand_ur.urdf"
@@ -127,6 +151,9 @@ if __name__ == '__main__':
     for node in out_dict['node_names']:
         if node in parent_dict:
             out_dict['link'].append({'parent': parent_dict[node], 'child': node})
+            
+    out_dict['hand_info'] = load_hand_info_from_urdf(urdf_path)       
+            
     json_string = json.dumps(out_dict, indent=4)
 
     out_path = "./assets/srhand_ur.json"
@@ -134,7 +161,7 @@ if __name__ == '__main__':
         outfile.write(json_string)
     print(json_string)
     
-    global_tf_to_joint_angle(urdf_path)
+    load_hand_info_from_urdf(urdf_path)
     
     # prefix = "/remote-home/liuym/ShadowHand/description"
     # struct_file = "/home/liuym/Project/IntelligentHand/data_preprocess/ours/assets/shadow_hand/srhand_ur_chain.json"

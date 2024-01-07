@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import trimesh
 from scipy.spatial.transform import Rotation as R
 import json
-from utils.kintree import load_sequence
+from utils.kintree import load_global_tf_sequence, load_joint_angle_sequence
 from utils.urdf_util import load_mesh_from_urdf
 from utils.global_util import segment_scene_point_cloud, extract_hand_mesh, find_closest
 from utils.pcd_util import PCDGenerator
@@ -24,6 +24,7 @@ class DataProcesser():
         self.data_dir = data_dir
         self.tf_data_dir = os.path.join(data_dir, "TF")
         self.hand_mesh_path = None
+        self.scene_to_mesh = None
         
         '''Load Hand Mesh'''
         with open(struct_file, 'r') as f:
@@ -40,15 +41,29 @@ class DataProcesser():
             tf_data_all_in_one = np.load(tf_data_file, allow_pickle=True)
             tf_data_all_in_one = tf_data_all_in_one.item()
         else:
-            tf_data_all_in_one = load_sequence(self.tf_data_dir, struct_file)
-            np.save(tf_data_file, tf_data_all_in_one)
+            tf_data_all_in_one = load_global_tf_sequence(self.tf_data_dir, struct_file)
+            np.save(tf_data_file, tf_data_all_in_one) # tf stored in 4*4 matrix form
         self.tf_data_all_in_one = tf_data_all_in_one
         self.num_tf = len(self.tf_data_all_in_one)
+        
+        '''Load Joint Angle'''
+        # joint_angle_file = os.path.join(self.tf_data_dir, "qpos_seq.npy")
+        # if os.path.exists(joint_angle_file): 
+        #     qpos_seq = np.load(joint_angle_file, allow_pickle=True)
+        #     qpos_seq = qpos_seq.item()
+        # else:
+        #     qpos_seq = load_joint_angle_sequence(self.tf_data_dir, struct_file)
+        #     np.save(joint_angle_file, qpos_seq) # tf stored in 4*4 matrix form
+        # self.qpos_seq = qpos_seq
         
         '''PCD generator'''
         self.pcd_generator = PCDGenerator(data_dir, cam_param_dir)
         time_stamp_file = os.path.join(data_dir, "rgbimage_timestamp.txt")
         self.scene_time_list = np.loadtxt(time_stamp_file)
+        
+        '''URDF info'''
+        urdf_info_path = "./assets/srhand_ur.json"
+        self.urdf_info = json.load(open(urdf_info_path))
         
         
 
@@ -97,7 +112,7 @@ class DataProcesser():
             print(f"Error: {error.strerror}")
             
             
-    def align_scene_handmesh(self, scene_id, max_search, cam_index=3, ratio_threshold = 0.07):
+    def align_scene_handmesh(self, scene_id, approx_start_time_sr, max_search, cam_index=3, ratio_threshold = 0.07):
         scene_pcd = self.pcd_generator.gen_pcd(scene_id, cam_index)
         
         sr_time_list = self.tf_data_all_in_one.keys()
@@ -105,6 +120,8 @@ class DataProcesser():
         potential_list = []
         count = 0
         for sr_time in progress_bar:
+            if sr_time < approx_start_time_sr:
+                continue
             sr_mesh = self.gen_single_hand_mesh(sr_time)
             seg_points_ratio, distance, scene_idx_list = segment_scene_point_cloud(scene_pcd, sr_mesh)
             progress_bar.set_postfix({  "potential_len": len(potential_list),
@@ -135,18 +152,18 @@ class DataProcesser():
             return
         
         '''Find the first pair that can be aligned'''
+        sr_time_list = self.tf_data_all_in_one.keys()
+        sr_time_list = sorted(sr_time_list)
         num_scene = len(self.scene_time_list)
         for start_scene_id in trange(num_scene):
             start_time_scene = self.scene_time_list[start_scene_id]
-            start_time_sr = self.align_scene_handmesh(scene_id=start_scene_id, max_search=20)
+            approx_start_time_sr = find_closest(sr_time_list, start_time_scene) - 0.5*1e8 #0.5s
+            start_time_sr = self.align_scene_handmesh(scene_id=start_scene_id, approx_start_time_sr=approx_start_time_sr, max_search=20)
             if start_time_sr is not None:
                 break
         ret_dict = {}
         
         '''Align the remain pairs'''
-        sr_time_list = self.tf_data_all_in_one.keys()
-        sr_time_list = sorted(sr_time_list)
-        
         for i, time_scene in enumerate(self.scene_time_list):
             delta_t = int(time_scene - start_time_scene)
             approx_sr_time = start_time_sr + delta_t
@@ -155,7 +172,25 @@ class DataProcesser():
         
         with open(out_path, 'w') as f:
             f.write(json.dumps(ret_dict, indent=4))
+            
+        self.scene_to_mesh = ret_dict
+            
+    def export_final_data(self):
+        if self.scene_to_mesh is None:
+            path = os.path.join(data_dir, "scene_to_mesh.json")
+            if os.path.exists(path):
+                self.scene_to_mesh = json.load(open(path))
+            else:
+                print("Do time sync first!")
+                return
+            
+        for time_scene in self.scene_to_mesh:
+            time_sr = self.scene_to_mesh[time_scene]
+            qpos = self.qpos_seq[time_sr]
+            
         
+        # return ret_dict
+               
        
 def export_meshes(sr_mesh_dir, scene_dir, out_dir, scene_to_mesh_path=None):
     if scene_to_mesh_path is None:
