@@ -286,6 +286,15 @@ def tf_to_mat(tf):
     mat[-1, -1] = 1
     return mat
 
+def rpy_to_mat(rpy):
+    rot = Rotation.from_euler('XYZ', rpy, degrees=False)
+    return rot.as_matrix()
+
+def rotate_axis(axis, rpy):
+    rot = Rotation.from_euler('XYZ', rpy, degrees=False)
+    axis = rot.apply(axis)
+    return axis
+
 def check_rotation_axis(mat, axis):
     '''Normalize the axis to make sure it's a unit vector'''
     axis = axis / np.linalg.norm(axis)
@@ -294,11 +303,19 @@ def check_rotation_axis(mat, axis):
 
     # Check if v_rotated is the same as v (within a tolerance)
     if np.allclose(axis_rotated, axis, atol=1e-6):
-        # print("The axis is an eigenvector of the rotation matrix with eigenvalue 1.")
-        # print("The rotation matrix R corresponds to a rotation around the given axis.")
+        # The axis is an eigenvector of the rotation matrix with eigenvalue 1.
         return True
     else:
-        print("The rotation matrix R does not correspond to a rotation around the given axis.") 
+        rot = Rotation.from_matrix(mat)
+        angle_axis = rot.as_rotvec() # angle * axis
+        angle = np.linalg.norm(angle_axis)
+        gt_axis = angle_axis / angle
+        if np.dot(angle_axis, gt_axis)<0:
+            gt_axis *= -1
+            angle *= -1
+        
+        print("The rotation matrix R does not correspond to a rotation around the given axis.")
+        print(axis, gt_axis, angle) 
         return False
 
 def compute_joint_angle(rot_mat, axis):

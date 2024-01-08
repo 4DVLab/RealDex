@@ -6,9 +6,9 @@ import xml.etree.ElementTree as ET
 import trimesh
 from scipy.spatial.transform import Rotation as R
 import json
-from utils.kintree import load_global_tf_sequence, load_joint_angle_sequence
+from utils.kintree import load_sequence
 from utils.urdf_util import load_mesh_from_urdf
-from utils.global_util import segment_scene_point_cloud, extract_hand_mesh, find_closest
+from utils.global_util import segment_scene_point_cloud, tf_to_mat, find_closest
 from utils.pcd_util import PCDGenerator
 import shutil
 from multiprocessing import Pool
@@ -35,31 +35,29 @@ class DataProcesser():
         self.mesh_dict = load_mesh_from_urdf(urdf_path,link_list, prefix)
         print(self.mesh_dict.keys())
         
-        '''Load TF Data'''
-        tf_data_file = os.path.join(self.tf_data_dir, "global_tf_all_in_one.npy")
-        if os.path.exists(tf_data_file): 
-            tf_data_all_in_one = np.load(tf_data_file, allow_pickle=True)
-            tf_data_all_in_one = tf_data_all_in_one.item()
+        '''Load TF Sequence Data'''
+        # tf_data_file = os.path.join(self.tf_data_dir, "global_tf_all_in_one.npy")
+        seq_file = os.path.join(self.tf_data_dir, "tf_seq.npy")
+        if os.path.exists(seq_file): 
+            seq_data = np.load(seq_file, allow_pickle=True)
+            seq_data = seq_data.item()
         else:
-            tf_data_all_in_one = load_global_tf_sequence(self.tf_data_dir, struct_file)
-            np.save(tf_data_file, tf_data_all_in_one) # tf stored in 4*4 matrix form
-        self.tf_data_all_in_one = tf_data_all_in_one
-        self.num_tf = len(self.tf_data_all_in_one)
-        
-        '''Load Joint Angle'''
-        # joint_angle_file = os.path.join(self.tf_data_dir, "qpos_seq.npy")
-        # if os.path.exists(joint_angle_file): 
-        #     qpos_seq = np.load(joint_angle_file, allow_pickle=True)
-        #     qpos_seq = qpos_seq.item()
-        # else:
-        #     qpos_seq = load_joint_angle_sequence(self.tf_data_dir, struct_file)
-        #     np.save(joint_angle_file, qpos_seq) # tf stored in 4*4 matrix form
-        # self.qpos_seq = qpos_seq
+            seq_data = load_sequence(self.tf_data_dir, struct_file)
+            np.save(seq_file, seq_data) # tf stored in 4*4 matrix form
+        self.global_tf_seq = seq_data['global_tf']
+        self.qpos_seq = seq_data['joint_angle']
+        self.num_tf = len(self.global_tf_seq)
         
         '''PCD generator'''
         self.pcd_generator = PCDGenerator(data_dir, cam_param_dir)
         time_stamp_file = os.path.join(data_dir, "rgbimage_timestamp.txt")
         self.scene_time_list = np.loadtxt(time_stamp_file)
+        
+        '''Load Object Poses'''
+        obj_tracking_path = os.path.join(self.data_dir, "tracking_result/tracking_and_icp.txt")
+        object_poses = np.loadtxt(obj_tracking_path)
+        self.object_poses = np.array([tf_to_mat(tf) for tf in object_poses])
+        print(self.object_poses.shape)
         
         '''URDF info'''
         urdf_info_path = "./assets/srhand_ur.json"
@@ -69,7 +67,7 @@ class DataProcesser():
 
     def gen_single_hand_mesh(self, time):
         updated_meshes = {}
-        tf_data = self.tf_data_all_in_one[time]
+        tf_data = self.global_tf_seq[time]
         for key in list(self.mesh_dict.keys()):
             tf = tf_data[key]
             # print(tf)
@@ -98,7 +96,7 @@ class DataProcesser():
         self.hand_mesh_path = os.path.join(data_dir, "srhand_ur_meshes")
         os.makedirs(self.hand_mesh_path, exist_ok=True)
     
-        for time in self.tf_data_all_in_one:
+        for time in self.global_tf_seq:
             combined_mesh = self.gen_single_hand_mesh(time)
             combined_mesh.export(os.path.join(self.hand_mesh_path, f"{time}.ply"))
         
@@ -111,11 +109,13 @@ class DataProcesser():
         except OSError as error:
             print(f"Error: {error.strerror}")
             
+    def gen_pcd(self, scene_id, cam_index):
+        return self.pcd_generator.gen_pcd(scene_id, cam_index)
             
     def align_scene_handmesh(self, scene_id, approx_start_time_sr, max_search, cam_index=3, ratio_threshold = 0.07):
-        scene_pcd = self.pcd_generator.gen_pcd(scene_id, cam_index)
+        scene_pcd = self.gen_pcd(scene_id, cam_index)
         
-        sr_time_list = self.tf_data_all_in_one.keys()
+        sr_time_list = self.global_tf_seq.keys()
         progress_bar = tqdm(sorted(sr_time_list), desc="Processing items", unit="item")
         potential_list = []
         count = 0
@@ -152,13 +152,16 @@ class DataProcesser():
             return
         
         '''Find the first pair that can be aligned'''
-        sr_time_list = self.tf_data_all_in_one.keys()
+        sr_time_list = self.global_tf_seq.keys()
         sr_time_list = sorted(sr_time_list)
         num_scene = len(self.scene_time_list)
         for start_scene_id in trange(num_scene):
             start_time_scene = self.scene_time_list[start_scene_id]
             approx_start_time_sr = find_closest(sr_time_list, start_time_scene) - 0.5*1e8 #0.5s
-            start_time_sr = self.align_scene_handmesh(scene_id=start_scene_id, approx_start_time_sr=approx_start_time_sr, max_search=20)
+            start_time_sr = self.align_scene_handmesh(scene_id=start_scene_id, 
+                                                      approx_start_time_sr=approx_start_time_sr, 
+                                                      max_search=20,
+                                                      ratio_threshold = 0.05)
             if start_time_sr is not None:
                 break
         ret_dict = {}
@@ -183,11 +186,33 @@ class DataProcesser():
             else:
                 print("Do time sync first!")
                 return
-            
-        for time_scene in self.scene_to_mesh:
+        
+        qpos_key_list = list(self.urdf_info['hand_info'].keys())
+        qpos_seq = []
+        global_transl_seq = []
+        global_orient_seq = []
+        for time_scene in tqdm(self.scene_to_mesh):
             time_sr = self.scene_to_mesh[time_scene]
-            qpos = self.qpos_seq[time_sr]
+            time_sr = int(time_sr.split('.')[0])
+            qpos_data = [self.qpos_seq[time_sr][k] for k in qpos_key_list]
+            qpos_seq.append(qpos_data)
             
+            hand_root_frame = self.global_tf_seq[time_sr]['rh_forearm']
+            global_transl_seq.append(hand_root_frame[:3, -1])
+            global_orient_seq.append(hand_root_frame[:3, :3])
+        qpos_seq = np.array(qpos_seq)
+        global_transl_seq = np.array(global_transl_seq)
+        global_orient_seq = np.array(global_orient_seq)
+        
+        out_dict = {'qpos': qpos_seq,
+                    'global_transl': global_transl_seq,
+                    'global_orient': global_orient_seq,
+                    'object_transl': self.object_poses[:, :3, -1],
+                    'object_orient': self.object_poses[:, :3, :3]}
+        for key in out_dict:
+            print(key, out_dict[key].shape)
+        path = os.path.join(data_dir, "hand_pose.npy")
+        np.save(path, out_dict)
         
         # return ret_dict
                
@@ -226,6 +251,7 @@ if __name__ == '__main__':
                 print(data_dir)
                 data_processer = DataProcesser(data_dir, cam_param_dir)
                 data_processer.time_sync()
+                data_processer.export_final_data()
     
     
     

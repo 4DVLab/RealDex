@@ -4,6 +4,8 @@ from typing import Callable
 from functools import lru_cache, wraps
 import os
 from utils.global_util import tf_to_mat, check_rotation_axis, compute_joint_angle
+from utils.global_util import rotate_axis, rpy_to_mat
+import sys
 
 class Node(object):
     def __init__(self, name):
@@ -21,6 +23,9 @@ class Node(object):
 
     def set_value(self, key, value):
         self.value[key] = value
+    
+    def get_value(self, key):
+        return self.value[key]
 
     def add_child(self, child):
         self.children.append(child)
@@ -58,24 +63,33 @@ class Kintree(object):
                 self.nodes[child].parent = None
                 continue
             self.nodes[parent].add_child(child)
-            self.nodes[child].parent = parent
+            self.nodes[child].parent = self.nodes[parent]
 
         for name in self.nodes:
             if self.nodes[name].parent is None:
                 self.root.add_child(name)
                 self.nodes[name].parent = self.root
                 
-    def compute_angle(self, tf_mat, cname):
+    def get_hand_info(self, name, key):
         hand_info = self.info['hand_info']
-        axis = hand_info[cname]['axis'].split()
-        axis = [float(number) for number in axis]
-        # joint_name = hand_info[cname]['joint_name']
-        axis= np.array(axis)
+        value = hand_info[name][key].split()
+        value = [float(number) for number in value]
+        value = np.array(value)
+        return value
+                
+    def compute_angle(self, tf_mat, cname):
+        axis = self.get_hand_info(cname, 'axis')
+        rpy = self.get_hand_info(cname, 'ori_rpy')
+        rot_mat = rpy_to_mat(rpy)
+        
+        local_tf_mat = np.linalg.inv(rot_mat) @ tf_mat[:3, :3]
 
-        if check_rotation_axis(tf_mat[:3, :3], axis):
-            angle = compute_joint_angle(tf_mat[:3,:3], axis)
-            
-        return angle
+        if check_rotation_axis(local_tf_mat, axis):
+            angle = compute_joint_angle(local_tf_mat, axis)
+            return angle  
+        else:
+            sys.stderr.write("The rotation axis of the given tf matrix is inconsistent with the axis in the URDF file.\n")
+            sys.exit(1)  
 
     def update_joints(self, tf_data, cname):
         try:
@@ -84,10 +98,12 @@ class Kintree(object):
             print(f"Couldn't find a node named {cname}")
         mat = tf_to_mat(tf_data)
         cnode.transform = mat
+        self.forward_kinematic(root=self.root)
         
-        # if cname in self.info['hand_info']:
-        #     angle = self.compute_angle(mat, cname)
-        #     cnode.set_value('joint_angle', angle)
+        if cname in self.info['hand_info']:
+            # print(cname, cnode.parent.name)
+            angle = self.compute_angle(mat, cname)
+            cnode.set_value('joint_angle', angle)
             
     def forward_kinematic(self, root, base_tf=None):
         if base_tf is None:
@@ -134,33 +150,21 @@ def rearrange_hand_tf(tf_data_dir, tf_info):
     # np.save(os.path.join(tf_data_dir, "tf.npy"),tf_data_list)
     return tf_data_list
 
-def load_joint_angle_sequence(tf_data_dir, tf_info_file):
-    with open(tf_info_file, 'r') as f:
-        tf_info = json.load(f)
-    data = rearrange_hand_tf(tf_data_dir, tf_info)
-    ktree = Kintree(tf_info_file)
-    out_dict = {}
-    for link_data in data:
-        time_stamp, tf_data, cname = link_data
-        ktree.update_joints(tf_data, cname)
-        joint_angle = ktree.output('joint_angle')
-        out_dict[time_stamp] = joint_angle
-    return out_dict 
-
-def load_global_tf_sequence(tf_data_dir, tf_info_file):
+def load_sequence(tf_data_dir, tf_info_file):
     
     with open(tf_info_file, 'r') as f:
         tf_info = json.load(f)
     
     data = rearrange_hand_tf(tf_data_dir, tf_info)
     ktree = Kintree(tf_info_file)
-    out_dict = {}
+    out_dict = {'global_tf': {}, 'joint_angle': {}}
     for link_data in data:
         time_stamp, tf_data, cname = link_data
         ktree.update_joints(tf_data, cname)
-        ktree.forward_kinematic(root=ktree.root)
         global_tf = ktree.output('global_tf')
-        out_dict[time_stamp] = global_tf
+        joint_angle = ktree.output('joint_angle')
+        out_dict['global_tf'][time_stamp] = global_tf 
+        out_dict['joint_angle'][time_stamp] = joint_angle 
     # out_file = os.path.join(tf_data_dir, "global_tf_all_in_one.npy")
     # np.save(out_file, out_dict)
     return out_dict
@@ -176,7 +180,7 @@ if __name__ == "__main__":
         tf_info = json.load(f)
 
     rearrange_hand_tf(tf_data_dir, tf_info)
-    load_global_tf_sequence(tf_data_dir, tf_info_file)
+    load_sequence(tf_data_dir, tf_info_file)
 
 
         

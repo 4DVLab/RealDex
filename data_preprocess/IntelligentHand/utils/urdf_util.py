@@ -124,11 +124,18 @@ def load_hand_info_from_urdf(urdf_path):
     for joint in root.findall('joint'):
         axis = joint.find('axis')
         child = joint.find('child')
+        origin = joint.find('origin')
         if axis is not None:
             joint_name = joint.get('name')
+            ori_rpy = origin.get('rpy')
+            ori_xyz = origin.get('xyz')
+            
             if joint_name.startswith('rh_'):
                 print(joint_name, axis.get('xyz'), child.get('link'))
-                hand_info[child.get('link')] = {'joint': joint_name, 'axis':axis.get('xyz')}
+                hand_info[child.get('link')] = {'joint': joint_name, 
+                                                'axis':axis.get('xyz'),
+                                                'ori_rpy': ori_rpy,
+                                                'ori_xyz': ori_xyz}
     return hand_info
                 
 
@@ -160,8 +167,6 @@ if __name__ == '__main__':
     with open(out_path, 'w') as outfile:
         outfile.write(json_string)
     print(json_string)
-    
-    load_hand_info_from_urdf(urdf_path)
     
     # prefix = "/remote-home/liuym/ShadowHand/description"
     # struct_file = "/home/liuym/Project/IntelligentHand/data_preprocess/ours/assets/shadow_hand/srhand_ur_chain.json"
