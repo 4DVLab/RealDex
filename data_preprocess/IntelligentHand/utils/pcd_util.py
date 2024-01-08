@@ -206,6 +206,39 @@ class PCDGenerator:
         pcd = pcd.voxel_down_sample(0.005)
 
         return pcd    
+    
+    def gen_object_pcd(self, index, out_dir):
+        pcd_list = []
+        for cam_index in range(4):
+            pcd = self.gen_pcd(index, cam_index)
+            pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
+                np.array([0.78, -0.6, 0.73], np.float64), np.array([2, 0.5, 1.06], np.float64)))
+            pcd_list.append(pcd)
+        
+        target = pcd_list[0]
+        max_dist= 0.001
+        registered_pc = [pcd_list[0]]
+        for i in range(1, 4):
+            source = pcd_list[i]
+            icp_fine = o3d.pipelines.registration.registration_icp(
+                source, target, max_dist, np.identity(4),
+                o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+                o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=200))
+            transformation_icp = icp_fine.transformation
+            source.transform(transformation_icp)
+            registered_pc.append(source)
+            
+        combined_pcd = o3d.geometry.PointCloud()
+        for pcd in registered_pc:
+            combined_pcd += pcd
+            
+        combined_pcd = combined_pcd.voxel_down_sample(0.005)
+        _, ind = combined_pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+        # Select the inlier points
+        inlier_cloud = combined_pcd.select_by_index(ind)
+        
+        out_path = os.path.join(out_dir, f"{index}.ply")
+        o3d.io.write_point_cloud(out_path, inlier_cloud)
 
 
 def gen_pcd_for_annotate(root_path, cam_param_dir, start, end=None):

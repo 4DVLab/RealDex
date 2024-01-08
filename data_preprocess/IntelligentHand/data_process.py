@@ -57,7 +57,6 @@ class DataProcesser():
         obj_tracking_path = os.path.join(self.data_dir, "tracking_result/tracking_and_icp.txt")
         object_poses = np.loadtxt(obj_tracking_path)
         self.object_poses = np.array([tf_to_mat(tf) for tf in object_poses])
-        print(self.object_poses.shape)
         
         '''URDF info'''
         urdf_info_path = "./assets/srhand_ur.json"
@@ -111,6 +110,14 @@ class DataProcesser():
             
     def gen_pcd(self, scene_id, cam_index):
         return self.pcd_generator.gen_pcd(scene_id, cam_index)
+    
+    def gen_object_pcd(self, scene_id):
+        out_dir = os.path.join(self.data_dir, "merged_pcd")
+        out_path = os.path.join(out_dir, f"{scene_id}.ply")
+        if os.path.exists(out_path):
+            return
+        os.makedirs(out_dir, exist_ok=True)
+        self.pcd_generator.gen_object_pcd(scene_id, out_dir)
             
     def align_scene_handmesh(self, scene_id, approx_start_time_sr, max_search, cam_index=3, ratio_threshold = 0.07):
         scene_pcd = self.gen_pcd(scene_id, cam_index)
@@ -119,9 +126,23 @@ class DataProcesser():
         progress_bar = tqdm(sorted(sr_time_list), desc="Processing items", unit="item")
         potential_list = []
         count = 0
+        qpos_key_list = list(self.urdf_info['hand_info'].keys())
+        
         for sr_time in progress_bar:
+            
+            '''Check if at this time, the qpos for sr is all updated'''
+            need_pass = False
+            for k in qpos_key_list:
+                if k not in self.qpos_seq[sr_time]:
+                    need_pass = True
+                    break
+            if need_pass:
+                continue
+            
             if sr_time < approx_start_time_sr:
                 continue
+                    
+            '''Start'''
             sr_mesh = self.gen_single_hand_mesh(sr_time)
             seg_points_ratio, distance, scene_idx_list = segment_scene_point_cloud(scene_pcd, sr_mesh)
             progress_bar.set_postfix({  "potential_len": len(potential_list),
@@ -194,6 +215,12 @@ class DataProcesser():
         for time_scene in tqdm(self.scene_to_mesh):
             time_sr = self.scene_to_mesh[time_scene]
             time_sr = int(time_sr.split('.')[0])
+            
+            for k in qpos_key_list:
+                if k not in self.qpos_seq[time_sr]:
+                    print(k)
+                    print(self.qpos_seq[time_sr].keys())
+            
             qpos_data = [self.qpos_seq[time_sr][k] for k in qpos_key_list]
             qpos_seq.append(qpos_data)
             
@@ -211,7 +238,7 @@ class DataProcesser():
                     'object_orient': self.object_poses[:, :3, :3]}
         for key in out_dict:
             print(key, out_dict[key].shape)
-        path = os.path.join(data_dir, "hand_pose.npy")
+        path = os.path.join(data_dir, "final_data.npy")
         np.save(path, out_dict)
         
         # return ret_dict
@@ -250,6 +277,7 @@ if __name__ == '__main__':
                 data_dir = os.path.join(base_dir, model_name, exp_code)
                 print(data_dir)
                 data_processer = DataProcesser(data_dir, cam_param_dir)
+                data_processer.gen_object_pcd(0)
                 data_processer.time_sync()
                 data_processer.export_final_data()
     
