@@ -4,24 +4,23 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
 import xml.etree.ElementTree as ET
 import trimesh
-from scipy.spatial.transform import Rotation as R
 import json
 from utils.kintree import load_sequence
 from utils.urdf_util import load_mesh_from_urdf
-from utils.global_util import segment_scene_point_cloud, tf_to_mat, find_closest
+from utils.global_util import segment_scene_point_cloud, tf_to_mat, find_closest, batched_rotmat_to_vec
 from utils.pcd_util import PCDGenerator
 import shutil
-from multiprocessing import Pool
-from itertools import repeat
 from tqdm import tqdm, trange
 import shutil
 import re
 import open3d as o3d
+from copy import deepcopy
 
 class DataProcesser():
-    def __init__(self, data_dir, cam_param_dir):
+    def __init__(self, data_dir, cam_param_dir, obj_mesh):
         
         self.data_dir = data_dir
+        self.obj_mesh = obj_mesh
         self.tf_data_dir = os.path.join(data_dir, "TF")
         self.hand_mesh_path = None
         self.scene_to_mesh = None
@@ -61,6 +60,8 @@ class DataProcesser():
         '''URDF info'''
         urdf_info_path = "./assets/srhand_ur.json"
         self.urdf_info = json.load(open(urdf_info_path))
+        self.qpos_key_list = list(self.urdf_info['hand_info'].keys())
+        print(self.qpos_key_list)
         
         
 
@@ -92,7 +93,7 @@ class DataProcesser():
 
     def gen_hand_mesh(self):
         '''Set out path'''
-        self.hand_mesh_path = os.path.join(data_dir, "srhand_ur_meshes")
+        self.hand_mesh_path = os.path.join(self.data_dir, "srhand_ur_meshes")
         os.makedirs(self.hand_mesh_path, exist_ok=True)
     
         for time in self.global_tf_seq:
@@ -115,9 +116,20 @@ class DataProcesser():
         out_dir = os.path.join(self.data_dir, "merged_pcd")
         out_path = os.path.join(out_dir, f"{scene_id}.ply")
         if os.path.exists(out_path):
-            return
+            pcd = o3d.io.read_point_cloud(out_path)
+            return pcd
         os.makedirs(out_dir, exist_ok=True)
-        self.pcd_generator.gen_object_pcd(scene_id, out_dir)
+        pcd = self.pcd_generator.gen_object_pcd(scene_id, out_dir)
+        return pcd
+        
+    def check_sr_valid(self, sr_time):
+        '''Check if at this time, the qpos for sr is all updated'''
+        is_valid = True
+        for k in self.qpos_key_list:
+            if k not in self.qpos_seq[sr_time]:
+                is_valid = False
+                break
+        return is_valid
             
     def align_scene_handmesh(self, scene_id, approx_start_time_sr, max_search, cam_index=3, ratio_threshold = 0.07):
         scene_pcd = self.gen_pcd(scene_id, cam_index)
@@ -126,17 +138,11 @@ class DataProcesser():
         progress_bar = tqdm(sorted(sr_time_list), desc="Processing items", unit="item")
         potential_list = []
         count = 0
-        qpos_key_list = list(self.urdf_info['hand_info'].keys())
         
         for sr_time in progress_bar:
             
             '''Check if at this time, the qpos for sr is all updated'''
-            need_pass = False
-            for k in qpos_key_list:
-                if k not in self.qpos_seq[sr_time]:
-                    need_pass = True
-                    break
-            if need_pass:
+            if not self.check_sr_valid(sr_time):
                 continue
             
             if sr_time < approx_start_time_sr:
@@ -167,7 +173,7 @@ class DataProcesser():
     
     def time_sync(self):
         '''Check if this data is processed'''
-        out_path = os.path.join(data_dir, "scene_to_mesh.json")
+        out_path = os.path.join(self.data_dir, "scene_to_mesh.json")
         if os.path.exists(out_path):
             print("Already Done!")
             return
@@ -182,7 +188,7 @@ class DataProcesser():
             start_time_sr = self.align_scene_handmesh(scene_id=start_scene_id, 
                                                       approx_start_time_sr=approx_start_time_sr, 
                                                       max_search=20,
-                                                      ratio_threshold = 0.05)
+                                                      ratio_threshold = 0.02)
             if start_time_sr is not None:
                 break
         ret_dict = {}
@@ -192,7 +198,13 @@ class DataProcesser():
             delta_t = int(time_scene - start_time_scene)
             approx_sr_time = start_time_sr + delta_t
             sr_time = find_closest(sr_time_list, approx_sr_time)
-            ret_dict[i] = f"{sr_time}.ply"
+            if self.check_sr_valid(sr_time):
+                ret_dict[i] = f"{sr_time}.ply"
+            else:
+                sr_time = self.align_scene_handmesh(scene_id=i,
+                                                    approx_start_time_sr=sr_time,
+                                                    max_search=10, ratio_threshold=0.03)
+                ret_dict[i] = f"{sr_time}.ply"
         
         with open(out_path, 'w') as f:
             f.write(json.dumps(ret_dict, indent=4))
@@ -201,14 +213,13 @@ class DataProcesser():
             
     def export_final_data(self):
         if self.scene_to_mesh is None:
-            path = os.path.join(data_dir, "scene_to_mesh.json")
+            path = os.path.join(self.data_dir, "scene_to_mesh.json")
             if os.path.exists(path):
                 self.scene_to_mesh = json.load(open(path))
             else:
                 print("Do time sync first!")
                 return
         
-        qpos_key_list = list(self.urdf_info['hand_info'].keys())
         qpos_seq = []
         global_transl_seq = []
         global_orient_seq = []
@@ -216,12 +227,12 @@ class DataProcesser():
             time_sr = self.scene_to_mesh[time_scene]
             time_sr = int(time_sr.split('.')[0])
             
-            for k in qpos_key_list:
+            for k in self.qpos_key_list:
                 if k not in self.qpos_seq[time_sr]:
                     print(k)
                     print(self.qpos_seq[time_sr].keys())
             
-            qpos_data = [self.qpos_seq[time_sr][k] for k in qpos_key_list]
+            qpos_data = [self.qpos_seq[time_sr][k] for k in self.qpos_key_list]
             qpos_seq.append(qpos_data)
             
             hand_root_frame = self.global_tf_seq[time_sr]['rh_forearm']
@@ -238,11 +249,66 @@ class DataProcesser():
                     'object_orient': self.object_poses[:, :3, :3]}
         for key in out_dict:
             print(key, out_dict[key].shape)
-        path = os.path.join(data_dir, "final_data.npy")
+        path = os.path.join(self.data_dir, "final_data.npy")
         np.save(path, out_dict)
         
-        # return ret_dict
-               
+        return out_dict
+    
+    def seg_sequence(self, out_dir):
+        seg_file = os.path.join(self.data_dir, "segment.txt")
+        seg_list = list(np.loadtxt(seg_file))
+        data_file = os.path.join(self.data_dir, "final_data.npy")
+        full_data = np.load(data_file, allow_pickle=True).item()
+        obj_tf_mat = np.eye(4)
+        hand_orient_full = batched_rotmat_to_vec(full_data['global_orient'])
+        obj_orient_full = batched_rotmat_to_vec(full_data['object_orient'])
+        
+        global counter
+        
+        for seg in tqdm(seg_list):
+            start, end = seg
+            start, end = int(start), int(end)
+            
+            qpos = full_data['qpos'][start:end, :]
+            
+            hand_transl = full_data['global_transl'][start:end, :]
+            obj_transl = full_data['object_transl'][start:end, :]
+            
+            obj_tf_mat[:3, :3] = full_data['object_orient'][start]
+            obj_tf_mat[:3, -1] = obj_transl[0]
+            obj_mesh = deepcopy(self.obj_mesh)
+            obj_mesh.apply_transform(obj_tf_mat)
+            bb_min, bb_max = obj_mesh.bounding_box.bounds
+            
+            obj_pcd = self.gen_object_pcd(start)
+            obj_pcd = PCDGenerator.crop_pcd(obj_pcd, bb_min, bb_max)
+            o3d.io.write_point_cloud(os.path.join(self.data_dir, "merged_pcd", f"{start}_crop.ply"),
+                                     obj_pcd)
+            
+            np.savez_compressed(os.path.join(out_dir, f"{counter}.npz"), 
+                                qpos = qpos,
+                                hand_transl = hand_transl,
+                                hand_orient = hand_orient_full[start:end, :],
+                                object_transl = obj_transl,
+                                object_orient = obj_orient_full[start:end, :],
+                                object_points = np.array(obj_pcd.points),
+                                object_colors = np.array(obj_pcd.colors)
+                                )
+            counter += 1
+            
+            
+        
+        
+        
+        
+    def split_data(self, out_dir, split_type='object'):
+        if split_type == 'object':
+            train = ['blue_magnet_toy', 'body_lotion', 'crisps', 'dust_cleaning_sprayer', 
+                     'laundry_detergent', 'toilet_cleaning_sprayer']
+            val = ['goji_jar', 'small_sprayer', 'yogurt']
+            test = ['duck_toy', 'cosmetics', 'sprayer']
+        
+            
        
 def export_meshes(sr_mesh_dir, scene_dir, out_dir, scene_to_mesh_path=None):
     if scene_to_mesh_path is None:
@@ -257,7 +323,17 @@ def export_meshes(sr_mesh_dir, scene_dir, out_dir, scene_to_mesh_path=None):
         shutil.copy(scene_pcd, out_path)
         out_path = os.path.join(out_dir, f"hand_{scene_t}.ply")
         shutil.copy(hand_mesh, out_path)
-        
+
+def run(data_processer):
+    data_processer.gen_object_pcd(0)
+    data_processer.time_sync()
+    data_processer.export_final_data()
+
+def segment_sequence(data_processer, model_name):
+    out_dir = "/storage/group/4dvlab/yumeng/IntelligentHand/collected_data/"
+    out_dir = os.path.join(out_dir, model_name)
+    os.makedirs(out_dir, exist_ok=True)
+    data_processer.seg_sequence(out_dir)
 
 if __name__ == '__main__':
     urdf_path = "../../data_process/bimanual_srhand_ur.urdf"
@@ -266,20 +342,26 @@ if __name__ == '__main__':
     
     base_dir = "/public/home/v-liuym/data/IntelligentHand_data/"
     cam_param_dir = "../../calibration_ws/calibration_process/data"
+    obj_model_dir = "/storage/group/4dvlab/youzhuo/models"
+    
     
     model_name_list = os.listdir(base_dir)
     
     for model_name in model_name_list:
         path = os.path.join(base_dir, model_name)
+        global counter 
+        counter = 0
         for exp_code in os.listdir(path):
             subpath = os.path.join(path, exp_code)
             if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
                 data_dir = os.path.join(base_dir, model_name, exp_code)
+                obj_path = os.path.join(obj_model_dir, f"{model_name}.obj")
+                obj_mesh = trimesh.load(obj_path)
                 print(data_dir)
-                data_processer = DataProcesser(data_dir, cam_param_dir)
-                data_processer.gen_object_pcd(0)
-                data_processer.time_sync()
-                data_processer.export_final_data()
+                data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
+                # run(data_processer)
+                segment_sequence(data_processer, model_name)
+                
     
     
     

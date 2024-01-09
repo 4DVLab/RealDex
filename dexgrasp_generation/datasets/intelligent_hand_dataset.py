@@ -85,11 +85,6 @@ class DFCDataset(Dataset):
             self.hand_builder = ShadowHandBuilder(self.hand_mesh_dir,
                                                   self.hand_urdf_path)
         else:
-            # use Adroit
-            # self.hand_mesh_dir = pjoin(self.root_path, dataset_cfg["adroit_hand_mesh_dir"])
-            # self.hand_urdf_path = pjoin(self.root_path, dataset_cfg["adroit_urdf_path"])
-            # self.hand_builder = AdroitHandBuilder(self.hand_mesh_dir,
-            #                                       self.hand_urdf_path)
             raise NotImplementedError("Adroit is not supported yet")
 
         self.splits = [mode]

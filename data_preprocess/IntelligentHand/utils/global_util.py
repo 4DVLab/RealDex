@@ -286,6 +286,11 @@ def tf_to_mat(tf):
     mat[-1, -1] = 1
     return mat
 
+def rotmat_to_angleaxis(mat):
+    rot = Rotation.from_matrix(mat)
+    angle_xis = rot.as_rotvec()
+    return angle_xis
+
 def rpy_to_mat(rpy):
     rot = Rotation.from_euler('XYZ', rpy, degrees=False)
     return rot.as_matrix()
@@ -325,6 +330,34 @@ def compute_joint_angle(rot_mat, axis):
     angle_axis = rot.as_rotvec() # angle * axis
     angle = np.dot(axis, angle_axis)
     return angle
+
+def batched_rotmat_to_vec(batched_rotation_matrices):
+    # Calculate the angle of rotation for each matrix
+    angles = np.arccos(((np.trace(batched_rotation_matrices, axis1=1, axis2=2) - 1) / 2).clip(-1, 1))
+    
+    # Allocate space for the batched axis of rotation
+    batch_size = batched_rotation_matrices.shape[0]
+    axis_of_rotation = np.zeros((batch_size, 3))
+    
+    # Epsilon to prevent division by zero
+    epsilon = 1e-6
+    
+    # Calculate each axis of rotation
+    for i in range(batch_size):
+        # The axis is the normalized vector of the matrix's off-diagonal elements
+        # [R32 - R23, R13 - R31, R21 - R12] / (2*sin(θ))
+        R = batched_rotation_matrices[i]
+        axis_unnormalized = np.array([R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]])
+        sin_theta = np.sin(angles[i])
+        if sin_theta > epsilon:
+            axis_of_rotation[i] = axis_unnormalized / (2 * sin_theta)
+        else:
+            # The axis does not matter for zero angle, but we set to [1, 0, 0] for convention
+            axis_of_rotation[i] = np.array([1, 0, 0])
+    
+    # Multiply the angle with the axis to get the angle-axis representation
+    angle_axis_batch = angles[:, np.newaxis] * axis_of_rotation
+    return angle_axis_batch
 
 def vis_hand_object(data_dir, tracking_file, obj_mesh_file, scene_to_mesh, out_path):    
     '''Load object mesh'''

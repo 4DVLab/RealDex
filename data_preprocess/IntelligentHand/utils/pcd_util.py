@@ -203,9 +203,15 @@ class PCDGenerator:
         
         _, pt_map = pcd.hidden_point_removal([0, 0, 0], 10000)
         pcd = pcd.select_by_index(pt_map)  
-        pcd = pcd.voxel_down_sample(0.005)
+        pcd = pcd.voxel_down_sample(0.002)
 
-        return pcd    
+        return pcd
+    
+    @staticmethod
+    def crop_pcd(pcd, bb_min, bb_max):
+        cropped_pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(bb_min, bb_max))
+        return cropped_pcd
+            
     
     def gen_object_pcd(self, index, out_dir):
         pcd_list = []
@@ -232,13 +238,14 @@ class PCDGenerator:
         for pcd in registered_pc:
             combined_pcd += pcd
             
-        combined_pcd = combined_pcd.voxel_down_sample(0.005)
+        # combined_pcd = combined_pcd.voxel_down_sample(0.001)
         _, ind = combined_pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
         # Select the inlier points
         inlier_cloud = combined_pcd.select_by_index(ind)
         
         out_path = os.path.join(out_dir, f"{index}.ply")
         o3d.io.write_point_cloud(out_path, inlier_cloud)
+        return inlier_cloud
 
 
 def gen_pcd_for_annotate(root_path, cam_param_dir, start, end=None):
