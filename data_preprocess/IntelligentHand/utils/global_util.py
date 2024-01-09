@@ -44,7 +44,32 @@ def extract_id(filename):
         return int(match.group(1))
     return None  # return a default value if no id is found
 
-def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, save_seg=False, ratio_threshold = 0.06):
+def find_closest(lst, key):
+    return min(lst, key=lambda x: abs(x - key))
+
+def extract_hand_mesh(data_dir, start_time_sr, start_scene_id=0):
+    time_stamp_file = os.path.join(data_dir, "rgbimage_timestamp.txt")
+    scene_time_list = np.loadtxt(time_stamp_file)
+    start_time_scene = scene_time_list[start_scene_id]
+    sr_mesh_dir = os.path.join(data_dir, "srhand_ur_meshes")
+    out_path = os.path.join(data_dir, "scene_to_mesh.json")
+    ret_dict = {}
+    
+    sr_mesh_file_list = os.listdir(sr_mesh_dir)
+    sr_time_list = [int(x.split('.')[0]) for x in sr_mesh_file_list]
+    sr_time_list = sorted(sr_time_list)
+    
+    for i, time_scene in enumerate(scene_time_list):
+        delta_t = int(time_scene - start_time_scene)
+        approx_sr_time = start_time_sr + delta_t
+        sr_time = find_closest(sr_time_list, approx_sr_time)
+        ret_dict[i] = f"{sr_time}.ply"
+    
+    with open(out_path, 'w') as f:
+        f.write(json.dumps(ret_dict, indent=4))
+    
+
+def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, scene_end=0, save_seg=False, ratio_threshold = 0.06):
     scene_file_list = []
     '''Sort the file list based on the id number'''
     pattern = re.compile(r'^\d+\.ply$')
@@ -54,10 +79,11 @@ def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, save_seg=False, 
     # scene_file_list = [filename for filename in scene_file_list if extract_id(filename) is not None]
     # scene_file_list = sorted(scene_file_list, key=extract_id)
     scene_file_num = len(scene_file_list)
+    scene_end = min(scene_file_num, scene_end)
     
     
     '''if the output file already exists, load it'''
-    out_path = os.path.join(scene_dir, "scene_to_mesh.json")
+    out_path = os.path.join(scene_dir, "../scene_to_mesh.json")
     print(out_path)
     if os.path.exists(out_path) and scene_start>0:
         with open(out_path, 'r') as file:
@@ -77,7 +103,7 @@ def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, save_seg=False, 
     seg_dir = os.path.join(scene_dir, "segmented")
     os.makedirs(seg_dir, exist_ok=True)
     # for scene_file in tqdm(scene_file_list):
-    for id in trange(scene_start, scene_file_num):
+    for id in trange(scene_start, scene_end):
         scene_file = f"{id}.ply"
         scene_pcd = o3d.io.read_point_cloud(os.path.join(scene_dir,scene_file))
         gotit = False
@@ -97,7 +123,7 @@ def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, save_seg=False, 
             elif len(potential_list) > 0:
                 potential_list = sorted(potential_list, key=lambda x: x[1], reverse=True) # the higher the better
                 selected_id, metric, scene_idx_list = potential_list[0]
-                scene_to_mesh[scene_file] = sr_mesh_file_list[selected_id] 
+                scene_to_mesh[id] = int(sr_mesh_file_list[selected_id].split('.')[0])
                 sr_start = selected_id + 1
                 gotit = True
                 break
@@ -112,15 +138,19 @@ def time_synchronization(sr_mesh_dir, scene_dir, scene_start=0, save_seg=False, 
             print(scene_file)
         with open(out_path, 'w') as f:
             f.write(json.dumps(scene_to_mesh, indent=4))
+            
+    return scene_to_mesh
         
 def offline_render():
     vis = o3d.visualization.Visualizer()
     vis.create_window()
     render = rendering.OffscreenRenderer(640, 480)
     image = vis.capture_screen_float_buffer(False)
+    
             
-def vis_result(sr_mesh_dir, scene_dir, export_img = True, out_path=None):
-    scene_to_mesh_path = os.path.join(scene_dir, "scene_to_mesh.json")
+def vis_result(sr_mesh_dir, scene_dir, scene_to_mesh_path=None, export_img = True, out_path=None):
+    if scene_to_mesh_path is None:
+        scene_to_mesh_path = os.path.join(scene_dir, "scene_to_mesh.json")
     with open(scene_to_mesh_path, 'r') as f:
         scene_to_mesh = json.load(f)
         
@@ -162,8 +192,9 @@ def vis_result(sr_mesh_dir, scene_dir, export_img = True, out_path=None):
         ctr = vis.get_view_control()
         ctr.convert_from_pinhole_camera_parameters(camera_parameters)
         
-        image = vis.capture_screen_float_buffer(False)
-        plt.imsave(os.path.join(out_path, '{:05d}.png'.format(counter)), np.asarray(image), dpi=1)
+        if export_img:
+            image = vis.capture_screen_float_buffer(False)
+            plt.imsave(os.path.join(out_path, '{:05d}.png'.format(counter)), np.asarray(image), dpi=1)
         counter += 1
 
         return False
@@ -254,6 +285,46 @@ def tf_to_mat(tf):
     mat[:3, -1] = transl
     mat[-1, -1] = 1
     return mat
+
+def rpy_to_mat(rpy):
+    rot = Rotation.from_euler('XYZ', rpy, degrees=False)
+    return rot.as_matrix()
+
+def rotate_axis(axis, rpy):
+    rot = Rotation.from_euler('XYZ', rpy, degrees=False)
+    axis = rot.apply(axis)
+    return axis
+
+def check_rotation_axis(mat, axis):
+    '''Normalize the axis to make sure it's a unit vector'''
+    axis = axis / np.linalg.norm(axis)
+    # Apply the rotation matrix to the rotation axis
+    axis_rotated = mat @ axis
+
+    # Check if v_rotated is the same as v (within a tolerance)
+    if np.allclose(axis_rotated, axis, atol=1e-6):
+        # The axis is an eigenvector of the rotation matrix with eigenvalue 1.
+        return True
+    else:
+        rot = Rotation.from_matrix(mat)
+        angle_axis = rot.as_rotvec() # angle * axis
+        angle = np.linalg.norm(angle_axis)
+        gt_axis = angle_axis / angle
+        if np.dot(angle_axis, gt_axis)<0:
+            gt_axis *= -1
+            angle *= -1
+        
+        print("The rotation matrix R does not correspond to a rotation around the given axis.")
+        print(axis, gt_axis, angle) 
+        return False
+
+def compute_joint_angle(rot_mat, axis):
+    '''Normalize the axis to make sure it's a unit vector'''
+    axis = axis / np.linalg.norm(axis)
+    rot = Rotation.from_matrix(rot_mat)
+    angle_axis = rot.as_rotvec() # angle * axis
+    angle = np.dot(axis, angle_axis)
+    return angle
 
 def vis_hand_object(data_dir, tracking_file, obj_mesh_file, scene_to_mesh, out_path):    
     '''Load object mesh'''
