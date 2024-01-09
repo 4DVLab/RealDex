@@ -59,8 +59,8 @@ def main(cfg):
     writer = SummaryWriter(pjoin(log_dir, "tensorboard"))
 
     """ DataLoaders """
-    # train_loader = get_dex_dataloader(cfg, "train")
-    train_loader = get_dex_dataloader(cfg, "test")
+    train_loader = get_dex_dataloader(cfg, "train")
+    # train_loader = get_dex_dataloader(cfg, "test")
     test_loader = get_dex_dataloader(cfg, "test")
 
     """ Trainer """

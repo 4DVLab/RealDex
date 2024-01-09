@@ -272,7 +272,7 @@ class AffordanceModel(BaseModel):
             'verts_loss': verts_loss,
             'KLD': KLD_loss,
             'cmap_loss': cmap_loss,
-            # 'penetr_loss': penetr_loss   
+            'penetr_loss': penetr_loss   
         }
         self.summarize_losses(loss_dict)
         

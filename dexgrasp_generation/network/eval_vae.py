@@ -98,35 +98,35 @@ def main(cfg, result_file):
             result.append({k: v.cpu() if type(v) == torch.Tensor else v for k, v in data.items()})
     
     # tta
-    # loader = result_to_loader(result, cfg, cfg['tta']['batch_size'])
-    # result = []
-    # for i, data in enumerate(tqdm(loader)):
-    #     points = data['canon_obj_pc'].cuda()
-    #     hand_pose = torch.cat([data['canon_translation'], torch.zeros_like(data['canon_translation']), data['qpos']], dim=-1)
-    #     old_hand_pose = hand_pose.clone()
-    #     data['hand_pose'] = add_rotation_to_hand_pose(old_hand_pose, data['sampled_rotation'])
-    #     plane_parameters = data['canon_plane'].cuda()
+    loader = result_to_loader(result, cfg, cfg['tta']['batch_size'])
+    result = []
+    for i, data in enumerate(tqdm(loader)):
+        points = data['canon_obj_pc'].cuda()
+        hand_pose = torch.cat([data['canon_translation'], torch.zeros_like(data['canon_translation']), data['qpos']], dim=-1)
+        old_hand_pose = hand_pose.clone()
+        data['hand_pose'] = add_rotation_to_hand_pose(old_hand_pose, data['sampled_rotation'])
+        plane_parameters = data['canon_plane'].cuda()
 
-    #     hand_pose = hand_pose.cuda()
-    #     hand = tta_loss.hand_model(hand_pose, with_surface_points=True)
-    #     discretized_cmap_pred = tta_loss.cmap_func(dict(canon_obj_pc=points, observed_hand_pc=hand['surface_points']))['contact_map'].exp()
-    #     # cmap_pred = (torch.argmax(discretized_cmap_pred, dim=-1) + 0.5) / discretized_cmap_pred.shape[-1]
-    #     arange = (torch.arange(0, discretized_cmap_pred.shape[-1], dtype=discretized_cmap_pred.dtype, device=discretized_cmap_pred.device)+0.5)
-    #     cmap_pred = torch.mean(discretized_cmap_pred * arange, dim=-1).detach()
-    #     # print(cmap_pred.shape)
-    #     # print(discretized_cmap_pred.shape)
-    #     data['cmap_pred'] = cmap_pred
+        hand_pose = hand_pose.cuda()
+        hand = tta_loss.hand_model(hand_pose, with_surface_points=True)
+        discretized_cmap_pred = tta_loss.cmap_func(dict(canon_obj_pc=points, observed_hand_pc=hand['surface_points']))['contact_map'].exp()
+        # cmap_pred = (torch.argmax(discretized_cmap_pred, dim=-1) + 0.5) / discretized_cmap_pred.shape[-1]
+        arange = (torch.arange(0, discretized_cmap_pred.shape[-1], dtype=discretized_cmap_pred.dtype, device=discretized_cmap_pred.device)+0.5)
+        cmap_pred = torch.mean(discretized_cmap_pred * arange, dim=-1).detach()
+        # print(cmap_pred.shape)
+        # print(discretized_cmap_pred.shape)
+        data['cmap_pred'] = cmap_pred
         
-    #     hand_pose.requires_grad_()
-    #     optimizer = torch.optim.Adam([hand_pose], lr=cfg['tta']['lr'])
-    #     for t in range(cfg['tta']['iterations']):
-    #         optimizer.zero_grad()
-    #         loss = tta_loss.tta_loss(hand_pose, points, cmap_pred, plane_parameters)
-    #         loss.backward()
-    #         optimizer.step()
+        hand_pose.requires_grad_()
+        optimizer = torch.optim.Adam([hand_pose], lr=cfg['tta']['lr'])
+        for t in range(cfg['tta']['iterations']):
+            optimizer.zero_grad()
+            loss = tta_loss.tta_loss(hand_pose, points, cmap_pred, plane_parameters)
+            loss.backward()
+            optimizer.step()
 
-    #     data['tta_hand_pose'] = add_rotation_to_hand_pose(hand_pose.detach().cpu(), data['sampled_rotation'])
-    #     result.append(data)
+        data['tta_hand_pose'] = add_rotation_to_hand_pose(hand_pose.detach().cpu(), data['sampled_rotation'])
+        result.append(data)
         
     torch.save(data, result_file)
 
