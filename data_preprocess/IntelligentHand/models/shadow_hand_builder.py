@@ -110,7 +110,7 @@ class ShadowHandBuilder():
     def qpos_to_qpos_dict(self, qpos,
                           hand_qpos_names=None):
         """
-        :param qpos: [24]
+        :param qpos: [22]
         WARNING: The order must correspond with the joint_names
         """
         if hand_qpos_names is None:
@@ -121,7 +121,7 @@ class ShadowHandBuilder():
     def qpos_dict_to_qpos(self, qpos_dict,
                           hand_qpos_names=None):
         """
-        :return: qpos: [24]
+        :return: qpos: [22]
         WARNING: The order must correspond with the joint_names
         """
         if hand_qpos_names is None:
@@ -137,7 +137,7 @@ class ShadowHandBuilder():
                       without_arm=False):
         """
         Either qpos or qpos_dict should be provided.
-        :param qpos: [24] numpy array
+        :param qpos: [22] numpy array
         :rotation_mat: [3, 3]
         :world_translation: [3]
         :return:
