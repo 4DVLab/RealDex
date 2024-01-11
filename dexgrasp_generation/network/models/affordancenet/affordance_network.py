@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from network.models.backbones.pointnet_encoder import PointNetEncoder
 from utils.hand_model import HandModel
 from pytorch3d.transforms import matrix_to_axis_angle
+import os
 
 
 class VAE(nn.Module):
@@ -160,6 +161,9 @@ class AffordanceCVAE(nn.Module):
         self.cmap_func = contact_net.forward
         
         self.data_info = torch.load("./assets/DFCData/pose_mean_std.pt")
+        
+        data_info_path = os.path.join(cfg["dataset"]["data_info_path"], "pose_mean_std.pt")
+        self.data_info = np.load(data_info_path)
         
         
         

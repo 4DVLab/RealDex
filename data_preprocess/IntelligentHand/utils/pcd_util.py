@@ -213,10 +213,10 @@ class PCDGenerator:
         return cropped_pcd
             
     
-    def gen_object_pcd(self, index, out_dir):
+    def gen_object_pcd(self, index, out_dir, export=True):
         pcd_list = []
         for cam_index in range(4):
-            pcd = self.gen_pcd(index, cam_index)
+            pcd = self.gen_pcd(index, cam_index, export=export)
             pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
                 np.array([0.78, -0.6, 0.73], np.float64), np.array([2, 0.5, 1.06], np.float64)))
             pcd_list.append(pcd)
@@ -229,7 +229,7 @@ class PCDGenerator:
             icp_fine = o3d.pipelines.registration.registration_icp(
                 source, target, max_dist, np.identity(4),
                 o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-                o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=200))
+                o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=10))
             transformation_icp = icp_fine.transformation
             source.transform(transformation_icp)
             registered_pc.append(source)
@@ -244,7 +244,9 @@ class PCDGenerator:
         inlier_cloud = combined_pcd.select_by_index(ind)
         
         out_path = os.path.join(out_dir, f"{index}.ply")
-        o3d.io.write_point_cloud(out_path, inlier_cloud)
+        
+        if export:
+            o3d.io.write_point_cloud(out_path, inlier_cloud)
         return inlier_cloud
 
 

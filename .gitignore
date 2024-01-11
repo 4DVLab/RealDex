@@ -15,6 +15,8 @@ models/mjcf/.DS_Store
 *.pth
 dexgrasp_generation/runs
 dexgrasp_generation/data*.pt
+dexgrasp_generation/manotorch
+
 .vscode
 affordance-CVAE/logs2
 affordance-CVAE/runs
@@ -22,9 +24,10 @@ build/
 devel/
 *.ply
 *.pcd
-data_preprocess/ours/assets/*
 result
 *.zip
+dexgrasp_generation/assets/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -189,3 +192,5 @@ cython_debug/
 .DS_Store
 mjcf/~$adow_hand_vis.xml
 ./history
+dexgrasp_generation/data
+

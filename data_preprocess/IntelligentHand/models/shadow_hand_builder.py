@@ -2,9 +2,12 @@ import pytorch_kinematics as pk
 from pytorch3d.structures import Meshes, join_meshes_as_batch, join_meshes_as_scene
 from pytorch3d.vis.plotly_vis import plot_scene
 from pytorch3d.ops import sample_points_from_meshes
+from utils.urdf_util import load_mesh_from_urdf
+
 import xml.etree.ElementTree as ET
 import torch
 import os
+import json
 
 import numpy as np
 import trimesh
@@ -12,42 +15,70 @@ import trimesh
 
 class ShadowHandBuilder():
     joint_names = [
-                # 'WRJ1', 'WRJ0',
-                'FFJ3', 'FFJ2', 'FFJ1', 'FFJ0',
-                'MFJ3', 'MFJ2', 'MFJ1', 'MFJ0',
-                'RFJ3', 'RFJ2', 'RFJ1', 'RFJ0',
-                'LFJ4', 'LFJ3', 'LFJ2', 'LFJ1', 'LFJ0',
-                'THJ4', 'THJ3', 'THJ2', 'THJ1', 'THJ0',
+                'WRJ2', 
+                'WRJ1',
+                'FFJ4', 'FFJ3', 'FFJ2', 'FFJ1',
+                'MFJ4', 'MFJ3', 'MFJ2', 'MFJ1',
+                'RFJ4', 'RFJ3', 'RFJ2', 'RFJ1',
+                'LFJ5', 'LFJ4', 'LFJ3', 'LFJ2', 'LFJ1',
+                'THJ5', 'THJ4', 'THJ3', 'THJ2', 'THJ1',
                 ]
-    joint_names = ["robot0:" + name for name in joint_names]
+    joint_names = ["rh_" + name for name in joint_names]
 
-    mesh_filenames = [  "forearm_electric.obj",
-                        "forearm_electric_cvx.obj",
-                        "wrist.obj",
-                        "palm.obj",
-                        "knuckle.obj",
-                        "F3.obj",
-                        "F2.obj",
-                        "F1.obj",
-                        "lfmetacarpal.obj",
-                        "TH3_z.obj",
-                        "TH2_z.obj",
-                        "TH1_z.obj"]
 
     def __init__(self,
                  device,
-                 mesh_dir="assets/mjcf/meshes",
-                 mjcf_path="assets/mjcf/shadow_hand.xml",
+                 assets_dir="./assets",
+                 mesh_prefix ="/public/home/v-liuym/data/ShadowHand/description/",
                  num_sample=500
                  ):
-        self.chain = pk.build_chain_from_mjcf(open(mjcf_path).read()).to(device=device, dtype=torch.float)
-        self.sr_xml_tree = ET.parse(mjcf_path)
+        urdf_path=os.path.join(assets_dir, "bimanual_srhand_ur.urdf")
+        self.urdf_info = json.load(open(os.path.join(assets_dir, "srhand_ur.json")))
+        self.mesh_dict, self.points_dict = self._load_mesh_from_urdf(urdf_path, mesh_prefix)
+        self.chain = self.get_hand_chain(urdf_path)
+        joints_name = self.chain.get_joint_parameter_names()
+        print(len(joints_name), joints_name)
         self.mesh = {}
         self.device = device
-        self.mesh_dir = mesh_dir
+        # self.mesh_dir = mesh_dir
         self.num_sample = num_sample
         
-        self.build_mesh(self.chain._root)
+        # self.build_mesh(self.chain._root)
+        
+    def get_hand_chain(self, urdf_path):
+        urdf_chain = pk.build_chain_from_urdf(open(urdf_path).read()).to(device=device, dtype=torch.float)
+        hand_chains = {}
+        root_frame_name = 'rh_palm_frame'
+        root_frame = urdf_chain.find_frame(root_frame_name)
+        chain = pk.chain.Chain(root_frame)
+        # for key in qpos_key_list:
+        #     chain = pk.chain.SerialChain(urdf_chain, 
+        #                                  end_frame_name=key,
+        #                                  root_frame_name=root_frame_name)
+        #     hand_chains[key] = chain
+        return chain
+    
+    def _load_mesh_from_urdf(self, urdf_path, prefix):
+        link_name_list = list(self.urdf_info['hand_info'].keys())
+        trimesh_dict = load_mesh_from_urdf(urdf_path, link_name_list, prefix)  
+        verts = [mesh.vertices for mesh in trimesh_dict.values()]
+        faces = [mesh.faces for mesh in trimesh_dict.values()]
+        meshes = Meshes(verts=verts, faces=faces)
+          
+        sampled_pts, pts_normal = sample_points_from_meshes(meshes=meshes, 
+                                                            num_samples=self.num_sample, 
+                                                            return_normals=True)
+        
+        ret_dict = {}
+        for i, link in enumerate(link_name_list):
+            ret_dict[link] = {
+                'vertices': verts[i],
+                'faces': faces[i],
+                'points': sampled_pts[i],
+                'points_normal': pts_normal[i]
+            }
+            
+        return ret_dict
         
     def build_mesh(self, body):
         
@@ -107,49 +138,41 @@ class ShadowHandBuilder():
             self.build_mesh(children)
         
 
-    def qpos_to_qpos_dict(self, qpos,
-                          hand_qpos_names=None):
+    def qpos_to_qpos_dict(self, qpos,hand_qpos_names):
         """
         :param qpos: [22]
         WARNING: The order must correspond with the joint_names
         """
-        if hand_qpos_names is None:
-            hand_qpos_names = ShadowHandBuilder.joint_names
         assert len(qpos) == len(hand_qpos_names)
         return dict(zip(hand_qpos_names, qpos))
 
-    def qpos_dict_to_qpos(self, qpos_dict,
-                          hand_qpos_names=None):
+    def qpos_dict_to_qpos(self, qpos_dict, hand_qpos_names):
         """
         :return: qpos: [22]
         WARNING: The order must correspond with the joint_names
         """
-        if hand_qpos_names is None:
-            hand_qpos_names = ShadowHandBuilder.joint_names
         return np.array([qpos_dict[name] for name in hand_qpos_names])
+    
+    def compute_status(self, qpos):
+        '''
+        qpos: tensor [batch_size, 22]
+        '''
+        batch_size = qpos.shape[0]
+        new_qpos = torch.cat([torch.zeros(batch_size, 2), qpos], dim=1) # 22->24
+        current_status = self.chain.forward_kinematics(new_qpos[None, :])
+        
+        return current_status
+        
 
-    def get_hand_model(self,
-                      rotation_mat,
-                      world_translation,
-                      qpos=None,
-                      hand_qpos_dict=None,
-                      hand_qpos_names=None,
-                      without_arm=False):
+    def get_hand_model(self, world_rotation, world_translation, qpos):
         """
         Either qpos or qpos_dict should be provided.
         :param qpos: [22] numpy array
-        :rotation_mat: [3, 3]
+        :world_rotation: [3, 3]
         :world_translation: [3]
         :return:
         """
-        if qpos is None:
-            if hand_qpos_names is None:
-                hand_qpos_names = ShadowHandBuilder.joint_names
-            assert hand_qpos_dict is not None, "Both qpos and qpos_dict are None!"
-            qpos = np.array([hand_qpos_dict[name] for name in hand_qpos_names], dtype=np.float32)
-        jn = self.chain.get_joint_parameter_names()
-        # print(len(jn), jn)
-        current_status = self.chain.forward_kinematics(qpos[None, :])
+        current_status = self.compute_status(qpos)
 
         verts = []
         faces = []
@@ -158,16 +181,26 @@ class ShadowHandBuilder():
         pts_normals_list = []
         
 
-        for link_name in self.mesh:
-            v = current_status[link_name].transform_points(self.mesh[link_name]['vertices'])
+        for link_name in self.mesh_dict:
+            mesh = self.mesh_dict[link_name]
+            verts = torch.tensor(mesh.vertices)
+            verts = current_status[link_name].transform_points(verts)
+            fn = torch.tensor(mesh.face_normals())
+            fn = current_status[link_name].transform_normals(fn)
+            pts = torch.tensor(self.points_dict[link_name])
+            pts = current_status[link_name].transform_points(pts)
+            
+            # new_mesh = trimesh.Trimesh(vertices=verts[:, :3], faces=mesh.faces)
+            # updated_meshes[key] = new_mesh
+            
             pts = current_status[link_name].transform_points(self.mesh[link_name]['sampled_pts'])
             normals = current_status[link_name].transform_normals(self.mesh[link_name]['face_normals'])
             pts_normals = current_status[link_name].transform_normals(self.mesh[link_name]['sampled_pts_normal'])
             
             
-            v = v @ rotation_mat.T + world_translation
-            pts = pts @ rotation_mat.T + world_translation
-            normals = normals @ rotation_mat.T
+            v = v @ world_rotation.T + world_translation
+            pts = pts @ world_rotation.T + world_translation
+            normals = normals @ world_rotation.T
             f = self.mesh[link_name]['faces']
             
             verts.append(v)
@@ -186,19 +219,17 @@ class ShadowHandBuilder():
 
 if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    sr_builder = ShadowHandBuilder(device=device,
-                                   mjcf_path="assets/mjcf/shadow_hand_vis.xml"
-                                )
-    qpos= torch.zeros(22).cuda()
-    rotation_mat = torch.eye(3, 3).cuda()
-    transl = torch.zeros(3).cuda()
-    ret_dict = sr_builder.get_hand_model(rotation_mat, transl, qpos, without_arm=False)
+    sr_builder = ShadowHandBuilder(device=device)
+    # qpos= torch.zeros(22).cuda()
+    # rotation_mat = torch.eye(3, 3).cuda()
+    # transl = torch.zeros(3).cuda()
+    # ret_dict = sr_builder.get_hand_model(rotation_mat, transl, qpos, without_arm=False)
     
-    points = torch.concat(ret_dict['sampled_pts']).reshape(-1, 3)
-    print(points.shape)
+    # points = torch.concat(ret_dict['sampled_pts']).reshape(-1, 3)
+    # print(points.shape)
     
-    meshes = trimesh.Trimesh(vertices=ret_dict['meshes'].verts_packed().cpu(), faces=ret_dict['meshes'].faces_packed().cpu())
-    points = trimesh.PointCloud(vertices=points.cpu())
-    meshes.export("./test.ply")
-    points.export("./test_pts.ply")
-    print(meshes.is_watertight)
+    # meshes = trimesh.Trimesh(vertices=ret_dict['meshes'].verts_packed().cpu(), faces=ret_dict['meshes'].faces_packed().cpu())
+    # points = trimesh.PointCloud(vertices=points.cpu())
+    # meshes.export("./test.ply")
+    # points.export("./test_pts.ply")
+    # print(meshes.is_watertight)

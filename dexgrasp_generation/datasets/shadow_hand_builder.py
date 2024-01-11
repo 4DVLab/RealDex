@@ -31,8 +31,9 @@ class ShadowHandBuilder():
                         "TH1_z.obj"]
 
     def __init__(self,
-                 mesh_dir="data/mjcf/meshes",
-                 mjcf_path="data/mjcf/shadow_hand.xml"):
+                 mesh_dir="assets/mjcf/meshes",
+                 mjcf_path="assets/mjcf/shadow_hand.xml"):
+        print(mjcf_path)
         self.chain = pk.build_chain_from_mjcf(open(mjcf_path).read()).to(dtype=torch.float)
 
         self.mesh = {}

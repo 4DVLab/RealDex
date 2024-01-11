@@ -9,6 +9,7 @@ from utils.kintree import load_sequence
 from utils.urdf_util import load_mesh_from_urdf
 from utils.global_util import segment_scene_point_cloud, tf_to_mat, find_closest, batched_rotmat_to_vec
 from utils.pcd_util import PCDGenerator
+from models.shadow_hand_builder import ShadowHandBuilder
 import shutil
 from tqdm import tqdm, trange
 import shutil
@@ -34,7 +35,7 @@ class DataProcesser():
             
         link_list = sr_struct['node_names']
         self.mesh_dict = load_mesh_from_urdf(urdf_path,link_list, prefix)
-        print(self.mesh_dict.keys())
+        # print(self.mesh_dict.keys())
         
         '''Load TF Sequence Data'''
         # tf_data_file = os.path.join(self.tf_data_dir, "global_tf_all_in_one.npy")
@@ -62,7 +63,14 @@ class DataProcesser():
         '''URDF info'''
         urdf_info_path = "./assets/srhand_ur.json"
         self.urdf_info = json.load(open(urdf_info_path))
-        self.qpos_key_list = list(self.urdf_info['hand_info'].keys())
+        # self.qpos_key_list = list(self.urdf_info['hand_info'].keys())
+        self.qpos_key_list = []
+        self.joints_name_list = ShadowHandBuilder.joint_names
+        for query_jn in self.joints_name_list:
+            for key, value in self.urdf_info['hand_info'].items():
+                if value['joint'] == query_jn:
+                    self.qpos_key_list.append(key) 
+        print(self.joints_name_list)
         print(self.qpos_key_list)
         
         '''Load Time Snyc Results'''
@@ -158,7 +166,7 @@ class DataProcesser():
             pcd = o3d.io.read_point_cloud(out_path)
             return pcd
         os.makedirs(out_dir, exist_ok=True)
-        pcd = self.pcd_generator.gen_object_pcd(scene_id, out_dir)
+        pcd = self.pcd_generator.gen_object_pcd(scene_id, out_dir, export=False)
         return pcd
         
     def check_sr_valid(self, sr_time):
@@ -271,7 +279,7 @@ class DataProcesser():
                     print(k)
                     print(self.qpos_seq[time_sr].keys())
             
-            qpos_data = [self.qpos_seq[time_sr][k] for k in self.qpos_key_list]
+            qpos_data = [self.qpos_seq[time_sr][k] for k in self.qpos_key_list[2:]]
             qpos_seq.append(qpos_data)
             
             hand_root_frame = self.global_tf_seq[time_sr]['rh_forearm']
@@ -304,6 +312,7 @@ class DataProcesser():
         
         global counter
         
+        
         for seg in tqdm(seg_list):
             start, end = seg
             start, end = int(start), int(end)
@@ -324,7 +333,7 @@ class DataProcesser():
                 obj_pcd = o3d.io.read_point_cloud(crop_pcd_path)
             else:
                 obj_pcd = self.gen_object_pcd(start)
-                obj_pcd = PCDGenerator.crop_pcd(obj_pcd, bb_min, bb_max)         
+                PCDGenerator.crop_pcd(obj_pcd, bb_min, bb_max)          
                 o3d.io.write_point_cloud(crop_pcd_path,obj_pcd)
             
             np.savez_compressed(os.path.join(out_dir, f"{counter}.npz"), 
@@ -362,7 +371,8 @@ class DataProcesser():
             start, end = seg
             start, end = int(start), int(end)
             obj_tf_mat = np.eye(4)
-            for t in trange(start, end):
+            # for t in trange(start, end):
+            for t in trange(0, start):
                 time_sr = int(self.scene_to_mesh[str(t)].split('.')[0])
                 
                 obj_tf_mat[:3, :3] = full_data['object_orient'][t]
@@ -375,7 +385,7 @@ class DataProcesser():
                                            self.gen_single_arm_hand(time_sr, only_hand=True))
                 o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{t}.ply"), 
                                            self.gen_single_arm_hand(time_sr, only_hand=False))
-                
+            break
                 
 
 def run(data_processer):
@@ -410,22 +420,22 @@ if __name__ == '__main__':
     
     model_name_list = os.listdir(base_dir)
     
-    run_single(model_name="blue_magnet_toy", exp_code="blue_magnet_toy_1_20231209")
+    # run_single(model_name="blue_magnet_toy", exp_code="blue_magnet_toy_1_20231209")
     
-    # for model_name in model_name_list:
-    #     path = os.path.join(base_dir, model_name)
-    #     global counter 
-    #     counter = 0
-    #     for exp_code in os.listdir(path):
-    #         subpath = os.path.join(path, exp_code)
-    #         if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
-    #             data_dir = os.path.join(base_dir, model_name, exp_code)
-    #             obj_path = os.path.join(obj_model_dir, f"{model_name}.obj")
-    #             obj_mesh = trimesh.load(obj_path)
-    #             print(data_dir)
-    #             data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
-    #             # run(data_processer)
-    #             segment_sequence(data_processer, model_name)
+    for model_name in model_name_list:
+        path = os.path.join(base_dir, model_name)
+        global counter 
+        counter = 0
+        for exp_code in os.listdir(path):
+            subpath = os.path.join(path, exp_code)
+            if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
+                data_dir = os.path.join(base_dir, model_name, exp_code)
+                obj_path = os.path.join(obj_model_dir, f"{model_name}.obj")
+                obj_mesh = trimesh.load(obj_path)
+                print(data_dir)
+                data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
+                run(data_processer)
+                segment_sequence(data_processer, model_name)
                 
     
     
