@@ -13,9 +13,6 @@
 [submodule "calibration_ws/k4a-calibration"]
 	path = calibration_ws/k4a-calibration
 	url = https://github.com/Yaxun-Yang/k4a-calibration
-[submodule "grabnet"]
-	path = grabnet
-	url = https://github.com/lym29/grabnet.git
 [submodule "affordance-CVAE"]
 	path = affordance-CVAE
 	url = ./affordance-CVAE
