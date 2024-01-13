@@ -56,7 +56,7 @@ class DataProcesser():
         self.scene_time_list = np.loadtxt(time_stamp_file)
         
         '''Load Object Poses'''
-        obj_tracking_path = os.path.join(self.data_dir, "tracking_result/tracking_and_icp.txt")
+        obj_tracking_path = os.path.join(self.data_dir, "tracking_result/gt_pose.txt")
         object_poses = np.loadtxt(obj_tracking_path)
         self.object_poses = np.array([tf_to_mat(tf) for tf in object_poses])
         
@@ -356,6 +356,8 @@ class DataProcesser():
                      'laundry_detergent', 'toilet_cleaning_sprayer']
             val = ['goji_jar', 'small_sprayer', 'yogurt']
             test = ['duck_toy', 'cosmetics', 'sprayer']
+            
+        self.splits = {'train': train, 'val': val, 'test':test}
         
     def export_meshes(self):
         out_dir = os.path.join(self.data_dir, "vis_meshes")

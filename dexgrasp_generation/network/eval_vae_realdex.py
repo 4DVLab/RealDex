@@ -31,7 +31,7 @@ from collections import OrderedDict
 from pytorch3d.transforms import rotation_6d_to_matrix, matrix_to_axis_angle
 
 
-def main(cfg, result_file):
+def main(cfg, result_path):
     cfg = process_config(cfg)
 
     """ Logging """
@@ -89,20 +89,18 @@ def main(cfg, result_file):
                               cfg['dataset']['num_hand_points'], contact_net)
 
     """ Test """
-    result = None
     # sample
-    for key, trainer in trainers.items():
-        loader = result_to_loader(result, cfg) if result else test_loader
-        result = []
-        for _, data in enumerate(tqdm(loader)):
+    loader = test_loader
+    for i, data in enumerate(tqdm(loader)):
+        for key, trainer in trainers.items():
+            # loader = result_to_loader(result, cfg) if result else test_loader
+            # result = []
             pred_dict, _ = trainer.test(data)
             data.update(pred_dict)
-            result.append({k: v.cpu() if type(v) == torch.Tensor else v for k, v in data.items()})
+        result = {k: v.cpu() if type(v) == torch.Tensor else v for k, v in data.items()}
+        torch.save(result, os.path.join(result_path, f"data_{i}.pt"))
             
-    print(data.keys())
-       
-    torch.save(data, result_file)
-
+                   
 def divide(data):
     seen_data = []
     unseen_data = []
@@ -141,22 +139,26 @@ def parse_args():
     parser.add_argument("--exp-dir", type=str, help="E.g., './eval_result'.")
     return parser.parse_args()
 
-def vis_test_result(filename, device, result_path):
-    result = torch.load(filename)
-    print(result.keys())
-    print(len(result))
-    
-    hand_pose = result['hand_pose'].to(device)
-    hand_model = HandModel(
-            mjcf_path='data/mjcf/shadow_hand.xml',
-            mesh_path='data/mjcf/meshes',
-            contact_points_path='data/mjcf/contact_points.json',
-            penetration_points_path='data/mjcf/penetration_points.json',
-            device=device,
-        )
-    hand_pose = hand_pose.float()
-    hand = hand_model(hand_pose=hand_pose, object_pc=result['obj_pc'].to(device), with_meshes=True)
-    vis_result(hand, result, result_path)
+def vis_test_result(device, result_path, vis_path):
+    for filename in os.listdir(result_path):
+        result = torch.load(os.path.join(result_path, filename))
+        print(result.keys())
+        print(len(result))
+        
+        hand_pose = result['hand_pose'].to(device)
+        print(hand_pose.shape)
+        hand_model = HandModel(
+                mjcf_path='data/mjcf/shadow_hand.xml',
+                mesh_path='data/mjcf/meshes',
+                contact_points_path='data/mjcf/contact_points.json',
+                penetration_points_path='data/mjcf/penetration_points.json',
+                device=device,
+            )
+        hand_pose = hand_pose.float()
+        hand = hand_model(hand_pose=hand_pose, object_pc=result['obj_pc'].to(device), with_meshes=True)
+        out_path = os.path.join(vis_path, filename.split(".")[0])
+        os.makedirs(out_path, exist_ok=True)
+        vis_result(hand, result, out_path)
     
 def vis_result(hand, data, result_path):
     num_hand = hand['vertices'].shape[0]
@@ -198,11 +200,14 @@ if __name__ == "__main__":
         cfg = compose(config_name=args.config_name, overrides=[f"exp_dir={args.exp_dir}"])
         
     
-    result_path = "/public/home/v-liuym/results/unidexgrasp_test_set_"+config_name
+    result_path = "/storage/group/4dvlab/yumeng/results/"
+    result_path = os.path.join(result_path, "test_set_"+config_name)
+    vis_path = os.path.join(result_path, "vis_"+config_name)
+    
     if not os.path.exists(result_path):
         os.makedirs(result_path)
-    results_file = os.path.join(result_path, "result_test_set_orig_ckpt.pt")
-    main(cfg, results_file)
+    # results_file = os.path.join(result_path, "result_test_set_orig_ckpt.pt")
+    # main(cfg, result_path)
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    vis_test_result(results_file, device, result_path)
+    vis_test_result(device, result_path, vis_path)
