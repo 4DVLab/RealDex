@@ -4,7 +4,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from data.dataset import get_mesh_dataloader, get_dex_dataloader
-from data.dataset import get_grab_mesh_dataloader, feature_to_color
+from data.dataset import get_grab_mesh_dataloader, feature_to_color, get_realdex_dataloader
 from trainer import Trainer
 # from trainer_grab import Trainer
 from utils.global_utils import result_to_loader, flatten_result
@@ -49,11 +49,11 @@ def main(cfg, result_file):
 
 
     """ DataLoaders """
-    test_loader = get_mesh_dataloader(cfg, "test")
+    test_loader = get_realdex_dataloader(cfg, "test")
     # test_loader = get_grab_mesh_dataloader(cfg, "train")
 
     """ Trainer """
-    trainers = []
+    trainers = {}
     for key in cfg['models'].keys():
         net_cfg = compose(f"{cfg['models'][key]['type']}_config")
         print(net_cfg['exp_dir'])
@@ -61,23 +61,25 @@ def main(cfg, result_file):
             net_cfg['device'] = cfg['device']
         trainer = Trainer(net_cfg, logger)
         trainer.resume()
-        trainers.append(trainer)
+        trainers[key] = (trainer)
 
-    contact_cfg = compose(f"{cfg['tta']['contact_net']['type']}_config")
-    with open_dict(contact_cfg):
-        contact_cfg['device'] = cfg['device']
-    contact_net = ContactMapNet(contact_cfg)
-    ckpt_dir = pjoin(contact_cfg['exp_dir'], 'ckpt')
-    model_name = get_model(ckpt_dir, contact_cfg.get('resume_epoch', None))
-    ckpt = torch.load(model_name)['model']
-    new_ckpt = OrderedDict()
-    for name in ckpt.keys():
-        new_name = name.replace('net.', '')
-        if new_name.startswith('backbone.'):
-            new_name = new_name.replace('backbone.', '')
-        new_ckpt[new_name] = ckpt[name]
+    # contact_cfg = compose(f"{cfg['tta']['contact_net']['type']}_config")
+    # with open_dict(contact_cfg):
+    #     contact_cfg['device'] = cfg['device']
+    # contact_net = ContactMapNet(contact_cfg)
+    # ckpt_dir = pjoin(contact_cfg['exp_dir'], 'ckpt')
+    # model_name = get_model(ckpt_dir, contact_cfg.get('resume_epoch', None))
+    # ckpt = torch.load(model_name)['model']
+    # new_ckpt = OrderedDict()
+    # for name in ckpt.keys():
+    #     new_name = name.replace('net.', '')
+    #     if new_name.startswith('backbone.'):
+    #         new_name = new_name.replace('backbone.', '')
+    #     new_ckpt[new_name] = ckpt[name]
     
-    contact_net.load_state_dict(new_ckpt)
+    # contact_net.load_state_dict(new_ckpt)
+    
+    contact_net = trainers['affordance_cvae'].model.contact_net
     contact_net = contact_net.to(cfg['device'])
     contact_net.eval()
     
@@ -89,7 +91,7 @@ def main(cfg, result_file):
     """ Test """
     result = None
     # sample
-    for key, trainer in zip(cfg['models'].keys(), trainers):
+    for key, trainer in trainers.items():
         loader = result_to_loader(result, cfg) if result else test_loader
         result = []
         for _, data in enumerate(tqdm(loader)):
@@ -186,7 +188,7 @@ def vis_result(hand, data, result_path):
 
 if __name__ == "__main__":
     args = parse_args()
-    config_name= "configs_cvae"
+    config_name= "configs_realdex"
     # config_name= "configs_grab_mesh"
     
     initialize(version_base=None, config_path="../" + config_name, job_name="train")
@@ -196,10 +198,10 @@ if __name__ == "__main__":
         cfg = compose(config_name=args.config_name, overrides=[f"exp_dir={args.exp_dir}"])
         
     
-    result_path = "/home/liuym/results/unidexgrasp_train_set_"+config_name
+    result_path = "/public/home/v-liuym/results/unidexgrasp_test_set_"+config_name
     if not os.path.exists(result_path):
         os.makedirs(result_path)
-    results_file = os.path.join(result_path, "result_train_set_orig_ckpt.pt")
+    results_file = os.path.join(result_path, "result_test_set_orig_ckpt.pt")
     main(cfg, results_file)
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

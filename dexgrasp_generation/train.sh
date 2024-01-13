@@ -13,3 +13,6 @@ python ./network/train_grab_baseline.py --config-name glow_joint_config \
 python ./network/train.py --config-name cvae_config \
                           --exp-dir ./runs/cvae_train
 
+python ./network/train.py --config-name cvae_config \
+                          --exp-dir ./runs/cvae_train
+

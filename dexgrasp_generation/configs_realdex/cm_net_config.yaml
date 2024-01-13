@@ -48,7 +48,7 @@ resume_epoch: -1
 cuda_id: 5
 
 # data loader
-num_workers: 2
+num_workers: 4
 batch_size: 8
 
 # hydra

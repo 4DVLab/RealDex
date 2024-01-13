@@ -3,7 +3,7 @@ import logging
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from data.dataset import get_dex_dataloader
+from data.dataset import get_dex_dataloader, get_realdex_dataloader
 from trainer import Trainer
 from utils.global_utils import log_loss_summary, add_dict
 from omegaconf import OmegaConf
@@ -59,9 +59,10 @@ def main(cfg):
     writer = SummaryWriter(pjoin(log_dir, "tensorboard"))
 
     """ DataLoaders """
-    train_loader = get_dex_dataloader(cfg, "train")
+    # train_loader = get_dex_dataloader(cfg, "train")
+    train_loader = get_realdex_dataloader(cfg, "train")
     # train_loader = get_dex_dataloader(cfg, "test")
-    test_loader = get_dex_dataloader(cfg, "test")
+    test_loader = get_realdex_dataloader(cfg, "test")
 
     """ Trainer """
     trainer = Trainer(cfg, logger)
@@ -127,7 +128,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    initialize(version_base=None, config_path="../configs_cvae", job_name="train")
+    initialize(version_base=None, config_path="../configs_realdex", job_name="train")
     if args.exp_dir is None:
         cfg = compose(config_name=args.config_name)
     else:

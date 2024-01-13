@@ -166,7 +166,7 @@ class DataProcesser():
             pcd = o3d.io.read_point_cloud(out_path)
             return pcd
         os.makedirs(out_dir, exist_ok=True)
-        pcd = self.pcd_generator.gen_object_pcd(scene_id, out_dir, export=False)
+        pcd = self.pcd_generator.gen_object_pcd(scene_id, out_dir, export=True)
         return pcd
         
     def check_sr_valid(self, sr_time):
@@ -333,9 +333,9 @@ class DataProcesser():
                 obj_pcd = o3d.io.read_point_cloud(crop_pcd_path)
             else:
                 obj_pcd = self.gen_object_pcd(start)
-                PCDGenerator.crop_pcd(obj_pcd, bb_min, bb_max)          
+                obj_pcd = PCDGenerator.crop_pcd(obj_pcd, bb_min, bb_max)          
                 o3d.io.write_point_cloud(crop_pcd_path,obj_pcd)
-            
+            obj_pcd = PCDGenerator.random_subsample(obj_pcd, num_points=7000)
             np.savez_compressed(os.path.join(out_dir, f"{counter}.npz"), 
                                 qpos = qpos,
                                 hand_transl = hand_transl,

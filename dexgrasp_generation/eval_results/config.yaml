@@ -1,5 +1,6 @@
 use_DFCData: true
 use_Shadow: true
+network_type: affordance_cvae
 models:
   affordance_cvae:
     type: cvae
@@ -29,25 +30,18 @@ exp_dir: ./eval_results
 wandb_offline: true
 wandb_debug_mode: true
 resume_epoch: -1
-cuda_id: 2
+cuda_id: 0
 num_workers: 0
 batch_size: 8
 n_samples: 100
 dataset:
-  root_path: data
-  dataset_dir: DFCData
-  hand_global_trans:
-  - 0
-  - -0.7
-  - 0.2
-  hand_global_rotation_xyz:
-  - -1.57
-  - 0
-  - 3.14
+  root_path: /storage/group/4dvlab/yumeng/IntelligentHand/
+  dataset_dir: collected_data
+  data_info_path: /public/home/v-liuym/projects/IntelligentHand/dexgrasp_generation/assets/RealDexData
   num_obj_points: 1024
   num_hand_points: 1024
-  shadow_hand_mesh_dir: mjcf/meshes
-  shadow_urdf_path: mjcf/shadow_hand.xml
+  shadow_hand_mesh_dir: assets/mjcf/meshes
+  shadow_urdf_path: assets/mjcf/shadow_hand.xml
   fps: true
-device: cuda:2
+device: cuda:0
 

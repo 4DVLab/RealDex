@@ -38,7 +38,7 @@ def get_realdex_dataloader(cfg, mode="train", shuffle=None):
         shuffle = (mode == "train")
 
     dataset = RealDexDataset(cfg, mode)
-    return DataLoader(dataset, batch_size=cfg["batch_size"], shuffle=shuffle, num_workers=cfg["num_workers"])
+    return DataLoader(dataset, batch_size=cfg["batch_size"], shuffle=shuffle, num_workers=cfg["num_workers"], drop_last=True)
 
 def get_mesh_dataloader(cfg, mode="train"):
     dataset = Meshdata(cfg, mode)

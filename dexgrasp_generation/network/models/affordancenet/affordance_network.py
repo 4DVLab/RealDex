@@ -11,6 +11,8 @@ from network.models.backbones.pointnet_encoder import PointNetEncoder
 from utils.hand_model import HandModel
 from pytorch3d.transforms import matrix_to_axis_angle
 import os
+from pytorch3d.ops import sample_farthest_points
+
 
 
 class VAE(nn.Module):
@@ -54,7 +56,7 @@ class VAE(nn.Module):
 
     def inference(self, n=1, c=None):
         batch_size = n
-        z = torch.randn([batch_size, self.latent_size], device=c.device)
+        z = torch.randn([batch_size, self.latent_size], device=c.device) * 0
         recon_x = self.decoder(z, c)
 
         return recon_x
@@ -132,6 +134,7 @@ class AffordanceCVAE(nn.Module):
         
         self.num_obj_feature = cfg["model"]["obj_feature_dim"]
         self.num_hand_points = cfg["dataset"]["num_obj_points"]
+        self.num_obj_points = cfg["dataset"]["num_obj_points"]
         
         self.cvae_encoder_sizes = cfg["model"]["cvae_encoder_sizes"]
         self.cvae_latent_size = cfg["model"]["cvae_latent_size"]
@@ -160,10 +163,11 @@ class AffordanceCVAE(nn.Module):
         )
         self.cmap_func = contact_net.forward
         
-        self.data_info = torch.load("./assets/DFCData/pose_mean_std.pt")
+        # self.data_info = torch.load("./assets/DFCData/pose_mean_std.pt")
         
         data_info_path = os.path.join(cfg["dataset"]["data_info_path"], "pose_mean_std.pt")
-        self.data_info = np.load(data_info_path)
+        self.data_info = torch.load(data_info_path)
+        print(self.data_info)
         
         
         
@@ -176,7 +180,7 @@ class AffordanceCVAE(nn.Module):
         pose_std = self.data_info['pose_std'].to(self.device)
         
         recon = self.cvae.inference(B, obj_glb_feature)
-        recon = recon * pose_std + pose_mean
+        # recon = recon * pose_std + pose_mean
         
         recon = recon.contiguous().view(B, -1)
         
@@ -201,6 +205,9 @@ class AffordanceCVAE(nn.Module):
         '''
         # fetch data
         obj_pc = dic['obj_pc']
+        obj_pc, _ = sample_farthest_points(obj_pc, K=self.num_obj_points)
+        
+        
         transl = dic['translation']
         rotation = dic['rotation']
         qpos = dic['hand_qpos']
@@ -221,7 +228,7 @@ class AffordanceCVAE(nn.Module):
         pose_mean = self.data_info['pose_mean'].to(self.device)
         pose_std = self.data_info['pose_std'].to(self.device)
         recon = recon.contiguous().view(B, 6 + qpos_dim)
-        recon = recon * pose_std + pose_mean
+        # recon = recon * pose_std + pose_mean
         
         recon_hand = self.hand_model(recon, obj_pc, with_penetration=True, with_surface_points=True, with_contact_candidates=True)
         

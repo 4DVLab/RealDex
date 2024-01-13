@@ -211,7 +211,43 @@ class PCDGenerator:
     def crop_pcd(pcd, bb_min, bb_max):
         cropped_pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(bb_min, bb_max))
         return cropped_pcd
-            
+    
+    @staticmethod     
+    def random_subsample(pcd, num_points=8000):
+        """
+        Randomly subsample a point cloud to a fixed number of points.
+
+        Parameters:
+        pcd (open3d.geometry.PointCloud): The input point cloud.
+        num_points (int): The number of points to sample.
+
+        Returns:
+        open3d.geometry.PointCloud: The subsampled point cloud.
+        """
+        # Get the total number of points in the point cloud
+        total_points = np.asarray(pcd.points).shape[0]
+        
+        # Check if the point cloud has enough points
+        if num_points >= total_points:
+            return pcd
+        
+        # Randomly select indices
+        indices = np.random.choice(total_points, num_points, replace=False)
+        
+        # Select points based on indices
+        selected_points = np.asarray(pcd.points)[indices, :]
+        
+        # Create a new point cloud based on the selected points
+        subsampled_pcd = o3d.geometry.PointCloud()
+        subsampled_pcd.points = o3d.utility.Vector3dVector(selected_points)
+        
+        # If the original point cloud has colors or normals, also subsample them
+        if pcd.has_colors():
+            subsampled_pcd.colors = o3d.utility.Vector3dVector(np.asarray(pcd.colors)[indices, :])
+        if pcd.has_normals():
+            subsampled_pcd.normals = o3d.utility.Vector3dVector(np.asarray(pcd.normals)[indices, :])
+    
+        return subsampled_pcd
     
     def gen_object_pcd(self, index, out_dir, export=True):
         pcd_list = []

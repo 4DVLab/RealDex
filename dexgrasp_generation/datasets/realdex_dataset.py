@@ -64,10 +64,12 @@ class RealDexDataset(Dataset):
         self.object_name_list = split_data('object')[mode]
         self.file_list = self.get_file_list(self.root_path,
                                             self.object_name_list)
+        print(f"Total Sequence Num: {len(self.file_list)}.")
+        
         self._load_data()
 
     def __len__(self):
-        return len(self.file_list)
+        return self.data['qpos'].shape[0]
 
     def __getitem__(self, item):
         """
@@ -78,7 +80,6 @@ class RealDexDataset(Dataset):
         hand_transl = self.data['hand_transl'][item]
         hand_orient = self.data['hand_orient'][item]
         obj_pc = self.data['object_points'][item]
-
         
         if self.cfg["network_type"] == "affordance_cvae":
             ret_dict = {
@@ -105,6 +106,7 @@ class RealDexDataset(Dataset):
                                     os.listdir(file_dir_path)))
             files = list(map(lambda file: pjoin(file_dir_path, file),
                                 files))
+            # print(obj, len(files))
             file_list += files 
 
         return file_list
@@ -115,18 +117,25 @@ class RealDexDataset(Dataset):
             'qpos': [],
             'hand_transl': [],
             'hand_orient': [],
-            'object_points': []
+            # 'object_points': []
         }
         
-        
+        obj_list = []
         for file in tqdm(self.file_list):
             seq_data = np.load(file, allow_pickle=True)
+            seq_len = seq_data['qpos'].shape[0]
+            obj_pc = torch.tensor(seq_data['object_points']).unsqueeze(0)
+            obj_pc = obj_pc.expand([seq_len, -1, -1])
+            obj_list.append(obj_pc)
+            
             for key in self.data:
                 self.data[key].append(torch.tensor(seq_data[key]))
         
+        self.data['object_points'] = obj_list
+                
+        self.data = {key:torch.cat(self.data[key], dim=0) for key in self.data}
         print(f"Split {self.mode}: {self.data['qpos'].shape[0]} pieces of data.")
         
-        self.data = {key:torch.cat(self.data[key], dim=0) for key in self.data}
         
 
             

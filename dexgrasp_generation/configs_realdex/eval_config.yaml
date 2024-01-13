@@ -6,6 +6,7 @@ defaults:
     
 use_DFCData: True
 use_Shadow: True
+network_type: affordance_cvae
 
 models:
     affordance_cvae:
@@ -45,7 +46,7 @@ wandb_debug_mode: True  # and only program error will be reported
 resume_epoch: -1
 
 # device
-cuda_id: 2
+cuda_id: 0
 
 # data loader
 num_workers: 0
