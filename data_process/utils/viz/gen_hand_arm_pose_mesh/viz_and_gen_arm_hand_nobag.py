@@ -1,4 +1,4 @@
-import rosbag
+
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from cv_bridge import CvBridge
@@ -24,6 +24,7 @@ from collections import defaultdict
 import copy
 import json
 from pprint import pprint
+from tqdm import tqdm, trange
 
 
 def camera_param_init():
@@ -246,8 +247,7 @@ def dfs_position(TF_tree, global_name_postion, time_slot, output_time_record=Fal
         time_record = False
     all_links_tf = {}
     if not output_tf:
-        all_links_tf = False
-
+        all_links_tf = None
 
     dfs_position_update(TF_tree, global_name_postion,
                         'world', time_slot, time_record,all_links_tf)
@@ -502,7 +502,6 @@ def simplify_mesh_list(mesh_list, proportion=0.5):
         mesh_list[key] = simplify_mesh(mesh, proportion)
     return mesh_list
 
-
 def gen_on_stamp_hand_arm_mesh(config_folder, bag_folder, rosbag_predix, stamp_index_begin, stamp_index_end=None, base_frame="world"):
 
     TF_tree, global_name_postion = build_TFtree_without_bag(bag_folder)
@@ -573,10 +572,11 @@ def gen_one_stamp_all_tf(bag_folder, stamp_index_begin, stamp_index_end=None):
 # 也需要只有一个arm_hand_mesh的
 if __name__ == "__main__":
 
-    ros_prefix_path = "/media/tony/T7/camera_data/configuration/hand_arm_mesh"
-    configuration_path = "/media/tony/T7/camera_data/configuration"
-    bag_folder = "/media/tony/T7/yyx_tmp/for_dust_cleanning_sprayer_tracking/dust_cleanning_spreyer/dust_cleanning_spreyer_1_20231105"
+    ros_prefix_path = "/home/lab4dv/data/bags/config_data/hand_arm_mesh"
+    configuration_path = "/home/lab4dv/data/bags/config_data"
+    bag_folder = "/home/lab4dv/data/bags/cosmetics/cosmetics_2"
     # gen_one_stamp_all_tf(bag_folder,1015)
 
     # bag_folder = "/media/tony/T7/camera_data/banana/"
     gen_on_stamp_hand_arm_mesh(configuration_path,bag_folder,ros_prefix_path,stamp_index_begin=0,stamp_index_end=50000)
+ 

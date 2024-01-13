@@ -3,7 +3,7 @@ import logging
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from data.dataset import get_grab_mesh_dataloader
+from data.dataset import get_grab_mesh_dataloader, get_grab_dataloader
 
 from trainer_grab import Trainer
 from utils.global_utils import result_to_loader, flatten_result
@@ -24,6 +24,8 @@ from utils.eval_utils import KaolinModel, eval_result
 from utils.visualize import visualize
 
 from pytorch3d import transforms as pttf
+from utils.grab_hand_model import HandModel
+import trimesh
 
 
 
@@ -45,7 +47,7 @@ def main(cfg):
 
 
     """ DataLoaders """
-    mesh_data = get_grab_mesh_dataloader(cfg, 'test')
+    mesh_data = get_grab_mesh_dataloader(cfg, 'train')
 
     """ Trainer """
     trainers = []
@@ -105,15 +107,30 @@ def main(cfg):
         data['tta_hand_pose'] = add_rotation_to_hand_pose(hand_pose.detach().cpu(), data['sampled_rotation'])
         result.append(data)
         
-    torch.save(data, "/home/liuym/results/unidexgrasp_test_on_grab/result.pt")
+    torch.save(data, "/home/liuym/results/unidexgrasp_test_on_grab/result_train_set.pt")
 
     
-def vis_result(filename):
+def vis_result(filename, device, result_path):
     result = torch.load(filename)
+    print(result.keys())
     print(len(result))
     
-    hand_pose = result['hand_pose']
-    print(hand_pose.shape)
+    hand_pose = result['hand_pose'].to(device)
+    
+    
+    hand_model = HandModel(device=device)
+    
+    hand = hand_model(hand_pose=hand_pose, obj_points=result['obj_pc'].to(device), with_meshes=True)
+    num_hand = hand['vertices'].shape[0]
+    hand_verts = hand['vertices'].cpu()
+    hand_faces = hand['faces'].cpu()
+    for i in range(num_hand):
+        obj_pc = trimesh.PointCloud(vertices=result['canon_obj_pc'][i])
+        hand_mesh = trimesh.Trimesh(vertices=hand_verts[i], faces=hand_faces[i])
+        hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
+        obj_pc.export(os.path.join(result_path, f"test_obj_{i}.ply"))
+        
+    
 
 
 
@@ -133,5 +150,7 @@ if __name__ == "__main__":
         cfg = compose(config_name=args.config_name, overrides=[f"exp_dir={args.exp_dir}"])
     # main(cfg)
     
-    results_file = "/home/liuym/results/unidexgrasp_test_on_grab/result.pt"
-    vis_result(results_file)
+    result_path = "/home/liuym/results/unidexgrasp_test_on_grab/"
+    results_file = os.path.join(result_path, "result_test_set_orig_ckpt.pt")
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    vis_result(results_file, device, result_path)

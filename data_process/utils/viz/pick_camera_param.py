@@ -6,11 +6,11 @@ import open3d as o3d
 def save_camera_parameters(vis):
     parameters = vis.get_view_control().convert_to_pinhole_camera_parameters()
     o3d.io.write_pinhole_camera_parameters(
-        "/home/tony/mine/Projects/ArmHandVis/HandVersion/HandArmFiles/ARM_HAND_URDF/yyx_tmp/test_tracking_duck/rh_palm_0.obj_camera_params.json", parameters)
+        "/media/tony/T7/yyx_tmp/yangtao_3_20231210/camera_param.json", parameters)
 
 
-bag_path = "/home/tony/mine/Projects/ArmHandVis/HandVersion/HandArmFiles/ARM_HAND_URDF/yyx_tmp/test_tracking_duck/merge_mesh/world_0.obj"
-mesh = o3d.io.read_triangle_mesh(bag_path)
+bag_path = "/media/tony/T7/yyx_tmp/yangtao_3_20231210/merged_pcd_filter/merge_pcd_0.ply"
+mesh = o3d.io.read_point_cloud(bag_path)
 
 vis = o3d.visualization.VisualizerWithKeyCallback()
 vis.create_window()

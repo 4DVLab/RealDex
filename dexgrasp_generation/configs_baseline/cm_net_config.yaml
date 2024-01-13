@@ -10,7 +10,7 @@ use_DFCData: True
 use_Shadow: True
 
 # dirs
-exp_dir: ./runs/cm_net_train
+exp_dir: ./runs/ContactNet/
 
 # wandb
 wandb_offline: True

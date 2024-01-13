@@ -19,7 +19,8 @@ from utils.interrupt_handler import InterruptHandler
 
 def process_config(cfg, save=True):
     root_dir = cfg["exp_dir"]
-    os.makedirs(root_dir, exist_ok=True)
+    if os.path.exists(root_dir) is not True:
+        os.makedirs(root_dir)
 
     with open_dict(cfg):
         cfg["device"] = f'cuda:{cfg["cuda_id"]}' if torch.cuda.is_available() else "cpu"
@@ -59,6 +60,7 @@ def main(cfg):
 
     """ DataLoaders """
     train_loader = get_dex_dataloader(cfg, "train")
+    # train_loader = get_dex_dataloader(cfg, "test")
     test_loader = get_dex_dataloader(cfg, "test")
 
     """ Trainer """
@@ -125,7 +127,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    initialize(version_base=None, config_path="../configs", job_name="train")
+    initialize(version_base=None, config_path="../configs_cvae", job_name="train")
     if args.exp_dir is None:
         cfg = compose(config_name=args.config_name)
     else:

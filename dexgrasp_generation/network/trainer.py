@@ -15,7 +15,7 @@ base_dir = os.path.dirname(__file__)
 sys.path.append(pjoin(base_dir, '..'))
 sys.path.append(pjoin(base_dir, '..', '..'))
 
-from network.models.model import IPDFModel, GlowModel, ContactModel, ApproachModel
+from network.models.model import IPDFModel, GlowModel, ContactModel, AffordanceModel
 from utils.global_utils import update_dict
 
 
@@ -99,8 +99,8 @@ class Trainer(nn.Module):
             self.model = GlowModel(cfg)
         elif cfg["network_type"] == "cm_net":
             self.model = ContactModel(cfg)
-        elif cfg["network_type"] == "toch_single_pose":
-            self.model = ApproachModel(cfg)
+        elif cfg["network_type"] == "affordance_cvae":
+            self.model = AffordanceModel(cfg)
 
         self.optimizer = get_optimizer([p for p in self.model.parameters() if p.requires_grad], cfg)
         self.scheduler = get_scheduler(self.optimizer, cfg)
@@ -164,7 +164,14 @@ class Trainer(nn.Module):
 
             self.log_string('Resume from epoch %d' % self.epoch)
 
-        self.model.load_state_dict(ckpt, strict=False)
+        try:
+            self.model.load_state_dict(ckpt)
+        except:
+            # load old version glow
+            new_ckpt = OrderedDict()
+            for name in ckpt.keys():
+                new_ckpt[name.replace('backbone.', '')] = ckpt[name]
+            self.model.load_state_dict(new_ckpt, strict=False)
 
         print(self.model)
 

@@ -14,7 +14,7 @@ from torch.utils.data._utils.collate import default_collate
 import time
 
 import pytorch3d
-from pytorch3d.transforms import Transform3d, axis_angle_to_matrix
+from pytorch3d.transforms import Transform3d, axis_angle_to_matrix, euler_angles_to_matrix
 from pytorch3d.ops import sample_points_from_meshes
 from pytorch3d.structures import Meshes
 
@@ -230,7 +230,7 @@ class GRABDataset(Dataset):
         return ret_dict
     
 class GRABMeshData(Dataset):
-    def __init__(self, cfg, mode='train', splits=None):
+    def __init__(self, cfg, mode='train', sample_num=5,splits=None):
         self.cfg = cfg
         self.mode = mode
 
@@ -240,6 +240,8 @@ class GRABMeshData(Dataset):
         root_path = dataset_cfg["root_path"]
         baseDir = dataset_cfg["dataset_dir"]
         baseDir = os.path.join(root_path, baseDir)
+        self.ds_path = os.path.join(baseDir, mode)
+        
         self.obj_info = np.load(os.path.join(baseDir, 'obj_info.npy'), allow_pickle=True).item()
         self.all_class = self.obj_info.keys()
         if splits is None:
@@ -251,23 +253,53 @@ class GRABMeshData(Dataset):
                     self.splits['train'].append(key)
         else:
             self.splits = splits
-        self.obj_list = self.splits[mode]
+        self.obj_name_list = self.splits[mode]
+        print(self.ds_path)
+        
+        # self.ds = {}
+        # self.ds['object_data'] = torch.load(os.path.join(self.ds_path, 'object_data.pt'))
+        # self.num_obj_points = dataset_cfg["num_obj_points"]
+        
+        self.object_list = []
+        
+        for obj_name in self.obj_name_list:
+            obj_info = self.obj_info[obj_name]
+            obj_pc = torch.tensor(obj_info['verts_sample']).float()
+            obj_verts = torch.tensor(obj_info['verts']).float()
+            obj_faces = obj_info['faces']
+            for scale in [0.8, 0.9, 1, 1.1, 1.5]:
+                for i in range(sample_num):
+                    # random pose
+                    translation = torch.zeros(1, 3)
+                    # translation[0, 2] = 1 + torch.rand(1)
+                    euler_angles = 2 * torch.pi * torch.rand(3)
+                    rot_mat = euler_angles_to_matrix(euler_angles, "XYZ")
+                    transform = Transform3d().scale(scale).rotate(rot_mat) #.translate(translation)
+                    
+                    new_obj_pc = transform.transform_points(obj_pc)
+                    new_obj_verts = transform.transform_points(obj_verts)
+                    # pose_matrices = transform.get_matrix()
+                    obj_mesh = trimesh.Trimesh(vertices=new_obj_verts.numpy(), faces=obj_faces)
+                    self.object_list.append((obj_name, new_obj_pc, obj_mesh))
+        
+        
     def get_categories(self):
         
-        return self.obj_list
+        return self.obj_name_list
         
     def __len__(self):
-        return len(self.obj_list)
+        return len(self.object_list)
+        # return 10
         
-    def __getitem__(self, index):
-        obj_class = self.obj_list[index]
-        obj = self.obj_info[obj_class]
-        obj_pc = torch.tensor(obj['verts_sample'])
-        # print(obj['verts_sample'].shape)
-        if self.dataset_cfg['fps']:
-            obj_pc = pytorch3d.ops.sample_farthest_points(obj_pc.unsqueeze(0), K=self.dataset_cfg["num_obj_points"])[0][0]  # [NO, 3]
+    def __getitem__(self, idx):
+        
+        obj_name, obj_pc, obj_mesh = self.object_list[idx]
+        plane = torch.tensor([0,0,1, 0])
+        
         ret_dict = {
                 "obj_pc": obj_pc,
+                "plane": plane,
+                "obj_mesh": obj_mesh,
             }
         return ret_dict
         
@@ -277,8 +309,6 @@ if __name__ == '__main__':
         'dataset': {
             'root_path': "/remote-home/share/yumeng/GRAB-Unidexgrasp-data/",
             'dataset_dir': "grab",
-            'hand_global_trans': [0, -0.7, 0.2],
-            'hand_global_rotation_xyz': [-1.57, 0, 3.14],
             'num_obj_points': 1024,
             'num_hand_points': 1024,
             'perturb': True,
@@ -288,9 +318,7 @@ if __name__ == '__main__':
         'network_type':'cm_net'
         
     }
-    # dataset = GRABDataset(cfg)
-    # ret_dict = dataset[0]
-    # export_data(ret_dict['canon_obj_pc'], ret_dict['gt_hand_pc'], ret_dict['contact_map'])
-    dataset = MeshData(cfg)
-    for i in [0, 1]:
-        dataset[i]
+    dataset = GRABDataset(cfg)
+    ret_dict = dataset[0]
+    export_data(ret_dict['canon_obj_pc'], ret_dict['gt_hand_pc'], ret_dict['contact_map'])
+    

@@ -14,7 +14,7 @@ from pytorch3d.structures import Meshes
 from pytorch3d.ops import sample_points_from_meshes, sample_farthest_points
 import pytorch3d.ops
 import pytorch3d.transforms
-from csdf import index_vertices_by_faces, compute_sdf
+# from csdf import index_vertices_by_faces, compute_sdf
 import pickle
 from manotorch.manolayer import ManoLayer, MANOOutput
 from manotorch.anchorlayer import AnchorLayer

@@ -1,0 +1,53 @@
+use_DFCData: true
+use_Shadow: true
+models:
+  affordance_cvae:
+    type: cvae
+    sample_num: 1
+tta:
+  contact_net:
+    type: cm_net
+  batch_size: 50
+  iterations: 300
+  lr: 0.001
+  normalize_factor: 60
+  weight_cmap: 0.07
+  weight_dis: 0.0
+  weight_pen: 10000
+  weight_spen: 10
+  weight_tpen: 1000
+  thres_dis: 0.01
+q1:
+  thres_pen: 0.005
+  thres_tpen: 0.01
+  m: 8
+  mu: 1
+  thres_contact: 0.01
+  nms: true
+  lambda_torque: 10
+exp_dir: ./eval_results
+wandb_offline: true
+wandb_debug_mode: true
+resume_epoch: -1
+cuda_id: 2
+num_workers: 0
+batch_size: 8
+n_samples: 100
+dataset:
+  root_path: data
+  dataset_dir: DFCData
+  hand_global_trans:
+  - 0
+  - -0.7
+  - 0.2
+  hand_global_rotation_xyz:
+  - -1.57
+  - 0
+  - 3.14
+  num_obj_points: 1024
+  num_hand_points: 1024
+  shadow_hand_mesh_dir: mjcf/meshes
+  shadow_urdf_path: mjcf/shadow_hand.xml
+  fps: true
+device: cuda:2
+

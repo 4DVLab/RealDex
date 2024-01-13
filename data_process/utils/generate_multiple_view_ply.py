@@ -14,9 +14,11 @@ import threading
 import shutil
 import filecmp
 from typing import Dict, List, TypedDict
-from genPC import genPC_use_o3d
-from common import common
 from collections import defaultdict
+
+from utils.genPC import genPC_use_o3d
+from utils.common import common
+
 
 
 # so, later, we gen the point cloud from the four camera seperatly
@@ -132,7 +134,7 @@ class gen_merge_pcd_ply:
                 # o3d.io.write_point_cloud(str(
                 #     self.merge_pcd_save_folder / f"pcd{cam_index}.ply"), pcd, write_ascii=False, compressed=False, print_progress=True)
                 merge_pcd += pcd
-                merge_pcd.remove_duplicated_points()
+                # merge_pcd.remove_duplicated_points()
             # o3d.visualization.draw_geometries([merge_pcd])
 
             o3d.io.write_point_cloud(str(
@@ -199,14 +201,14 @@ class gen_merge_pcd_ply:
     def filter_pcd(self, pcd):  # for every pcd, we have to filter the point cloud
         # origin, she process the filter in the world frame
 
-        _, pt_map = pcd.hidden_point_removal([0, 0, 0], 10000)
-        pcd = pcd.select_by_index(pt_map)
+        # _, pt_map = pcd.hidden_point_removal([0, 0, 0], 10000)
+        # pcd = pcd.select_by_index(pt_map)
 
         pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
             np.array([-0.5, -0.8, 0], np.float64), np.array([2, 0.8, 1.5], np.float64)))
 
         # filter
-        pcd, ind = pcd.remove_statistical_outlier(30, 1.5)
+        # pcd, ind = pcd.remove_statistical_outlier(30, 1.5)
 
         return pcd
 
@@ -248,7 +250,7 @@ def mint():
 if __name__ == "__main__":
     four_cam_intrisics_extrisics_save_folder = Path(
         "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")
-    root_path = Path("/home/lab4dv/data")
+    root_path = Path("/home/lab4dv/data/bags/test/test_3")
     gen_pcd_for_annotate(root_path, four_cam_intrisics_extrisics_save_folder)
 
 

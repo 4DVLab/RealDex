@@ -15,7 +15,7 @@ import numpy as np
 import random
 from utils import utils_loss
 from utils.loss import CVAE_loss_mano, CMap_loss, CMap_loss1, CMap_loss3, CMap_loss4, inter_penetr_loss, CMap_consistency_loss
-from pytorch3d.loss import chamfer_distance
+# from pytorch3d.loss import chamfer_distance
 import mano
 
 writer = SummaryWriter()
