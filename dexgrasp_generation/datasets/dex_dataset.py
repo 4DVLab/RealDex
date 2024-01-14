@@ -139,30 +139,6 @@ class DFCDataset(Dataset):
 
         object_pc = pc[:3000]
         obj_pc = (object_pc - pose_matrix[:3, 3] / recorded_data['scale'].item()) @ pose_matrix[:3, :3]  # [N, 3]
-
-        # print(object_pc.shape)
-        # table_pc = pc[3000:]
-
-        # max_diameter = 0.2
-        # n_samples_table_extra = 2000
-
-        # min_diameter = (object_pc[:, 0] ** 2 + object_pc[:, 1] ** 2).max()
-        # distances = min_diameter + (max_diameter - min_diameter) * torch.rand(n_samples_table_extra, dtype=torch.float) ** 0.5
-        # theta = 2 * np.pi * torch.rand(n_samples_table_extra, dtype=torch.float)
-        # table_pc_extra = torch.stack([distances * torch.cos(theta), distances * torch.sin(theta), torch.zeros_like(distances)], dim=1)
-        # table_pc = torch.cat([table_pc, table_pc_extra])
-        # table_pc_cropped = table_pc[table_pc[:, 0] ** 2 + table_pc[:, 1] ** 2 < max_diameter]
-        # table_pc_cropped_sampled = pytorch3d.ops.sample_farthest_points(table_pc_cropped.unsqueeze(0), K=1000)[0][0]
-        # object_pc = (torch.cat([object_pc, table_pc_cropped_sampled]) - pose_matrix[:3, 3] / recorded_data['scale'].item()) @ pose_matrix[:3, :3]  # [N, 3]
-
-        # if self.dataset_cfg['fps']:
-        #     obj_pc = pytorch3d.ops.sample_farthest_points(object_pc.unsqueeze(0), K=self.num_obj_points)[0][0]  # [NO, 3]
-        # else:
-        #     obj_pc = object_pc
-        
-        # obj_pc = pcs_table[:3000].unsqueeze(0)
-
-        
                 
         if self.cfg["network_type"] == "affordance_cvae":
             plane_pose = plane2pose(plane)

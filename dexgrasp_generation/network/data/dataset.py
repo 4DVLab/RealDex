@@ -10,6 +10,7 @@ sys.path.append(pjoin(base_dir, '..'))  # data -> model -> root, to import data_
 sys.path.append(pjoin(base_dir, '..', '..'))  # data -> model -> root, to import data_proc
 
 from datasets.dex_dataset import DFCDataset
+from datasets.realdex_dataset import RealDexDataset
 from datasets.object_dataset import Meshdata
 from datasets.grab_dataset import GRABDataset, GRABMeshData
 from utils.global_utils import my_collate_fn
@@ -31,6 +32,13 @@ def get_dex_dataloader(cfg, mode="train", shuffle=None):
 
     dataset = DFCDataset(cfg, mode)
     return DataLoader(dataset, batch_size=cfg["batch_size"], shuffle=shuffle, num_workers=cfg["num_workers"])
+
+def get_realdex_dataloader(cfg, mode="train", shuffle=None):
+    if shuffle is None:
+        shuffle = (mode == "train")
+
+    dataset = RealDexDataset(cfg, mode)
+    return DataLoader(dataset, batch_size=cfg["batch_size"], shuffle=shuffle, num_workers=cfg["num_workers"], drop_last=True)
 
 def get_mesh_dataloader(cfg, mode="train"):
     dataset = Meshdata(cfg, mode)

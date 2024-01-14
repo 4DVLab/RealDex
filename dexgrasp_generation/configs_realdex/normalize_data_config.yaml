@@ -19,14 +19,14 @@ wandb_debug_mode: True  # and only program error will be reported
 # frequency
 freq:
     step_epoch: 100
-    save: 1000  # per iter
+    save: 10000  # per iter
     plot: 100  # per iter
     test: 50000 # per iter
 
 # optimization options
 optimizer: Adam
 weight_decay: 0.0001
-learning_rate: 0.0005
+learning_rate: 0.001
 lr_policy: step
 lr_gamma: 0.5 # lr decay rate
 lr_step_size: 40
@@ -44,11 +44,11 @@ total_epoch: 250
 resume_epoch: -1
 
 # device
-cuda_id: 0
+cuda_id: 1
 
 # data loader
 num_workers: 8
-batch_size: 32
+batch_size: 256
 
 # hydra
 hydra:

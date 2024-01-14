@@ -203,9 +203,87 @@ class PCDGenerator:
         
         _, pt_map = pcd.hidden_point_removal([0, 0, 0], 10000)
         pcd = pcd.select_by_index(pt_map)  
-        pcd = pcd.voxel_down_sample(0.005)
+        pcd = pcd.voxel_down_sample(0.002)
 
-        return pcd    
+        return pcd
+    
+    @staticmethod
+    def crop_pcd(pcd, bb_min, bb_max):
+        cropped_pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(bb_min, bb_max))
+        return cropped_pcd
+    
+    @staticmethod     
+    def random_subsample(pcd, num_points=8000):
+        """
+        Randomly subsample a point cloud to a fixed number of points.
+
+        Parameters:
+        pcd (open3d.geometry.PointCloud): The input point cloud.
+        num_points (int): The number of points to sample.
+
+        Returns:
+        open3d.geometry.PointCloud: The subsampled point cloud.
+        """
+        # Get the total number of points in the point cloud
+        total_points = np.asarray(pcd.points).shape[0]
+        
+        # Check if the point cloud has enough points
+        if num_points >= total_points:
+            return pcd
+        
+        # Randomly select indices
+        indices = np.random.choice(total_points, num_points, replace=False)
+        
+        # Select points based on indices
+        selected_points = np.asarray(pcd.points)[indices, :]
+        
+        # Create a new point cloud based on the selected points
+        subsampled_pcd = o3d.geometry.PointCloud()
+        subsampled_pcd.points = o3d.utility.Vector3dVector(selected_points)
+        
+        # If the original point cloud has colors or normals, also subsample them
+        if pcd.has_colors():
+            subsampled_pcd.colors = o3d.utility.Vector3dVector(np.asarray(pcd.colors)[indices, :])
+        if pcd.has_normals():
+            subsampled_pcd.normals = o3d.utility.Vector3dVector(np.asarray(pcd.normals)[indices, :])
+    
+        return subsampled_pcd
+    
+    def gen_object_pcd(self, index, out_dir, export=True):
+        pcd_list = []
+        for cam_index in range(4):
+            pcd = self.gen_pcd(index, cam_index, export=export)
+            pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
+                np.array([0.78, -0.6, 0.73], np.float64), np.array([2, 0.5, 1.06], np.float64)))
+            pcd_list.append(pcd)
+        
+        target = pcd_list[0]
+        max_dist= 0.001
+        registered_pc = [pcd_list[0]]
+        for i in range(1, 4):
+            source = pcd_list[i]
+            icp_fine = o3d.pipelines.registration.registration_icp(
+                source, target, max_dist, np.identity(4),
+                o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+                o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=10))
+            transformation_icp = icp_fine.transformation
+            source.transform(transformation_icp)
+            registered_pc.append(source)
+            
+        combined_pcd = o3d.geometry.PointCloud()
+        for pcd in registered_pc:
+            combined_pcd += pcd
+            
+        # combined_pcd = combined_pcd.voxel_down_sample(0.001)
+        _, ind = combined_pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+        # Select the inlier points
+        inlier_cloud = combined_pcd.select_by_index(ind)
+        
+        out_path = os.path.join(out_dir, f"{index}.ply")
+        
+        if export:
+            o3d.io.write_point_cloud(out_path, inlier_cloud)
+        return inlier_cloud
 
 
 def gen_pcd_for_annotate(root_path, cam_param_dir, start, end=None):
