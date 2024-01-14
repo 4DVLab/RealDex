@@ -17,6 +17,10 @@ import re
 import open3d as o3d
 from copy import deepcopy
 import random
+from pytorch3d.loss.point_mesh_distance import point_face_distance
+from pytorch3d.structures import Meshes, Pointclouds
+from pytorch3d.ops import sample_farthest_points
+import torch
 
 class DataProcesser():
     def __init__(self, data_dir, cam_param_dir, obj_mesh):
@@ -80,11 +84,15 @@ class DataProcesser():
         
         
 
-    def gen_single_arm_hand(self, time, only_hand):
+    def gen_single_arm_hand(self, time, out_type='all'):
         updated_meshes = {}
         tf_data = self.global_tf_seq[time]
-        if only_hand:
+        if out_type == 'only_hand':
             key_list = set(self.qpos_key_list) & set(self.mesh_dict.keys())
+            key_list = list(key_list)
+        elif out_type == 'all':
+            key_list = list(self.mesh_dict.keys())
+            # key_list = set(self.mesh_dict.keys()) - set(self.qpos_key_list)
             key_list = list(key_list)
         else:
             # key_list = list(self.mesh_dict.keys())
@@ -301,6 +309,8 @@ class DataProcesser():
         
         return out_dict
     
+    
+    
     def seg_sequence(self, out_dir):
         seg_file = os.path.join(self.data_dir, "segment.txt")
         seg_list = list(np.loadtxt(seg_file))
@@ -347,8 +357,81 @@ class DataProcesser():
                                 )
             counter += 1
     
-    def compute_contact(self, qpos):
-        pass
+    def filter_contact_seq(self, full_data):
+        seg_file = os.path.join(self.data_dir, "segment.txt")
+        if os.path.exists(seg_file):
+            return
+        
+        for time_scene in tqdm(self.scene_to_mesh):
+            time_sr = self.scene_to_mesh[time_scene]
+            time_sr = int(time_sr.split('.')[0])
+            hand_mesh = self.gen_single_arm_hand(time_sr, out_type='only_hand')
+            hand_verts = torch.tensor(hand_mesh.vertices)
+            hand_faces = torch.tensor(hand_mesh.triangles)
+            hand_mesh = Meshes(verts=[hand_verts], faces=[hand_faces])
+            
+            POINTS_NUM = 1000
+            sampled_pts, _ = sample_farthest_points(hand_mesh.verts_padded(), K=POINTS_NUM)
+            print(sampled_pts.shape)
+            
+            dist = DataProcesser.point_mesh_face_distance(obj_mesh, sampled_pts)
+            
+            # TODO: filter all  contact mesh
+
+            
+    
+    @staticmethod
+    def point_mesh_face_distance(
+        meshes: Meshes,
+        pcls: Pointclouds,
+        min_triangle_area: float = 5e-3,
+    ):
+        """
+        Computes the distance between a pointcloud and a mesh within a batch.
+        Given a pair `(mesh, pcl)` in the batch, we define the distance to be the
+        sum of two distances, namely `point_face(mesh, pcl) + face_point(mesh, pcl)`
+
+        `point_face(mesh, pcl)`: Computes the squared distance of each point p in pcl
+            to the closest triangular face in mesh and averages across all points in pcl
+        `face_point(mesh, pcl)`: Computes the squared distance of each triangular face in
+            mesh to the closest point in pcl and averages across all faces in mesh.
+
+        The above distance functions are applied for all `(mesh, pcl)` pairs in the batch
+        and then averaged across the batch.
+
+        Args:
+            meshes: A Meshes data structure containing N meshes
+            pcls: A Pointclouds data structure containing N pointclouds
+            min_triangle_area: (float, defaulted) Triangles of area less than this
+                will be treated as points/lines.
+
+        Returns:
+            the closet distance from a point cloud to a mesh
+        """
+
+        if len(meshes) != len(pcls):
+            raise ValueError("meshes and pointclouds must be equal sized batches")
+        N = len(meshes)
+
+        # packed representation for pointclouds
+        points = pcls.points_packed()  # (P, 3)
+        points_first_idx = pcls.cloud_to_packed_first_idx()
+        max_points = pcls.num_points_per_cloud().max().item()
+
+        # packed representation for faces
+        verts_packed = meshes.verts_packed()
+        faces_packed = meshes.faces_packed()
+        tris = verts_packed[faces_packed]  # (T, 3, 3)
+        tris_first_idx = meshes.mesh_to_faces_packed_first_idx()
+        max_tris = meshes.num_faces_per_mesh().max().item()
+
+        # point to face distance: shape (P,)
+        point_to_face = point_face_distance(
+            points, points_first_idx, tris, tris_first_idx, max_points, min_triangle_area
+        )
+        dist = torch.minimum(point_to_face)
+        return dist
+        
         
     def split_data(self, out_dir, split_type='object'):
         if split_type == 'object':
@@ -398,8 +481,11 @@ def run(data_processer):
 def segment_sequence(data_processer, model_name):
     out_dir = "/storage/group/4dvlab/yumeng/IntelligentHand/collected_data/"
     out_dir = os.path.join(out_dir, model_name)
-    os.makedirs(out_dir, exist_ok=True)
-    data_processer.seg_sequence(out_dir)
+    if os.path.exists(out_dir):
+        return
+    else:
+        os.makedirs(out_dir, exist_ok=True)
+        data_processer.seg_sequence(out_dir)
     
 def run_single(model_name, exp_code):
     data_dir = os.path.join(base_dir, model_name, exp_code)
@@ -433,11 +519,14 @@ if __name__ == '__main__':
             if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
                 data_dir = os.path.join(base_dir, model_name, exp_code)
                 obj_path = os.path.join(obj_model_dir, f"{model_name}.obj")
+                if not os.path.exists(obj_path):
+                    print("OBJ NOT EXISTS", obj_path)
+                    continue
                 obj_mesh = trimesh.load(obj_path)
                 print(data_dir)
                 data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
                 run(data_processer)
-                segment_sequence(data_processer, model_name)
+                # segment_sequence(data_processer, model_name)
                 
     
     

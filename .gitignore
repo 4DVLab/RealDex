@@ -194,4 +194,4 @@ mjcf/~$adow_hand_vis.xml
 ./history
 dexgrasp_generation/data
 
-dexgrasp_generation/eval_results/
+# dexgrasp_generation/eval_results/
