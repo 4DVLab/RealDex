@@ -195,3 +195,4 @@ mjcf/~$adow_hand_vis.xml
 dexgrasp_generation/data
 
 # dexgrasp_generation/eval_results/
+dexgrasp_generation/eval_results/config.yaml
