@@ -446,31 +446,28 @@ class DataProcesser():
         out_dir = os.path.join(self.data_dir, "vis_meshes")
         os.makedirs(out_dir, exist_ok=True)
         
-        seg_file = os.path.join(self.data_dir, "segment.txt")
-        seg_list = list(np.loadtxt(seg_file))
+        # seg_file = os.path.join(self.data_dir, "segment.txt")
+        # seg_list = list(np.loadtxt(seg_file))
         data_file = os.path.join(self.data_dir, "final_data.npy")
         
         full_data = np.load(data_file, allow_pickle=True).item()
+        tf_len = len(self.scene_to_mesh)
             
-        for seg in tqdm(seg_list):
-            start, end = seg
-            start, end = int(start), int(end)
-            obj_tf_mat = np.eye(4)
-            # for t in trange(start, end):
-            for t in trange(0, start):
-                time_sr = int(self.scene_to_mesh[str(t)].split('.')[0])
-                
-                obj_tf_mat[:3, :3] = full_data['object_orient'][t]
-                obj_tf_mat[:3, -1] = full_data['object_transl'][t]
-                obj_mesh = deepcopy(self.obj_mesh)
-                obj_mesh.apply_transform(obj_tf_mat)
-                
-                obj_mesh.export(os.path.join(out_dir, f"{t}_object.ply"))
-                o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{t}_hand.ply"), 
-                                           self.gen_single_arm_hand(time_sr, only_hand=True))
-                o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{t}.ply"), 
-                                           self.gen_single_arm_hand(time_sr, only_hand=False))
-            break
+        obj_tf_mat = np.eye(4)
+        # for t in trange(start, end):
+        for t in trange(tf_len):
+            time_sr = int(self.scene_to_mesh[str(t)].split('.')[0])
+            
+            obj_tf_mat[:3, :3] = full_data['object_orient'][t]
+            obj_tf_mat[:3, -1] = full_data['object_transl'][t]
+            obj_mesh = deepcopy(self.obj_mesh)
+            obj_mesh.apply_transform(obj_tf_mat)
+            
+            obj_mesh.export(os.path.join(out_dir, f"{t}_object.ply"))
+            o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{t}_hand.ply"), 
+                                        self.gen_single_arm_hand(time_sr, out_type='only_hand'))
+            o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{t}.ply"), 
+                                        self.gen_single_arm_hand(time_sr, out_type='only_hand'))
                 
 
 def run(data_processer):
@@ -494,7 +491,9 @@ def run_single(model_name, exp_code):
     print(data_dir)
     data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
     # data_processer.gen_all_arm_hand(out_type='both', num_samples=1)
-    data_processer.export_meshes()
+    # data_processer.export_meshes()
+    data_processer.gen_object_pcd(50)
+    
     
 if __name__ == '__main__':
     urdf_path = "../../data_process/bimanual_srhand_ur.urdf"
@@ -508,25 +507,25 @@ if __name__ == '__main__':
     
     model_name_list = os.listdir(base_dir)
     
-    # run_single(model_name="blue_magnet_toy", exp_code="blue_magnet_toy_1_20231209")
+    run_single(model_name="elephant_watering_can", exp_code="elephant_watering_can_1_20240106")
     
-    for model_name in model_name_list:
-        path = os.path.join(base_dir, model_name)
-        global counter 
-        counter = 0
-        for exp_code in os.listdir(path):
-            subpath = os.path.join(path, exp_code)
-            if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
-                data_dir = os.path.join(base_dir, model_name, exp_code)
-                obj_path = os.path.join(obj_model_dir, f"{model_name}.obj")
-                if not os.path.exists(obj_path):
-                    print("OBJ NOT EXISTS", obj_path)
-                    continue
-                obj_mesh = trimesh.load(obj_path)
-                print(data_dir)
-                data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
-                run(data_processer)
-                # segment_sequence(data_processer, model_name)
+    # for model_name in model_name_list:
+    #     path = os.path.join(base_dir, model_name)
+    #     global counter 
+    #     counter = 0
+    #     for exp_code in os.listdir(path):
+    #         subpath = os.path.join(path, exp_code)
+    #         if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
+    #             data_dir = os.path.join(base_dir, model_name, exp_code)
+    #             obj_path = os.path.join(obj_model_dir, f"{model_name}.obj")
+    #             if not os.path.exists(obj_path):
+    #                 print("OBJ NOT EXISTS", obj_path)
+    #                 continue
+    #             obj_mesh = trimesh.load(obj_path)
+    #             print(data_dir)
+    #             data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
+    #             run(data_processer)
+    #             # segment_sequence(data_processer, model_name)
                 
     
     

@@ -23,12 +23,13 @@ from network.models.contactnet.contact_network import ContactMapNet
 from utils.hand_model import AdditionalLoss, add_rotation_to_hand_pose
 from utils.eval_utils import KaolinModel, eval_result
 from utils.visualize import visualize
-from utils.hand_model import HandModel
+# from utils.hand_model import HandModel
+from utils.shadow_hand_builder import ShadowHandBuilder
 import trimesh
 from pytorch3d import transforms as pttf
 from network.models.model import get_model
 from collections import OrderedDict
-from pytorch3d.transforms import rotation_6d_to_matrix, matrix_to_axis_angle
+from pytorch3d.transforms import axis_angle_to_matrix
 
 
 def main(cfg, result_path):
@@ -142,34 +143,32 @@ def parse_args():
 def vis_test_result(device, result_path, vis_path):
     for filename in os.listdir(result_path):
         result = torch.load(os.path.join(result_path, filename))
-        print(result.keys())
-        print(len(result))
         
         hand_pose = result['hand_pose'].to(device)
-        print(hand_pose.shape)
-        hand_model = HandModel(
-                mjcf_path='data/mjcf/shadow_hand.xml',
-                mesh_path='data/mjcf/meshes',
-                contact_points_path='data/mjcf/contact_points.json',
-                penetration_points_path='data/mjcf/penetration_points.json',
-                device=device,
-            )
         hand_pose = hand_pose.float()
-        hand = hand_model(hand_pose=hand_pose, object_pc=result['obj_pc'].to(device), with_meshes=True)
+        
+        global_translation = hand_pose[:, 0:3]
+        global_rotation = axis_angle_to_matrix(hand_pose[:, 3:6])
+        qpos = hand_pose[:,6:]
+        hand_model = ShadowHandBuilder(device=device, 
+                                       assets_dir="/public/home/v-liuym/projects/IntelligentHand/dexgrasp_generation/assets")
+        hand_dict = hand_model.get_hand_model(global_rotation, global_translation, qpos)
+        
+        
         out_path = os.path.join(vis_path, filename.split(".")[0])
         os.makedirs(out_path, exist_ok=True)
-        vis_result(hand, result, out_path)
+        vis_result(hand_dict['meshes'], result, out_path)
     
-def vis_result(hand, data, result_path):
-    num_hand = hand['vertices'].shape[0]
-    hand_verts = hand['vertices'].cpu()
-    hand_faces = hand['faces'].cpu()
-    # print(hand_verts.shape, hand_faces.shape)
+def vis_result(hand_meshes, data, result_path):
+    num_hand = len(hand_meshes)
+    hand_verts = hand_meshes.verts_padded().cpu()
+    hand_faces = hand_meshes.faces_padded().cpu()
+    print(hand_verts.shape, hand_faces.shape)
     for i in range(num_hand):
         # colors = feature_to_color(result['cmap_pred'][i].cpu())
         obj_pc = data['obj_pc'][i].cpu()
         obj_pc = trimesh.PointCloud(vertices=obj_pc) #, colors=colors)
-        hand_mesh = trimesh.Trimesh(vertices=hand_verts[i], faces=hand_faces)
+        hand_mesh = trimesh.Trimesh(vertices=hand_verts[i], faces=hand_faces[i])
         hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
         obj_pc.export(os.path.join(result_path, f"test_obj_{i}.ply"))
         
