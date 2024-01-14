@@ -23,7 +23,7 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path,constrain_bound,sleep
     image_save_folder = obj_folder / f"capture_image"
     os.makedirs(image_save_folder, exist_ok=True)
     hand_arm_mesh_folder_path = Path(bag_folder_path) / Path("arm_hand_mesh")
-    object_mesh_folder  = Path(bag_folder_path) /Path("icp_object_pose_in_every_frame")
+    object_mesh_folder  = Path(bag_folder_path) /Path("object_pose_in_every_frame")
     # object_mesh.compute_vertex_normals()
     for index in np.arange(constrain_bound[0],min(constrain_bound[1],pcd_length)):
         sleep(sleep_time_)
@@ -35,13 +35,14 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path,constrain_bound,sleep
         # hand_arm_mesh.compute_vertex_normals()
 
         object_mesh = o3d.io.read_triangle_mesh(str(object_mesh_folder / Path(f"{index}.ply")))
+        object_mesh.compute_vertex_normals()
         object_mesh.paint_uniform_color([1,0,0])
         if index != 0:
             vis.clear_geometries()
         
         vis.add_geometry(env_pcd)
         # vis.add_geometry(hand_arm_mesh)
-        vis.add_geometry(object_mesh)
+        # vis.add_geometry(object_mesh)
         vis.get_view_control().convert_from_pinhole_camera_parameters(camera_params)
         vis.poll_events()
         vis.update_renderer()
@@ -53,12 +54,12 @@ def show_obj_env_pcd(bag_folder_path, viz_camera_info_path,constrain_bound,sleep
 if __name__ == "__main__":
 
     # os.environ['DISPLAY'] = ':1'  # 指定显示器编号
-    bag_folder_path = "/home/lab4dv/data/ssd/xbox/xbox_2"
+    bag_folder_path = "/home/lab4dv/data/bags/yogurt/yogurt_1_20231207"
+
     sleep_time = 0
     
     
-    
-    viz_camera_info_path = "/home/lab4dv/data/bags/camera_param.json"
+    viz_camera_info_path = "/home/lab4dv/data/camera_param.json"
     
     constrain_bound = [0,2000]
     

@@ -150,8 +150,8 @@ class gen_merge_pcd_ply:
         pcd.transform(self.four_cams_to_world_frame[cam_index])
         pcd = self.filter_pcd(pcd)
         os.makedirs(self.merge_pcd_save_folder / f"cam{cam_index}",exist_ok=True)
-        o3d.io.write_point_cloud(str(self.merge_pcd_save_folder / f"cam{cam_index}/{time_index}.ply"),
-                pcd, write_ascii=False, compressed=False, print_progress=True)
+        # o3d.io.write_point_cloud(str(self.merge_pcd_save_folder / f"cam{cam_index}/{time_index}.ply"),
+        #         pcd, write_ascii=False, compressed=False, print_progress=True)
         with threading.Lock():  # Ensure thread-safe operation on the merge_pcd object
             merge_pcd += pcd
             # merge_pcd.remove_duplicated_points()
@@ -166,9 +166,9 @@ class gen_merge_pcd_ply:
                 futures = [executor.submit(self.process_camera, cam_index, time_index, merge_pcd) for cam_index in range(4)]
                 for future in futures:
                     future.result()
-                # o3d.io.write_point_cloud(str(
-                #     self.merge_pcd_save_folder / f"merge_pcd_{index}.ply"),
-                #     merge_pcd, write_ascii=False, compressed=False, print_progress=True)
+                o3d.io.write_point_cloud(str(
+                    self.merge_pcd_save_folder / f"merge_pcd_{index}.ply"),
+                    merge_pcd, write_ascii=False, compressed=False, print_progress=True)
                 merge_pcd.clear()
         return len(batch_range)
 
@@ -355,23 +355,45 @@ def gen_mvp(bag_folder_path):
         root_path, 
         four_cam_intrisics_extrisics_save_folder, constrain_bound)
 
+def search_all_folder_gen_pcd(root_folder_path):
+    root_folder_path = Path(root_folder_path)
+    file_list = os.listdir(root_folder_path)
+    if 'TF' in file_list and 'global_name_position' in file_list:
+        print(root_folder_path)
+        gen_mvp(root_folder_path)
+        return
+    for file in file_list:
+        temp_path = root_folder_path / file
+        try:
+            if os.path.isdir(temp_path):
+                search_all_folder_gen_pcd(temp_path)
+        except PermissionError:
+            print("PermissionError")
+            continue
+
 
 if __name__ == "__main__":
-
-    root_path = Path("/media/lab4dv/HighSpeed/crisps/crisps_1")
-
-
-
-    four_cam_intrisics_extrisics_save_folder = Path(
-        "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")    
-
-    pcd_index = 0
-    constrain_bound = [0,2000]
-    # constrain_bound = [pcd_index,pcd_index]
+    # search_all_folder_gen_pcd("/media/lab4dv/film/bags")
+ 
+    search_all_folder_gen_pcd("/home/lab4dv/data/bags/cosmetics")
 
 
-    gen_pcd_for_annotate(
-        root_path, 
-        four_cam_intrisics_extrisics_save_folder, constrain_bound)
+
+
+    # root_path = Path("/media/lab4dv/HighSpeed/dust_cleaning_sprayer/dust_cleaning_sprayer_2")
+
+
+
+    # four_cam_intrisics_extrisics_save_folder = Path(
+    #     "/home/lab4dv/IntelligentHand/calibration_ws/calibration_process/data")    
+
+    # pcd_index = 0
+    # constrain_bound = [0,2000]
+    # # constrain_bound = [pcd_index,pcd_index]
+
+
+    # gen_pcd_for_annotate(
+    #     root_path, 
+    #     four_cam_intrisics_extrisics_save_folder, constrain_bound)
 
 

@@ -13,6 +13,8 @@ import multiprocessing
 from generate_multiple_view_ply import gen_mvp
 from transform_mesh_with_tracking_result import gen_tracking_result_model
 
+
+
 def seven_num2matrix(seven_num):
     translation = seven_num[:3]
     roatation = seven_num[3:]

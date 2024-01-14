@@ -17,6 +17,8 @@ from tqdm import tqdm, trange
 import shutil
 import re
 import open3d as o3d
+from pathlib import Path
+
 
 class DataProcesser():
     def __init__(self, data_dir, cam_param_dir):
@@ -170,9 +172,10 @@ def export_meshes(sr_mesh_dir, scene_dir, out_dir, scene_to_mesh_path=None):
         shutil.copy(scene_pcd, out_path)
         out_path = os.path.join(out_dir, f"hand_{scene_t}.ply")
         shutil.copy(hand_mesh, out_path)
-        
 
-if __name__ == '__main__':
+
+
+def time_sync_script():
     urdf_path = "../../data_process/bimanual_srhand_ur.urdf"
     prefix ="/public/home/v-liuym/data/ShadowHand/description/"
     struct_file = "./assets/srhand_ur.json"
@@ -192,6 +195,47 @@ if __name__ == '__main__':
                 data_processer = DataProcesser(data_dir, cam_param_dir)
                 data_processer.time_sync()
     
+def load_scene_to_mesh_by_step(data_dir):
+    file_path = f"{data_dir}/scene_to_mesh_by_step.json"
+    with open(file_path,"r") as json_reader:
+        file = json.load(json_reader)
+    return file
+
+if __name__ == '__main__': 
+    urdf_path = "../../data_process/bimanual_srhand_ur.urdf"
+    prefix ="/home/lab4dv/data/hand_arm_mesh"
+    struct_file = "./assets/srhand_ur.json"
     
+    cam_param_dir = "../../calibration_ws/calibration_process/data"
     
+
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
+    bag_folder_path = Path("/media/lab4dv/HighSpeed/charger/charger_1")
+    env_pcd_folder = Path(bag_folder_path) / Path("merged_pcd_filter")
+    viz_camera_info_path = "/home/lab4dv/data/bags/camera_param.json"
+    camera_params = o3d.io.read_pinhole_camera_parameters(viz_camera_info_path)
+    
+
+    data_dir = str(bag_folder_path)
+    time_sync_json = load_scene_to_mesh_by_step(data_dir)
+    # print(time_sync_json)
+    data_processer = DataProcesser(data_dir, cam_param_dir)
+    for key, value in time_sync_json.items():
+        time = value.split('.')[0]
+        
+        env_pcd = o3d.io.read_point_cloud(str(env_pcd_folder / Path(f"cam0/{key}.ply")))
+
+        hand_mesh = data_processer.gen_single_hand_mesh(int(time))
+        hand_mesh.compute_vertex_normals()
+        if key != 0:
+            vis.clear_geometries()
+        vis.add_geometry(env_pcd)
+        # vis.add_geometry(hand_arm_mesh)
+        vis.add_geometry(hand_mesh)
+        vis.get_view_control().convert_from_pinhole_camera_parameters(camera_params)
+        vis.poll_events()
+        vis.update_renderer()
+    vis.destroy_window()
+
     

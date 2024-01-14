@@ -56,7 +56,7 @@ def sub_mesh_transform_and_save(transform_matrix,mesh_path,path_to_save):
         o3d.io.write_triangle_mesh(str(path_to_save), mesh)
 
 
-def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interval = [0,99999], cam2world_transform=None,cam_index=0,icp_result = False,icp_mode_ = 1):
+def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interval = [0,99999], cam2world_transform=None,cam_index=0,icp_result = False,icp_mode_ = 1,file_name = "tracking_result.txt"):
 
     mesh_path = Path(bag_folder_path).parent / Path("models") /  Path(model_name + ".obj")
     # bag_name = bag_folder_path.split('/')[-1] #[:-9]
@@ -67,7 +67,7 @@ def transform_obj2result_pose(bag_folder_path, model_name, transform_mesh_interv
     # pose_path = Path(bag_folder_path) / Path(f"tracking_result/{bag_name}_cam_index_{cam_index}_tracking_result.txt")
     pose_path = Path(bag_folder_path) / \
         Path(
-            f"tracking_result/tracking_result.txt")
+            f"tracking_result/{file_name}")
     if icp_result :
         pose_path = Path(bag_folder_path) / \
         Path(
@@ -126,7 +126,7 @@ def get_model_name(bag_folder_path):
 
 
 
-def gen_tracking_result_model(bag_folder_path,icp_mode = 1,icp = False):
+def gen_tracking_result_model(bag_folder_path,icp_mode = 1,icp = False,file_name = "tracking_result.txt"):
     bag_folder_path = bag_folder_path
     model_name = get_model_name(bag_folder_path)
     
@@ -144,11 +144,24 @@ def gen_tracking_result_model(bag_folder_path,icp_mode = 1,icp = False):
                               transform_mesh_interval,
                               None,
                               icp_result=icp,
-                              icp_mode_ = icp_mode)
+                              icp_mode_ = icp_mode,
+                              file_name = file_name)
+
+def get_model_name(bag_folder_path):
+    bag_folder_path = Path(bag_folder_path)
+    model_folder_path = bag_folder_path.parent / Path("models")
+    print(model_folder_path)
+    model_name = None
+    for file in os.listdir(model_folder_path):
+        if file.endswith(".obj"):
+            model_name = file[:-4]
+            return model_name
+
 
 if __name__ == "__main__":
-    bag_folder_path = "/home/lab4dv/data/bags/apple/apple_1_20231207"
-    model_name = "apple"
+    bag_folder_path = "/home/lab4dv/data/bags/sprayer/sprayer_1_20231209"
+
+    model_name = get_model_name(bag_folder_path)
     icp_result = False
 
 
@@ -166,7 +179,8 @@ if __name__ == "__main__":
                               transform_mesh_interval,
                               None,
                             icp_result=icp_result,
-                            icp_mode_=3
+                            icp_mode_=3,
+                            file_name="tracking_and_icp_mode_3.txt"
 )
 
 

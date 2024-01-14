@@ -4,6 +4,7 @@ from pathlib import Path
 
 def move_mesh_to_origin(mesh_vertices):
     # 计算网格的几何中心
+    mesh_vertices = mesh_vertices * 0.001
     center = np.mean(mesh_vertices, axis=0)
 
     # 将网格几何中心移动到坐标中心
@@ -35,7 +36,7 @@ def write_obj_file(file_path, vertices, faces):
         for face in faces:
             f.write(f"f {' '.join(str(index) for index in face)}\n")
 
-folder_path = "/home/lab4dv/data/model"
+folder_path = "/media/lab4dv/Elements/charmander/charmander"
 
 for file in os.listdir(folder_path):
     if file.endswith(".obj"):
@@ -49,3 +50,4 @@ for file in os.listdir(folder_path):
         write_path = Path(folder_path) / file
         # 写入OBJ文件
         write_obj_file(write_path, centered_vertices, mesh_faces)
+        

@@ -25,7 +25,8 @@ devel/
 data_preprocess/ours/assets/*
 result
 *.zip
-
+*.ini
+*.stl
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

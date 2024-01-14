@@ -42,7 +42,8 @@ class path_data_class:
     def update_path(self):
         self.root_path = Path(self.root_path) 
         self.folder_path = Path(self.folder_path)
-        self.urdf_path = self.root_path / Path("urdf") / Path("bimanual_srhand_ur.urdf")
+        # self.urdf_path = self.root_path / Path("urdf") / Path("bimanual_srhand_ur.urdf")
+        self.urdf_path = Path("/home/lab4dv/data/hand_arm_mesh/bimanual_srhand_ur.urdf")
         self.bag_path = self.folder_path / Path(self.bag_name) / Path(str(self.bag_name) + ".bag")
         self.output_folder = self.folder_path/ Path(self.bag_name)  / Path("output")
         self.rgb_timestamp_path = self.folder_path / Path(self.bag_name) 

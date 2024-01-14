@@ -17,7 +17,7 @@ def get_args():
     # parser.add_argument('--bag_name', default=None, type=str,)
     parser.add_argument("--outsize_folder",default=None,type=str,help="the folder outsize the bag folder")
     
-    return parser.parse_args()
+    return parser.parse_args() 
 
 
 
@@ -37,9 +37,9 @@ if __name__ == "__main__":
     # folder_path = args.folder_path
     # bag_name = args.bag_name
     # camera_param_path = args.camera_param_path
-    root_folder = "/home/lab4dv/data/bags"
+    root_folder = "/media/lab4dv/game/new_bags"
     for folder in os.listdir(root_folder):
-        folder = "small_sprayer"
+        folder = "robot_toy"
         # if "urdf" in folder or "config_data" in folder or "hand_arm_mesh" in folder or "lost+found" in folder or "wd40" not in folder:
         #     continue
         # else:
@@ -64,8 +64,8 @@ if __name__ == "__main__":
                     extract_everything_from_bag(middle_folder,bag_name)
                     shutil.move(str(file_transfer_path), str(file_origin_path))
                     # os.remove(Path(file_transfer_path))
-            break
             # shutil.move(str(middle_folder), str(Path("/home/lab4dv/data/ssd") / Path(folder)))
+            break
         except PermissionError:
             print("PermissionError")
             continue

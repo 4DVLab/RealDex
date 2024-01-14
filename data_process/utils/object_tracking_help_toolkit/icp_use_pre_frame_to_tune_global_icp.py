@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
     use_origin_icp_result = True
     
-    folder_path = "/media/lab4dv/HighSpeed/experiment/shower_cleaner_1"
+    folder_path = "/home/lab4dv/data/2024_1_9_bags/oyster_sauce/oyster_sauce_20240109"
 
     icp_tune(folder_path)
     
