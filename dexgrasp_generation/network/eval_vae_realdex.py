@@ -13,6 +13,7 @@ from omegaconf.omegaconf import open_dict
 import os
 from os.path import join as pjoin
 import json
+import re
 from tqdm import tqdm, trange
 
 import argparse
@@ -30,6 +31,7 @@ from pytorch3d import transforms as pttf
 from network.models.model import get_model
 from collections import OrderedDict
 from pytorch3d.transforms import axis_angle_to_matrix
+import numpy as np
 
 
 def main(cfg, result_path):
@@ -56,6 +58,9 @@ def main(cfg, result_path):
     """ Trainer """
     trainers = {}
     for key in cfg['models'].keys():
+        print(key)
+        if key == 'affordance_cvae':
+            continue
         net_cfg = compose(f"{cfg['models'][key]['type']}_config")
         print(net_cfg['exp_dir'])
         with open_dict(net_cfg):
@@ -63,36 +68,17 @@ def main(cfg, result_path):
         trainer = Trainer(net_cfg, logger)
         trainer.resume()
         trainers[key] = (trainer)
-
-    # contact_cfg = compose(f"{cfg['tta']['contact_net']['type']}_config")
-    # with open_dict(contact_cfg):
-    #     contact_cfg['device'] = cfg['device']
-    # contact_net = ContactMapNet(contact_cfg)
-    # ckpt_dir = pjoin(contact_cfg['exp_dir'], 'ckpt')
-    # model_name = get_model(ckpt_dir, contact_cfg.get('resume_epoch', None))
-    # ckpt = torch.load(model_name)['model']
-    # new_ckpt = OrderedDict()
-    # for name in ckpt.keys():
-    #     new_name = name.replace('net.', '')
-    #     if new_name.startswith('backbone.'):
-    #         new_name = new_name.replace('backbone.', '')
-    #     new_ckpt[new_name] = ckpt[name]
     
-    # contact_net.load_state_dict(new_ckpt)
-    
-    contact_net = trainers['affordance_cvae'].model.contact_net
-    contact_net = contact_net.to(cfg['device'])
-    contact_net.eval()
-    
-    tta_loss = AdditionalLoss(cfg['tta'], 
-                              cfg['device'], 
-                              cfg['dataset']['num_obj_points'], 
-                              cfg['dataset']['num_hand_points'], contact_net)
+    # contact_net = trainers['affordance_cvae'].model.contact_net
+    # contact_net = contact_net.to(cfg['device'])
+    # contact_net.eval()
 
     """ Test """
     # sample
     loader = test_loader
-    for i, data in enumerate(tqdm(loader)):
+    for i, data_tuple in enumerate(tqdm(loader)):
+        data, obj_name = data_tuple
+        data['object_name'] = obj_name
         for key, trainer in trainers.items():
             # loader = result_to_loader(result, cfg) if result else test_loader
             # result = []
@@ -100,7 +86,9 @@ def main(cfg, result_path):
             data.update(pred_dict)
         result = {k: v.cpu() if type(v) == torch.Tensor else v for k, v in data.items()}
         torch.save(result, os.path.join(result_path, f"data_{i}.pt"))
-            
+
+def test_time_opt(contact_net, data):
+    pass
                    
 def divide(data):
     seen_data = []
@@ -141,41 +129,58 @@ def parse_args():
     return parser.parse_args()
 
 def vis_test_result(device, result_path, vis_path):
-    for filename in os.listdir(result_path):
+    for filename in tqdm(os.listdir(result_path)):
+        if not re.match(r'data_\d+\.pt$', filename):
+            continue
         result = torch.load(os.path.join(result_path, filename))
         
-        hand_pose = result['hand_pose'].to(device)
-        hand_pose = hand_pose.float()
+        # hand_pose = result['hand_pose'].to(device)
+        # hand_pose = hand_pose.float()
         
-        global_translation = hand_pose[:, 0:3]
-        global_rotation = axis_angle_to_matrix(hand_pose[:, 3:6])
-        qpos = hand_pose[:,6:]
+        global_translation = result['translation'].float().to(device)
+        global_rotation = axis_angle_to_matrix(result['rotation'].float().to(device))
+        qpos = result['hand_qpos'].float().to(device)
         hand_model = ShadowHandBuilder(device=device, 
                                        assets_dir="/public/home/v-liuym/projects/IntelligentHand/dexgrasp_generation/assets")
         hand_dict = hand_model.get_hand_model(global_rotation, global_translation, qpos)
         
         
-        out_path = os.path.join(vis_path, filename.split(".")[0])
-        os.makedirs(out_path, exist_ok=True)
-        vis_result(hand_dict['meshes'], result, out_path)
+        vis_result(hand_dict['meshes'], result, vis_path)
     
-def vis_result(hand_meshes, data, result_path):
+def vis_result(hand_meshes, data, result_path, mesh_dir=None):
+    if mesh_dir is None:
+        mesh_dir = "/storage/group/4dvlab/youzhuo/models/"
     num_hand = len(hand_meshes)
     hand_verts = hand_meshes.verts_padded().cpu()
     hand_faces = hand_meshes.faces_padded().cpu()
-    print(hand_verts.shape, hand_faces.shape)
+    
+    object_rotation = axis_angle_to_matrix(data['object_orient'].float().to(device))
+    object_rotation = object_rotation.cpu().numpy()
+    obj_tf_mat = np.eye(4)
+    
     for i in range(num_hand):
         # colors = feature_to_color(result['cmap_pred'][i].cpu())
         obj_pc = data['obj_pc'][i].cpu()
         obj_pc = trimesh.PointCloud(vertices=obj_pc) #, colors=colors)
         hand_mesh = trimesh.Trimesh(vertices=hand_verts[i], faces=hand_faces[i])
-        hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
-        obj_pc.export(os.path.join(result_path, f"test_obj_{i}.ply"))
-        
-        if 'obj_mesh' in data.keys():
+        if 'object_name' in data.keys():
+            obj_name = data['object_name'][i]
+            out_dir = os.path.join(result_path, obj_name)
+            os.makedirs(out_dir, exist_ok=True)
+            counter = len(os.listdir(out_dir))
+            obj_mesh = trimesh.load(pjoin(mesh_dir, f"{obj_name}.obj"))
+            obj_tf_mat[:3, :3] = object_rotation[i]
+            obj_tf_mat[:3, -1] = data['object_transl'][i]
+            obj_mesh.apply_transform(obj_tf_mat)
+            # obj_mesh.export(pjoin(out_dir,f"obj_{counter}.ply"))
+            (hand_mesh + obj_mesh).export(os.path.join(out_dir, f"combined_{counter}.ply"))
+            obj_pc.export(os.path.join(out_dir, f"obj_pc_{counter}.ply"))
+            
+            
+        elif 'obj_mesh' in data.keys():
             obj_mesh = data['obj_mesh'][i]
             (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
-        if 'mesh_path' in data.keys():
+        elif 'mesh_path' in data.keys():
             mesh_path = data['mesh_path'][i]
             obj_mesh = trimesh.load(mesh_path)
             scale = data['scale'][i].cpu()
@@ -185,6 +190,11 @@ def vis_result(hand_meshes, data, result_path):
             obj_mesh.vertices = new_verts
             
             (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
+            
+        else:
+            hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
+            obj_pc.export(os.path.join(result_path, f"test_obj_pc_{i}.ply"))
+            
 
 
 if __name__ == "__main__":

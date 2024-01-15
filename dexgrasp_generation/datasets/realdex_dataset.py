@@ -21,7 +21,6 @@ sys.path.insert(0, BASEPATH)
 sys.path.insert(0, pjoin(BASEPATH, '..'))
 
 from network.models.loss import contact_map_of_m_to_n
-from datasets.shadow_hand_builder import ShadowHandBuilder
 
 
 def split_data(split_type='object'):
@@ -35,6 +34,17 @@ def split_data(split_type='object'):
                       'test': test}
     return split_dict
 
+def str_to_ascii_tensor(s):
+    # Convert string to a list of ASCII values
+    ascii_values = [ord(c) for c in s]
+    # Create a tensor from the list of ASCII values
+    tensor = torch.tensor(ascii_values, dtype=torch.int8)
+    return tensor
+
+def ascii_tensor_to_str(tensor):
+    # Convert each integer in the tensor to the corresponding character
+    # and then join them into a single string
+    return ''.join(chr(c) for c in tensor)
 
 class RealDexDataset(Dataset):
     def __init__(self, cfg, mode):
@@ -51,15 +61,6 @@ class RealDexDataset(Dataset):
         self.num_hand_points = dataset_cfg["num_hand_points"]
         # if originally self.categories is None, it means we want all categories
         self.categories = dataset_cfg.get("categories", None)
-
-        # For constructing ShadowHandBuilder
-        if cfg["use_Shadow"]:
-            self.hand_mesh_dir = dataset_cfg["shadow_hand_mesh_dir"]
-            self.hand_urdf_path = dataset_cfg["shadow_urdf_path"]
-            self.hand_builder = ShadowHandBuilder(self.hand_mesh_dir,
-                                                  self.hand_urdf_path)
-        else:
-            raise NotImplementedError("Adroit is not supported yet")
  
         self.object_name_list = split_data('object')[mode]
         self.file_list = self.get_file_list(self.root_path,
@@ -80,17 +81,24 @@ class RealDexDataset(Dataset):
         hand_transl = self.data['hand_transl'][item]
         hand_orient = self.data['hand_orient'][item]
         obj_pc = self.data['object_points'][item]
+        obj_name = self.data['object_names'][item]
+        object_orient = self.data['object_orient'][item]
+        object_transl = self.data['object_transl'][item]
+        
         
         if self.cfg["network_type"] == "affordance_cvae":
             ret_dict = {
                 "obj_pc": obj_pc,
                 "hand_qpos": qpos,
                 "rotation": hand_orient,
-                "translation": hand_transl
+                "translation": hand_transl,
+                "object_orient": object_orient,
+                "object_transl": object_transl,
+                # "object_name": obj_name
             }
             
         ret_dict["obj_scale"] = 1
-        return ret_dict
+        return ret_dict, obj_name
 
 
     def get_file_list(self, root_dir, obj_list):
@@ -117,10 +125,13 @@ class RealDexDataset(Dataset):
             'qpos': [],
             'hand_transl': [],
             'hand_orient': [],
+            'object_transl': [],
+            'object_orient': []
             # 'object_points': []
         }
         
         obj_list = []
+        obj_name_list = []
         for file in tqdm(self.file_list):
             seq_data = np.load(file, allow_pickle=True)
             seq_len = seq_data['qpos'].shape[0]
@@ -128,14 +139,16 @@ class RealDexDataset(Dataset):
             obj_pc = obj_pc.expand([seq_len, -1, -1])
             obj_list.append(obj_pc)
             
+            obj_name = file.split('/')[-2]
+            obj_name_list += [obj_name] * seq_len
+            
             for key in self.data:
                 self.data[key].append(torch.tensor(seq_data[key]))
         
-        self.data['object_points'] = obj_list
-                
+        self.data['object_points'] = obj_list                
         self.data = {key:torch.cat(self.data[key], dim=0) for key in self.data}
-        print(f"Split {self.mode}: {self.data['qpos'].shape[0]} pieces of data.")
+        
+        self.data['object_names'] = obj_name_list
         
         
-
-            
+        print(f"Split {self.mode}: {self.data['qpos'].shape[0]} pieces of data.")         
