@@ -18,46 +18,40 @@ from tqdm import tqdm, trange
 import argparse
 
 from train import process_config
-from utils.interrupt_handler import InterruptHandler
-from network.models.contactnet.contact_network import ContactMapNet
-from utils.hand_model import AdditionalLoss, add_rotation_to_hand_pose
-from utils.eval_utils import KaolinModel, eval_result
-from utils.visualize import visualize
-from utils.hand_model import HandModel
+from utils.shadow_hand_builder import ShadowHandBuilder
+from eval_vae_realdex import vis_result
+
 import trimesh
-from pytorch3d import transforms as pttf
-from network.models.model import get_model
-from collections import OrderedDict
-from pytorch3d.transforms import rotation_6d_to_matrix, matrix_to_axis_angle
+from pytorch3d.transforms import axis_angle_to_matrix, matrix_to_axis_angle
 
 import json
 
-def vis_result(hand, data, result_path):
-    num_hand = hand['vertices'].shape[0]
-    hand_verts = hand['vertices'].cpu()
-    hand_faces = hand['faces'].cpu()
-    # print(hand_verts.shape, hand_faces.shape)
-    for i in range(num_hand):
-        # colors = feature_to_color(result['cmap_pred'][i].cpu())
-        obj_pc = data['obj_pc'][i].cpu()
-        obj_pc = trimesh.PointCloud(vertices=obj_pc) #, colors=colors)
-        hand_mesh = trimesh.Trimesh(vertices=hand_verts[i], faces=hand_faces)
-        hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
-        obj_pc.export(os.path.join(result_path, f"test_obj_{i}.ply"))
+# def vis_result(hand, data, result_path):
+#     num_hand = hand['vertices'].shape[0]
+#     hand_verts = hand['vertices'].cpu()
+#     hand_faces = hand['faces'].cpu()
+#     # print(hand_verts.shape, hand_faces.shape)
+#     for i in range(num_hand):
+#         # colors = feature_to_color(result['cmap_pred'][i].cpu())
+#         obj_pc = data['obj_pc'][i].cpu()
+#         obj_pc = trimesh.PointCloud(vertices=obj_pc) #, colors=colors)
+#         hand_mesh = trimesh.Trimesh(vertices=hand_verts[i], faces=hand_faces)
+#         hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
+#         obj_pc.export(os.path.join(result_path, f"test_obj_{i}.ply"))
         
-        if 'obj_mesh' in data.keys():
-            obj_mesh = data['obj_mesh'][i]
-            (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
-        if 'mesh_path' in data.keys():
-            mesh_path = data['mesh_path'][i]
-            obj_mesh = trimesh.load(mesh_path)
-            scale = data['scale'][i].cpu()
-            pose_matrix = data['pose_matrix'][i].cpu()
-            verts = torch.from_numpy(obj_mesh.vertices).float()
-            new_verts = scale * ( verts @ pose_matrix[:3, :3].T + pose_matrix[:3, 3])
-            obj_mesh.vertices = new_verts
+#         if 'obj_mesh' in data.keys():
+#             obj_mesh = data['obj_mesh'][i]
+#             (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
+#         if 'mesh_path' in data.keys():
+#             mesh_path = data['mesh_path'][i]
+#             obj_mesh = trimesh.load(mesh_path)
+#             scale = data['scale'][i].cpu()
+#             pose_matrix = data['pose_matrix'][i].cpu()
+#             verts = torch.from_numpy(obj_mesh.vertices).float()
+#             new_verts = scale * ( verts @ pose_matrix[:3, :3].T + pose_matrix[:3, 3])
+#             obj_mesh.vertices = new_verts
             
-            (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
+#             (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
 
 def vis_dex_data(cfg):
     cfg = process_config(cfg)
@@ -75,28 +69,26 @@ def vis_dex_data(cfg):
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    result_path = "/home/liuym/results/unidexgrasp_datavis"
+    result_path = "/storage/group/4dvlab/yumeng/results/unidexgrasp_datavis"
     if os.path.exists(result_path) is not True:
         os.makedirs(result_path)
 
     """ DataLoaders """
     train_loader = get_dex_dataloader(cfg, "train")
+    test_loader = get_dex_dataloader(cfg, "test")
     
-    for _, data in enumerate(tqdm(train_loader)):
+    
+    for _, data in enumerate(tqdm(test_loader)):
         print(data.keys())
-        hand_model = HandModel(
-            mjcf_path='data/mjcf/shadow_hand.xml',
-            mesh_path='data/mjcf/meshes',
-            contact_points_path='data/mjcf/contact_points.json',
-            penetration_points_path='data/mjcf/penetration_points.json',
-            device=device,
-        )
+        hand_model = ShadowHandBuilder(device=device, 
+                                       assets_dir="/public/home/v-liuym/projects/IntelligentHand/dexgrasp_generation/assets")
+        rotation = axis_angle_to_matrix(data['rotation'].to(device).float())
+        hand_dict = hand_model.get_hand_model(rotation, 
+                                              data['translation'].to(device).float(), 
+                                              data['hand_qpos'].to(device).float())
         
-        hand_pose = torch.cat([data['translation'], data['rotation'], data['hand_qpos']],dim=-1).to(device)
-        hand_pose = hand_pose.float()
-        hand = hand_model(hand_pose=hand_pose, object_pc=data['obj_pc'].float().to(device), with_meshes=True)
-        vis_result(hand, data, result_path)
-        break
+        vis_result(hand_dict['meshes'], data, result_path)
+        
     
 def compute_data_mean_std(cfg):
     cfg = process_config(cfg)
@@ -208,5 +200,5 @@ if __name__ == "__main__":
     else:
         cfg = compose(config_name=args.config_name, overrides=[f"exp_dir={args.exp_dir}"])
         
-    # vis_dex_data(cfg)
-    compute_data_mean_std(cfg)
+    vis_dex_data(cfg)
+    # compute_data_mean_std(cfg)

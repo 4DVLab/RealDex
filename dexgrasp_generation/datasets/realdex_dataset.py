@@ -28,7 +28,9 @@ def split_data(split_type='object'):
         train = ['blue_magnet_toy', 'body_lotion', 'crisps', 'dust_cleaning_sprayer', 
                     'laundry_detergent', 'toilet_cleaning_sprayer']
         val = ['goji_jar', 'small_sprayer', 'yogurt']
-        test = ['duck_toy', 'cosmetics', 'sprayer']
+        # test = ['duck_toy', 'cosmetics', 'sprayer']
+        test = ['duck_toy', 'cosmetics', 'sprayer', 'goji_jar', 'small_sprayer', 'yogurt']
+        
         split_dict = {'train': train,
                       'val': val,
                       'test': test}

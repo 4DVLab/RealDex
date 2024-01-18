@@ -86,6 +86,7 @@ def main(cfg, result_path):
             data.update(pred_dict)
         result = {k: v.cpu() if type(v) == torch.Tensor else v for k, v in data.items()}
         torch.save(result, os.path.join(result_path, f"data_{i}.pt"))
+        
 
 def test_time_opt(contact_net, data):
     pass
@@ -154,8 +155,9 @@ def vis_result(hand_meshes, data, result_path, mesh_dir=None):
     hand_verts = hand_meshes.verts_padded().cpu()
     hand_faces = hand_meshes.faces_padded().cpu()
     
-    object_rotation = axis_angle_to_matrix(data['object_orient'].float().to(device))
-    object_rotation = object_rotation.cpu().numpy()
+    if 'object_orient' in data:
+        object_rotation = axis_angle_to_matrix(data['object_orient'].float().to(device))
+        object_rotation = object_rotation.cpu().numpy()
     obj_tf_mat = np.eye(4)
     
     for i in range(num_hand):
@@ -174,7 +176,8 @@ def vis_result(hand_meshes, data, result_path, mesh_dir=None):
             obj_mesh.apply_transform(obj_tf_mat)
             # obj_mesh.export(pjoin(out_dir,f"obj_{counter}.ply"))
             (hand_mesh + obj_mesh).export(os.path.join(out_dir, f"combined_{counter}.ply"))
-            obj_pc.export(os.path.join(out_dir, f"obj_pc_{counter}.ply"))
+            obj_mesh.export(os.path.join(out_dir, f"obj_{counter}.ply"))
+            hand_mesh.export(os.path.join(out_dir, f"hand_{counter}.ply"))
             
             
         elif 'obj_mesh' in data.keys():
@@ -182,14 +185,32 @@ def vis_result(hand_meshes, data, result_path, mesh_dir=None):
             (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
         elif 'mesh_path' in data.keys():
             mesh_path = data['mesh_path'][i]
+            # print(mesh_path)
+            obj_name = mesh_path.split('/')[-3]
+            out_dir = os.path.join(result_path, obj_name)
+            os.makedirs(out_dir, exist_ok=True)
+            counter = len(os.listdir(out_dir))
+            
+            
             obj_mesh = trimesh.load(mesh_path)
             scale = data['scale'][i].cpu()
+            print("scale: ", scale)
             pose_matrix = data['pose_matrix'][i].cpu()
+            # obj_mesh.apply_transform(pose_matrix)
             verts = torch.from_numpy(obj_mesh.vertices).float()
-            new_verts = scale * ( verts @ pose_matrix[:3, :3].T + pose_matrix[:3, 3])
+            # new_verts =  verts @ pose_matrix[:3, :3].T + pose_matrix[:3, 3]
+            # new_verts = scale * ( verts @ pose_matrix[:3, :3].T + pose_matrix[:3, 3])
+            new_verts = (verts /scale - pose_matrix[:3, 3])@pose_matrix[:3,:3]
+            
             obj_mesh.vertices = new_verts
             
-            (hand_mesh + obj_mesh).export(os.path.join(result_path, f"combined_{i}.ply"))
+            (hand_mesh + obj_mesh).export(os.path.join(out_dir, f"{counter}_combined.ply"))
+            obj_mesh.export(os.path.join(out_dir, f"{counter}_obj.ply"))
+            hand_mesh.export(os.path.join(out_dir, f"{counter}_hand.ply"))
+            obj_pc.export(os.path.join(out_dir, f"{counter}_obj_pc.ply"))
+            
+            
+            
             
         else:
             hand_mesh.export(os.path.join(result_path, f"test_hand_{i}.ply"))
@@ -210,13 +231,13 @@ if __name__ == "__main__":
         
     
     result_path = "/storage/group/4dvlab/yumeng/results/"
-    result_path = os.path.join(result_path, "test_set_"+config_name)
-    vis_path = os.path.join(result_path, "vis_"+config_name)
+    result_path = os.path.join(result_path, "test_set_0118_"+config_name)
+    vis_path = os.path.join(result_path, "vis_0118_"+config_name)
     
     if not os.path.exists(result_path):
         os.makedirs(result_path)
     # results_file = os.path.join(result_path, "result_test_set_orig_ckpt.pt")
-    # main(cfg, result_path)
+    main(cfg, result_path)
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     vis_test_result(device, result_path, vis_path)

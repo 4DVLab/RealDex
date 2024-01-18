@@ -81,6 +81,8 @@ class DataProcesser():
         path = os.path.join(self.data_dir, "scene_to_mesh.json")
         if os.path.exists(path):
             self.scene_to_mesh = json.load(open(path))
+        else:
+            self.time_sync()
         
         
 
@@ -92,10 +94,7 @@ class DataProcesser():
             key_list = list(key_list)
         elif out_type == 'all':
             key_list = list(self.mesh_dict.keys())
-            # key_list = set(self.mesh_dict.keys()) - set(self.qpos_key_list)
-            key_list = list(key_list)
         else:
-            # key_list = list(self.mesh_dict.keys())
             key_list = set(self.mesh_dict.keys()) - set(self.qpos_key_list)
             key_list = list(key_list)
             
@@ -374,7 +373,7 @@ class DataProcesser():
             sampled_pts, _ = sample_farthest_points(hand_mesh.verts_padded(), K=POINTS_NUM)
             print(sampled_pts.shape)
             
-            dist = DataProcesser.point_mesh_face_distance(obj_mesh, sampled_pts)
+            # dist = DataProcesser.point_mesh_face_distance(obj_mesh, sampled_pts)
             
             # TODO: filter all  contact mesh
 
@@ -445,6 +444,8 @@ class DataProcesser():
     def export_meshes(self):
         out_dir = os.path.join(self.data_dir, "vis_meshes")
         os.makedirs(out_dir, exist_ok=True)
+        if len(os.listdir(out_dir)) > 100:
+            return
         
         # seg_file = os.path.join(self.data_dir, "segment.txt")
         # seg_list = list(np.loadtxt(seg_file))
@@ -455,19 +456,34 @@ class DataProcesser():
             
         obj_tf_mat = np.eye(4)
         # for t in trange(start, end):
-        for t in trange(tf_len):
-            time_sr = int(self.scene_to_mesh[str(t)].split('.')[0])
+        # for t in trange(tf_len):
+        for t in trange(50, 200):
+            t = str(t) + ".ply"
+            self.export_single_mesh(t, full_data=full_data)
             
-            obj_tf_mat[:3, :3] = full_data['object_orient'][t]
-            obj_tf_mat[:3, -1] = full_data['object_transl'][t]
-            obj_mesh = deepcopy(self.obj_mesh)
-            obj_mesh.apply_transform(obj_tf_mat)
+    def export_single_mesh(self, idx_scene, full_data = None):
+        out_dir = os.path.join(self.data_dir, "vis_meshes")
+        os.makedirs(out_dir, exist_ok=True)
+        obj_tf_mat = np.eye(4)
+        
+        if full_data is None:
+            data_file = os.path.join(self.data_dir, "final_data.npy")
+            full_data = np.load(data_file, allow_pickle=True).item()
             
-            obj_mesh.export(os.path.join(out_dir, f"{t}_object.ply"))
-            o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{t}_hand.ply"), 
-                                        self.gen_single_arm_hand(time_sr, out_type='only_hand'))
-            o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{t}.ply"), 
-                                        self.gen_single_arm_hand(time_sr, out_type='only_hand'))
+        tf_len = len(self.scene_to_mesh)
+        time_sr = int(self.scene_to_mesh[str(idx_scene)].split('.')[0])
+            
+        obj_tf_mat[:3, :3] = full_data['object_orient'][idx_scene]
+        obj_tf_mat[:3, -1] = full_data['object_transl'][idx_scene]
+        obj_mesh = deepcopy(self.obj_mesh)
+        obj_mesh.apply_transform(obj_tf_mat)
+        
+        obj_mesh.export(os.path.join(out_dir, f"{idx_scene}_object.ply"))
+        o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{idx_scene}_hand.ply"), 
+                                    self.gen_single_arm_hand(time_sr, out_type='only_hand'))
+        o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{idx_scene}.ply"), 
+                                    self.gen_single_arm_hand(time_sr, out_type='all'))
+        
                 
 
 def run(data_processer):
@@ -484,15 +500,20 @@ def segment_sequence(data_processer, model_name):
         os.makedirs(out_dir, exist_ok=True)
         data_processer.seg_sequence(out_dir)
     
-def run_single(model_name, exp_code):
+def run_single(model_name, exp_code, idx_scene=None):
     data_dir = os.path.join(base_dir, model_name, exp_code)
     obj_path = os.path.join(obj_model_dir, f"{model_name}.obj")
     obj_mesh = trimesh.load(obj_path)
     print(data_dir)
     data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
+    data_processer.export_final_data()
+    
     # data_processer.gen_all_arm_hand(out_type='both', num_samples=1)
-    # data_processer.export_meshes()
-    data_processer.gen_object_pcd(50)
+    if idx_scene is None:
+        data_processer.export_meshes()
+    else:
+        data_processer.export_single_mesh(idx_scene)
+    # data_processer.gen_object_pcd(50)
     
     
 if __name__ == '__main__':
@@ -507,7 +528,16 @@ if __name__ == '__main__':
     
     model_name_list = os.listdir(base_dir)
     
-    run_single(model_name="elephant_watering_can", exp_code="elephant_watering_can_1_20240106")
+    # run_single(model_name="duck_toy", exp_code="duck_toy_1_20231207")
+    
+    for model_name in model_name_list:
+        path = os.path.join(base_dir, model_name)
+        exp_code_list = os.listdir(path)
+        for exp_code in exp_code_list:
+            subpath = os.path.join(path, exp_code)
+            if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
+                run_single(model_name, exp_code)
+                break
     
     # for model_name in model_name_list:
     #     path = os.path.join(base_dir, model_name)
