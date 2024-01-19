@@ -162,8 +162,7 @@ class DFCDataset(Dataset):
         # place the table horizontally
         obj_pc = obj_pc @ plane_pose[:3, :3].T + plane_pose[:3, 3]
         global_rotation_mat = plane_pose[:3, :3] @ global_rotation_mat
-        # rotation_6d = matrix_to_rotation_6d(global_rotation_mat)
-        hand_translation = global_translation @ plane_pose[:3, :3].T
+        hand_translation = global_translation @ plane_pose[:3, :3].T + plane_pose[:3, 3]
         rotation = matrix_to_axis_angle(torch.tensor(global_rotation_mat).unsqueeze(0))[0]
         
         ret_dict = {

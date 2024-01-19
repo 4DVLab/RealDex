@@ -434,10 +434,12 @@ class DataProcesser():
         
     def split_data(self, out_dir, split_type='object'):
         if split_type == 'object':
-            train = ['blue_magnet_toy', 'body_lotion', 'crisps', 'dust_cleaning_sprayer', 
-                     'laundry_detergent', 'toilet_cleaning_sprayer']
-            val = ['goji_jar', 'small_sprayer', 'yogurt']
-            test = ['duck_toy', 'cosmetics', 'sprayer']
+            # train = ['blue_magnet_toy', 'body_lotion', 'crisps', 'dust_cleaning_sprayer', 
+            #          'laundry_detergent', 'toilet_cleaning_sprayer']
+            
+            train = []
+            val = ['goji_jar', 'small_sprayer', 'yogurt', 'body_lotion', 'bowling_game_box', 'chips']
+            test = ['duck_toy', 'cosmetics', 'sprayer', 'box', 'daily_moisture_lotion', 'midew_remover']
             
         self.splits = {'train': train, 'val': val, 'test':test}
         

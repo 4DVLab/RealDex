@@ -199,8 +199,8 @@ def vis_result(hand_meshes, data, result_path, mesh_dir=None):
             # obj_mesh.apply_transform(pose_matrix)
             verts = torch.from_numpy(obj_mesh.vertices).float()
             # new_verts =  verts @ pose_matrix[:3, :3].T + pose_matrix[:3, 3]
-            # new_verts = scale * ( verts @ pose_matrix[:3, :3].T + pose_matrix[:3, 3])
-            new_verts = (verts /scale - pose_matrix[:3, 3])@pose_matrix[:3,:3]
+            new_verts = ( verts @ pose_matrix[:3, :3].T + pose_matrix[:3, 3]) / scale
+            # new_verts = (verts /scale - pose_matrix[:3, 3])@pose_matrix[:3,:3]
             
             obj_mesh.vertices = new_verts
             
