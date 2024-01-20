@@ -4,6 +4,8 @@ import re
 import numpy as np
 from bisect import bisect_left
 from tqdm import tqdm, trange
+from utils.global_util import tf_to_mat
+
 
 def get_model_name(exp_code):
 
@@ -20,7 +22,10 @@ def get_model_name(exp_code):
     extracted_string = re.sub(pattern, '', original)
     return extracted_string
 
-def interp_qpos(qpos_seq, time):
+def interp_data(seq_data, object_transl_seq, time):
+    qpos_seq = seq_data['joint_angle']
+    tf_seq = seq_data['global_tf']
+    
     time_stamp_list = list(qpos_seq.keys())
     time_stamp_list = sorted(time_stamp_list)
     index = bisect_left(time_stamp_list, time)
@@ -30,15 +35,21 @@ def interp_qpos(qpos_seq, time):
     assert (before is not None and after is not None)
     
     ratio = (time - before) / (after - before)
-    b_qpos = qpos_seq[before]
-    a_qpos = qpos_seq[after]
-    new_qpos = {}
+    b_qpos, a_qpos = qpos_seq[before], qpos_seq[after]
+    b_transl, a_transl = tf_seq[before]['rh_wrist'][:3, -1], tf_seq[after]['rh_wrist'][:3, -1]
+    b_obj_tranl, a_obj_transl = object_transl_seq[index-1], object_transl_seq[index]
+    
+    new_transl = b_transl * ratio + a_transl * (1-ratio)
+    new_obj_transl = b_obj_tranl * ratio + a_obj_transl * (1-ratio)
+
+    ret_dict = {}
     for key in b_qpos:
-        new_qpos[key] = b_qpos[key] * ratio + a_qpos[key] * (1-ratio)
+        ret_dict[key] = b_qpos[key] * ratio + a_qpos[key] * (1-ratio)
     
+    ret_dict['rh_wrist_transl'] = new_transl
+    ret_dict['object_transl'] = new_obj_transl
     
-    
-    return new_qpos
+    return ret_dict
 
 def export_joint_angle(base_dir, exp_code, start_id, end_id, seq_dur_time = 30, frequency=100):
     '''
@@ -49,8 +60,14 @@ def export_joint_angle(base_dir, exp_code, start_id, end_id, seq_dur_time = 30, 
     data_dir = os.path.join(base_dir, model_name, exp_code)
     seq_file = os.path.join(data_dir, "TF/tf_seq.npy")
     seq_data = np.load(seq_file, allow_pickle=True).item()
-    qpos_seq = seq_data['joint_angle']
-    time_stamp_list = list(qpos_seq.keys())
+    
+    obj_tracking_path = os.path.join(data_dir, "tracking_result/gt_pose.txt")
+    object_poses = np.loadtxt(obj_tracking_path)
+    object_poses = np.array([tf_to_mat(tf) for tf in object_poses])
+    object_poses = object_poses[:, :3, -1]
+    
+    
+    time_stamp_list = list(seq_data['joint_angle'].keys())
     start_time = time_stamp_list[start_id]
     end_time = time_stamp_list[end_id]
     
@@ -58,7 +75,8 @@ def export_joint_angle(base_dir, exp_code, start_id, end_id, seq_dur_time = 30, 
     qpos_dict = {}
     for id in trange(sample_num):
         time = start_time + (id / sample_num) * (end_time - start_time)
-        qpos = interp_qpos(qpos_seq, time)
+        
+        qpos = interp_data(seq_data, object_poses, time)
         print(time)
         qpos_dict[time] = qpos
         
@@ -68,6 +86,9 @@ def export_joint_angle(base_dir, exp_code, start_id, end_id, seq_dur_time = 30, 
 if __name__ == '__main__':
     base_dir = "/public/home/v-liuym/data/IntelligentHand_data/"
     exp_code = "elephant_watering_can_2_20240110"
+    
+    
+    
     start, end = 0, 30
     qpos_dict = export_joint_angle(base_dir, exp_code, start_id=start, end_id=end)
     
