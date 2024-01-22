@@ -12,6 +12,7 @@ from scipy.spatial.transform import Rotation
 
 
 
+
 def segment_scene_point_cloud(scene_pcd, sr_mesh):
     scene_pcd_tree = o3d.geometry.KDTreeFlann(scene_pcd)
     
@@ -295,6 +296,14 @@ def rpy_to_mat(rpy):
     rot = Rotation.from_euler('XYZ', rpy, degrees=False)
     return rot.as_matrix()
 
+def xyzrpy_to_mat(xyz, rpy):
+    rot = Rotation.from_euler('XYZ', rpy, degrees=False)
+    tran = np.array(xyz)
+    tf = np.eye(4)
+    tf[:3, :3] = rot
+    tf[:3, 3] = tran
+    return tf
+
 def rotate_axis(axis, rpy):
     rot = Rotation.from_euler('XYZ', rpy, degrees=False)
     axis = rot.apply(axis)
@@ -307,7 +316,17 @@ def check_rotation_axis(mat, axis):
     axis_rotated = mat @ axis
 
     # Check if v_rotated is the same as v (within a tolerance)
-    if np.allclose(axis_rotated, axis, atol=1e-6):
+    if np.allclose(axis_rotated, axis, atol=1e-2):
+
+        # rot = Rotation.from_matrix(mat)
+        # angle_axis = rot.as_rotvec() # angle * axis
+        # angle = np.linalg.norm(angle_axis)
+        # gt_axis = angle_axis / angle
+        # if np.dot(angle_axis, gt_axis)<0:
+        #     gt_axis *= -1
+        #     angle *= -1
+
+        # print(axis, gt_axis, angle) 
         # The axis is an eigenvector of the rotation matrix with eigenvalue 1.
         return True
     else:
@@ -320,7 +339,7 @@ def check_rotation_axis(mat, axis):
             angle *= -1
         
         print("The rotation matrix R does not correspond to a rotation around the given axis.")
-        print(axis, gt_axis, angle) 
+        print(axis, gt_axis, angle_axis , angle) 
         return False
 
 def compute_joint_angle(rot_mat, axis):

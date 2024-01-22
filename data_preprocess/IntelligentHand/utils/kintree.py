@@ -80,15 +80,17 @@ class Kintree(object):
     def compute_angle(self, tf_mat, cname):
         axis = self.get_hand_info(cname, 'axis')
         rpy = self.get_hand_info(cname, 'ori_rpy')
+        xyz = self.get_hand_info(cname, "ori_xyz")
         rot_mat = rpy_to_mat(rpy)
         
         local_tf_mat = np.linalg.inv(rot_mat) @ tf_mat[:3, :3]
 
         if check_rotation_axis(local_tf_mat, axis):
+            # print(f"good node, with {cname}\n")
             angle = compute_joint_angle(local_tf_mat, axis)
             return angle  
         else:
-            sys.stderr.write("The rotation axis of the given tf matrix is inconsistent with the axis in the URDF file.\n")
+            sys.stderr.write(f"The rotation axis of the given tf matrix is inconsistent with the axis in the URDF file, with node {cname}.\n" )
             sys.exit(1)  
 
     def update_joints(self, tf_data, cname):
