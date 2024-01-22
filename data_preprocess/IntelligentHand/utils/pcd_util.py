@@ -249,12 +249,16 @@ class PCDGenerator:
     
         return subsampled_pcd
     
-    def gen_object_pcd(self, index, out_dir, export=True):
+    def gen_merged_pcd(self, index, out_dir, bb_min=None, bb_max=None, export=True):
+        if bb_min is None or bb_max is None:
+            '''box around the object point cloud'''
+            bb_min = np.array([0.78, -0.6, 0.73], np.float64)
+            bb_max = np.array([2, 0.5, 1.06], np.float64)
+        
         pcd_list = []
         for cam_index in range(4):
             pcd = self.gen_pcd(index, cam_index, export=export)
-            pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(
-                np.array([0.78, -0.6, 0.73], np.float64), np.array([2, 0.5, 1.06], np.float64)))
+            pcd = pcd.crop(o3d.geometry.AxisAlignedBoundingBox(bb_min, bb_max))
             pcd_list.append(pcd)
         
         target = pcd_list[0]

@@ -20,7 +20,6 @@ sys.path.insert(0, BASEPATH)
 sys.path.insert(0, pjoin(BASEPATH, '..'))
 
 from network.models.loss import contact_map_of_m_to_n
-from datasets.shadow_hand_builder import ShadowHandBuilder
 
 
 def plane2pose(plane_parameters):
@@ -35,6 +34,24 @@ def plane2pose(plane_parameters):
     pose[2, 3] = np.array(plane_parameters[3])
     pose[3, 3] = 1
     return pose
+
+def qpos_dict_to_qpos(qpos_dict,
+                    hand_qpos_names=None):
+    """
+    :return: qpos: [24]
+    WARNING: The order must correspond with the joint_names
+    """
+    joint_names = [
+        # 'WRJ1', 'WRJ0',
+                'FFJ3', 'FFJ2', 'FFJ1', 'FFJ0',
+                'MFJ3', 'MFJ2', 'MFJ1', 'MFJ0',
+                'RFJ3', 'RFJ2', 'RFJ1', 'RFJ0',
+                'LFJ4', 'LFJ3', 'LFJ2', 'LFJ1', 'LFJ0',
+                'THJ4', 'THJ3', 'THJ2', 'THJ1', 'THJ0']
+    joint_names = ["robot0:" + name for name in joint_names]
+    if hand_qpos_names is None:
+        hand_qpos_names = joint_names
+    return np.array([qpos_dict[name] for name in hand_qpos_names])
 
 
 def load_splits(root_folder, categories=None):
@@ -82,8 +99,8 @@ class DFCDataset(Dataset):
         if cfg["use_Shadow"]:
             self.hand_mesh_dir = pjoin(self.root_path, dataset_cfg["shadow_hand_mesh_dir"])
             self.hand_urdf_path = pjoin(self.root_path, dataset_cfg["shadow_urdf_path"])
-            self.hand_builder = ShadowHandBuilder(self.hand_mesh_dir,
-                                                  self.hand_urdf_path)
+            # self.hand_builder = ShadowHandBuilder(self.hand_mesh_dir,
+            #                                       self.hand_urdf_path)
         else:
             # use Adroit
             # self.hand_mesh_dir = pjoin(self.root_path, dataset_cfg["adroit_hand_mesh_dir"])
@@ -115,6 +132,7 @@ class DFCDataset(Dataset):
         instance_no: str = file_path.split("/")[-2]
         category = file_path.split("/")[-3]  # e.g., core
         recorded_data = np.load(file_path, allow_pickle=True)
+        mesh_path = os.path.join(self.root_path, 'DFCData/meshes', category, instance_no, "coacd/decomposed.obj")
 
         qpos_dict = recorded_data["qpos"].item()
         global_translation = np.array([qpos_dict['WRJTx'], qpos_dict['WRJTy'], qpos_dict['WRJTz']])  # [3]
@@ -122,7 +140,7 @@ class DFCDataset(Dataset):
             transforms3d.euler.euler2mat(qpos_dict['WRJRx'], qpos_dict['WRJRy'], qpos_dict['WRJRz']))  # [3, 3]
         object_scale = recorded_data["scale"]
 
-        qpos = self.hand_builder.qpos_dict_to_qpos(qpos_dict)
+        qpos = qpos_dict_to_qpos(qpos_dict)
 
         plane = recorded_data["plane"]
         obj_pc_path = pjoin(self.root_path, "DFCData", "meshes",
@@ -140,31 +158,24 @@ class DFCDataset(Dataset):
         object_pc = pc[:3000]
         obj_pc = (object_pc - pose_matrix[:3, 3] / recorded_data['scale'].item()) @ pose_matrix[:3, :3]  # [N, 3]
                 
-        if self.cfg["network_type"] == "affordance_cvae":
-            plane_pose = plane2pose(plane)
-            # place the table horizontally
-            obj_pc = obj_pc @ plane_pose[:3, :3].T + plane_pose[:3, 3]
-            global_rotation_mat = plane_pose[:3, :3] @ global_rotation_mat
-            # rotation_6d = matrix_to_rotation_6d(global_rotation_mat)
-            hand_translation = global_translation @ plane_pose[:3, :3].T
-            rotation = matrix_to_axis_angle(torch.tensor(global_rotation_mat).unsqueeze(0))[0]
+        plane_pose = plane2pose(plane)
+        # place the table horizontally
+        obj_pc = obj_pc @ plane_pose[:3, :3].T + plane_pose[:3, 3]
+        global_rotation_mat = plane_pose[:3, :3] @ global_rotation_mat
+        hand_translation = global_translation @ plane_pose[:3, :3].T + plane_pose[:3, 3]
+        rotation = matrix_to_axis_angle(torch.tensor(global_rotation_mat).unsqueeze(0))[0]
+        
+        ret_dict = {
+            "obj_pc": obj_pc,
+            "hand_qpos": qpos,
+            "rotation": rotation,
+            "translation": hand_translation,
+            "mesh_path":mesh_path,
+            "pose_matrix": pose_matrix,
+        }
             
-            ret_dict = {
-                "obj_pc": obj_pc,
-                "hand_qpos": qpos,
-                "rotation": rotation,
-                "translation": hand_translation
-            }
-            
-        else:
-            print("WARNING: entered undefined dataset type!")
-            ret_dict = {
-                "obj_pc": obj_pc,
-                "hand_qpos": qpos,
-                "world_frame_hand_rotation_mat": global_rotation_mat,
-                "world_frame_hand_translation": global_translation
-            }
-        ret_dict["obj_scale"] = object_scale
+        
+        ret_dict["scale"] = object_scale
         return ret_dict
 
 
@@ -187,3 +198,4 @@ class DFCDataset(Dataset):
 
         print(f"Split {splits}: {len(file_list)} pieces of data.")
         return file_list
+    

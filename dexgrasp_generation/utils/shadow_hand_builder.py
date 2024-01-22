@@ -92,19 +92,16 @@ class ShadowHandBuilder():
         self.num_sample = num_sample
         
         urdf_path=os.path.join(assets_dir, "bimanual_srhand_ur.urdf")
-        print(urdf_path)
         self.urdf_info = json.load(open(os.path.join(assets_dir, "srhand_ur.json")))
         self.chain = self.get_hand_chain(urdf_path).to(device=self.device)
         self.hand_joints_name = self.chain.get_joint_parameter_names()
         self.hand_frame_name = self.chain.get_frame_names()
-        print(len(self.hand_joints_name), self.hand_joints_name)
-        print(len(self.hand_frame_name), self.hand_frame_name)
         
         self.mesh_dict = self._load_mesh_from_urdf(urdf_path, mesh_prefix)
         
         
     def get_hand_chain(self, urdf_path):
-        urdf_chain = pk.build_chain_from_urdf(open(urdf_path).read()).to(device=device, dtype=torch.float)
+        urdf_chain = pk.build_chain_from_urdf(open(urdf_path).read()).to(device=self.device, dtype=torch.float)
         root_frame_name = 'rh_wrist'
         root_frame = urdf_chain.find_frame(root_frame_name)
         chain = pk.chain.Chain(root_frame)
@@ -203,18 +200,13 @@ class ShadowHandBuilder():
             ret_dict[key] = torch.cat(ret_dict[key], dim=1)
         meshes = Meshes(verts=ret_dict['verts'], 
                         faces=ret_dict['faces'])
-        print(len(meshes))
-        print(meshes.num_verts_per_mesh(), meshes.num_faces_per_mesh())
-        print(meshes.valid)
+        
         # num_sample = [self.num_sample] * batch_size
         sampled_pts, pts_normal = sample_points_from_meshes(meshes=meshes, 
                                                             num_samples=2 * self.num_sample, 
                                                             return_normals=True)
-        print(sampled_pts.shape)
         
         sampled_pts, _ = sample_farthest_points(sampled_pts, K=self.num_sample)
-        print(sampled_pts.shape)
-
         
         ret_dict['points'] = sampled_pts
         ret_dict['point_normals'] = pts_normal
@@ -235,7 +227,6 @@ if __name__ == '__main__':
     ret_dict = sr_builder.get_hand_model(rotation_mat, transl, qpos)
     
     points = ret_dict['points']
-    print(points.shape)
     meshes = ret_dict['meshes']
     
     meshes = trimesh.Trimesh(vertices=meshes.verts_list()[0].cpu(), 
@@ -246,4 +237,3 @@ if __name__ == '__main__':
     os.makedirs(out_dir, exist_ok=True)
     meshes.export(os.path.join(out_dir, "test_hand.ply"))
     points.export(os.path.join(out_dir, "test_points.ply"))
-    print(meshes.is_watertight)

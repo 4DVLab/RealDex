@@ -172,20 +172,32 @@ def batch_mesh_contains_points(
     exterior = final_intersections.sum(2) % 2 == 0
     return exterior
 
-def inter_penetr_loss(hand_xyz, hand_face, obj_xyz, nn_dist, nn_idx):
+def inter_penetr_loss(hand_meshes, obj_xyz):
     '''
     get penetrate object xyz and the distance to its NN
-    :param hand_xyz: [B, 778, 3]
-    :param hand_face: [B, 1538, 3], hand faces vertex index in [0:778]
+    :param hand_xyz: [B, n_hand_v, 3]
+    :param hand_face: [B, n_hand_f, 3],
     :param obj_xyz: [B, 3000, 3]
     :return: inter penetration loss
     '''
-    B = hand_xyz.size(0)
-    mesh = Meshes(verts=hand_xyz, faces=hand_face)
-    hand_normal = mesh.verts_normals_packed().view(-1, 778, 3)
+    B = len(hand_meshes)
+    # mesh = Meshes(verts=hand_xyz, faces=hand_face)
+    hand_normal = hand_meshes.verts_normals_packed().view(B, -1, 3)
+    hand_xyz = hand_meshes.verts_packed()
 
-    # if not nn_dist:
-    #     nn_dist, nn_idx = utils_loss.get_NN(obj_xyz, hand_xyz)
+    nn_dist, nn_idx = get_NN(obj_xyz, hand_xyz)
     interior = get_interior(hand_normal, hand_xyz, obj_xyz, nn_idx).type(torch.bool)  # True for interior
     penetr_dist = nn_dist[interior].sum() / B  # batch reduction
-    return 100.0 * penetr_dist
+    return penetr_dist
+
+
+def compute_o2h_dist(obj_xyz, hand_points):
+    '''hand_points is sample from hand mesh, much smaller number, for faster computation'''
+    nn_dist, _ = get_NN(obj_xyz, hand_points)
+    return nn_dist
+    
+
+def contact_loss(cmnet_cmap, dist_o2h, normalize_factor=60):
+    recon_cmap = 2 - 2 * torch.sigmoid(normalize_factor * (dist_o2h.abs() + 1e-8).sqrt())
+    loss = torch.nn.functional.mse_loss(recon_cmap, cmnet_cmap) 
+    return loss
