@@ -3,7 +3,10 @@ from sapien.utils.viewer import Viewer
 import numpy as np
 import time
 import math
- 
+import os
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 def get_quaternion_from_euler(roll, pitch, yaw):
   """
   Convert an Euler angle to a quaternion.
@@ -23,7 +26,10 @@ def get_quaternion_from_euler(roll, pitch, yaw):
  
   return np.array([qx, qy, qz, qw])
 
-def load_joints(load_path:str):
+def read_object_initial_pose():
+    pass
+
+def load_joints_from_controller_bag(load_path:str):
     ra_path = load_path +"/test_ra_points.txt"
     rh_wr_path = load_path + "/test_rh_wr_points.txt"
     rh_path = load_path + "/test_rh_points.txt"
@@ -32,9 +38,27 @@ def load_joints(load_path:str):
     rh_joints = np.loadtxt(rh_path)
     return ra_joints, rh_wr_joints, rh_joints
 
+def load_joints_from_dataset(load_path:str):
+    joints = np.loadtxt(load_path)
+    return joints
+
+def load_joints_from_motion(hand_load_path:str, arm_load_path:str):
+    hand_joints = np.loadtxt(hand_load_path)
+    arm_joints = np.loadtxt(arm_load_path)
+
+    joints_list = []
+    hand_index = 0
+    for arm_index in range(len(arm_joints)):
+        joints = list(arm_joints[arm_index]) + list(hand_joints[hand_index][1:])
+        if 120 < arm_index and hand_index <len(hand_joints)-1:
+            hand_index = hand_index + 1
+        joints_list.append(joints)
+            
+    return joints_list
 
 def demo(fix_root_link, balance_passive_force):
     engine = sapien.Engine()
+    
     renderer = sapien.SapienRenderer()
     engine.set_renderer(renderer)
 
@@ -60,45 +84,24 @@ def demo(fix_root_link, balance_passive_force):
     loader.fix_root_link = fix_root_link
     loader.fix_root_link = True
     
-    robot: sapien.KinematicArticulation = loader.load_kinematic("/home/lab4dv/IntelligentHand/sapien_ws/robots/shadow_hand/bimanual_srhand_ur.urdf")
+    # robot: sapien.KinematicArticulation = loader.load_kinematic("/home/lab4dv/IntelligentHand/sapien_ws/robots/shadow_hand/bimanual_srhand_ur.urdf")
+    robot: sapien.Articulation = loader.load("/home/lab4dv/IntelligentHand/sapien_ws/robots/shadow_hand/bimanual_srhand_ur.urdf")
+    
     robot.set_root_pose(sapien.Pose([0, 0, 0], [0, 0, 0, 1]))
-    # print(x for x in robot.get_joints())
-
-    ra_joints, rh_wr_joints, rh_joints = load_joints("/home/lab4dv/IntelligentHand/drive_ws/bags")
-
-
-    # find nearest timestamp to match arm and hand movement
-    nearest_index =[]
-    rh_prt = 0
-    for ra_prt in range(len(ra_joints)):
-        while rh_prt < len(rh_joints) - 1 and rh_joints[rh_prt][0] < ra_joints[ra_prt][0]:
-            rh_prt =  rh_prt + 1
-        if rh_prt == 0 or abs(rh_joints[rh_prt][0] - ra_joints[ra_prt][0]) < abs(rh_joints[rh_prt - 1][0] - ra_joints[ra_prt][0]):
-            nearest_index.append(rh_prt)
-        else:
-            nearest_index.append(rh_prt - 1)
-        if (ra_prt > nearest_index[ra_prt]):
-            print("find nearest index error:", ra_prt, " ", rh_prt)
-            return -1
-        
-
-    # Set initial joint positions
-    # ra_qpos = [-1.985541484947321023e-01, -1.511765714932389759e+00, 1.744144698609367605e+00, -4.199380877807101786e-01, 1.224338149918524188e+00, -2.853568453307711472e+00]
-    # rh_wr_qpos = [-3.518346993224432673e-01, 1.084536541826265771e-01]
-    # rh_qpos = [-5.977415392589238707e-02, -1.574840546072039660e-01, 5.011600017179467237e-01, -1.065708169943478190e-03, 3.636982963940606495e-01, -3.098749694647516262e-01, -2.618010946901915825e-01, 3.090739293982310617e-03, 4.258698396761410598e-01, 9.958308787068738399e-02, -1.464164005054023332e-01, 4.562792452727346126e-01, 4.423967552310126131e-04, -1.763802015284804403e-01, -1.599434749169263703e-02, 1.721247601542393590e-01, 1.939343557097971404e-01, 3.628516803201176089e-01, 5.766439566088897850e-01, 1.457189073599620549e-02, 1.597839815720200063e-01, -1.169722944991009872e-01]
-   
+    
     # for x in robot.get_active_joints():
-    #     print(x.get_name())
-
-    # return 
+    #     print(x.name)
+    
+    # exit()
+    
 
     # set objects
-    # box_builder = scene.create_actor_builder()
-    # box_half_size = [0.15, 0.14, 0.07]
-    # box_builder.add_box_collision(half_size= box_half_size)
-    # box_builder.add_box_visual(half_size=box_half_size, color=[1, 0, 0])
-    # box = box_builder.build_static(name="box")
-    # box.set_pose(sapien.Pose(p=[-1.3, 0, box_half_size[2]]))
+    box_builder = scene.create_actor_builder()
+    box_half_size = [0.15, 0.14, 0.07]
+    box_builder.add_box_collision(half_size= box_half_size)
+    box_builder.add_box_visual(half_size=box_half_size, color=[1, 0, 0])
+    box = box_builder.build_static(name="box")
+    box.set_pose(sapien.Pose(p=[-1.3, 0, box_half_size[2]]))
     
 
     mesh_builder = scene.create_actor_builder()
@@ -107,23 +110,19 @@ def demo(fix_root_link, balance_passive_force):
         static_friction=2000,
         dynamic_friction=2000
     )
-    # scale_value = 0.06
-    scale_value = 0.6
-    mesh_builder.add_collision_from_file(filename='/home/lab4dv/IntelligentHand/sapien_ws/objects/fixed_vhacd.obj', material= physical_material, density=50, scale=[scale_value, scale_value, scale_value])
-    mesh_builder.add_visual_from_file(filename='/home/lab4dv/IntelligentHand/sapien_ws/objects/fixed_vhacd.obj', scale=[scale_value, scale_value, scale_value])
+    scale_value = 0.06
+    # scale_value = 0.6
+    mesh_builder.add_collision_from_file(filename='/home/lab4dv/IntelligentHand/sapien_ws/objects/11demo.obj', material= physical_material, density=50, scale=[scale_value, scale_value, scale_value])
+    mesh_builder.add_visual_from_file(filename='/home/lab4dv/IntelligentHand/sapien_ws/objects/11demo.obj', scale=[scale_value, scale_value, scale_value])
     mesh= mesh_builder.build(name='mesh')
     mesh_q = get_quaternion_from_euler(0, 0, -math.pi/2)
     mesh.set_pose(sapien.Pose(p=[-1.26,-0.01,0.19], q=mesh_q))
 
-
-    
-
+    joints = load_joints_from_motion("config/hand_points.txt", "config/test_ra_points.txt")
     #initial pose  
-    ra_current_index = 250
-    rh_joint_mess = rh_joints[nearest_index[ra_current_index]][1:]
-    rh_joint = list(rh_joint_mess[0:4]) + list(rh_joint_mess[9:17]) + list(rh_joint_mess[4:9])+ list(rh_joint_mess[-5:])
-    target_qpos = list(ra_joints[ra_current_index][1:]) + list(rh_wr_joints[ra_current_index][1:]) + rh_joint
-    ra_current_index = ra_current_index + 1
+    current_index = 0
+    target_qpos = list(joints[current_index][1:])
+    current_index = current_index + 1
     robot.set_qpos(target_qpos)
     scene.step()
     scene.update_render()
@@ -133,7 +132,7 @@ def demo(fix_root_link, balance_passive_force):
     first = 0
     while not viewer.closed:
         first = first + 1
-        if first>300:
+        if first>0:
             for _ in range(4):  # render every 4 steps
                 # if balance_passive_force:
                 if True:
@@ -143,18 +142,18 @@ def demo(fix_root_link, balance_passive_force):
                     #     external= False
                     # )
                     # robot.set_qf(qf) 
-                    rh_joint_mess = rh_joints[nearest_index[ra_current_index]][1:]
-                    # rh_joint = list(rh_joint_mess[0:4]) + list(rh_joint_mess[9:17]) + list(rh_joint_mess[4:9])+ list(rh_joint_mess[-5:])
-                    target_qpos = list(ra_joints[ra_current_index][1:]) + list(rh_wr_joints[ra_current_index][1:]) + rh_joint
-                    ra_current_index = ra_current_index + 1
-                    if (ra_current_index >= len(ra_joints)):
-                        ra_current_index = 0      
+                    target_qpos = list(joints[current_index][1:])
+                    current_index = current_index + 1
+                    if (current_index >= len(joints)):
+                        current_index = 0      
                     robot.set_qpos(target_qpos)
                     # print(robot.get_qpos())
+                    if first>30:
+                        print(first)
+                        time.sleep(0.01)
                 scene.step()
+                
             
-
-            # time.sleep(0.1)
             
         scene.update_render()
         viewer.render()
