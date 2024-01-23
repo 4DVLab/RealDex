@@ -17,7 +17,7 @@
 // #include <moveit_visual_tools/moveit_visual_tools.h>
 using json = nlohmann::json;
 
-#define LOOP_RATE 20
+#define LOOP_RATE 50
 
 #define IF_TEST false
 #define IF_CONFIG false

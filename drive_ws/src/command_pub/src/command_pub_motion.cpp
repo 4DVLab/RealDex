@@ -15,7 +15,7 @@
 #include <moveit_msgs/CollisionObject.h>
 using json = nlohmann::json;
 
-#define LOOP_RATE 20
+#define LOOP_RATE 40
 
 #define IF_TEST false
 #define IF_CONFIG false
@@ -43,8 +43,8 @@ using json = nlohmann::json;
   }
   std::cout<<std::endl;
 
-    move_group_interface.setMaxVelocityScalingFactor(0.05);
-    move_group_interface.setMaxAccelerationScalingFactor(0.05);
+    move_group_interface.setMaxVelocityScalingFactor(0.1);
+    move_group_interface.setMaxAccelerationScalingFactor(0.1);
 
     move_group_interface.setJointValueTarget(goal_joint_positions);
 
@@ -145,7 +145,7 @@ std::vector<std::vector<double>> & rh_wr_points_vector, std::vector<std::vector<
         myfile.close();
     }
     else{
-      ROS_ERROR("%s file do not exist", file_path);
+      ROS_ERROR("%s file do not exist", rh_file_path);
     }
 
     return points_num;
@@ -235,9 +235,10 @@ int main(int argc, char **argv)
     // int ra_points_num=readCommand("/home/user/test_ra_points.txt", ra_timestamp_vector, ra_point_vector);
     // int rh_wr_points_num=readCommand("/home/user/test_rh_wr_points.txt", rh_wr_timestamp_vector, rh_wr_point_vector);
     // int rh_points_num = readCommand("/home/user/test_rh_points.txt", rh_timestamp_vector, rh_point_vector);
-  int ra_points_num = readCommand("../config/hand_points.txt", ra_timestamp_vector, ra_point_vector);
-  int rh_points_num = readHandMotionCommand("../bags/trajectory_points.txt", rh_timestamp_vector,rh_wr_point_vector, rh_point_vector);
+  int ra_points_num = readCommand("/home/user/IntelligentHand/drive_ws/bags/test_ra_points.txt", ra_timestamp_vector, ra_point_vector);
+  int rh_points_num = readHandMotionCommand("/home/user/IntelligentHand/drive_ws/config/hand_points.txt", rh_timestamp_vector,rh_wr_point_vector, rh_point_vector);
 
+  std::cout << ra_points_num <<" "<< rh_points_num<<std::endl;
   // start spin in ROS
   spinner.start();
 
@@ -304,11 +305,16 @@ int main(int argc, char **argv)
         if(rh_wr_current_points < rh_points_num-1 && rh_wr_current_points < nearest_index[ra_current_points])
         rh_wr_current_points ++;
 
-
+        if (ra_current_points == 60)
+        break;
         trajectory_msgs::JointTrajectory ra_command = formCommand("ra",ra_point_vector[ra_current_points], ra_seq++ );
         trajectory_msgs::JointTrajectory rh_command = formCommand("rh",rh_point_vector[rh_current_points] ,rh_seq++);
         trajectory_msgs::JointTrajectory rh_wr_command = formCommand("rh_wr", rh_wr_point_vector[rh_wr_current_points], rh_wr_seq++);
         
+        if (!ra_current_points)
+        {
+           ra_current_points =  rh_wr_current_points = rh_current_points = 0;
+        }
     
         if(IF_TEST)
         {
@@ -337,7 +343,7 @@ int main(int argc, char **argv)
         goal_joint_positions.insert(goal_joint_positions.end(), rh_wr_point_vector[0].begin(), rh_wr_point_vector[0].end());
         goal_joint_positions.insert(goal_joint_positions.end(), rh_point_vector[0].begin(), rh_point_vector[0].end());
         back_to_initial("right_arm_and_hand", goal_joint_positions);
-        ra_current_points =  rh_wr_current_points = rh_current_points = 0;
+       
       }
 
 
@@ -345,7 +351,7 @@ int main(int argc, char **argv)
      
       ros::spinOnce();
       loop_rate.sleep();
-      ROS_INFO("ra:%d, rh_wr:%d, rh:%d", ra_current_points -1, rh_wr_current_points -1, rh_current_points -1);
+      ROS_INFO("ra:%d, rh_wr:%d, rh:%d", ra_current_points, rh_wr_current_points, rh_current_points );
       
     }
      
