@@ -162,7 +162,7 @@ def demo(fix_root_link, balance_passive_force):
                     # print(robot.get_qpos())
                     if first>30:
                         print(first)
-                        time.sleep(0.1)
+                        time.sleep(0.01)
                 scene.step()
                 
             
