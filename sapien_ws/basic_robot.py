@@ -41,6 +41,15 @@ def load_joints_from_controller_bag(load_path:str):
 def load_joints_from_dataset(load_path:str):
     joints = np.loadtxt(load_path)
     return joints
+def load_joints_from_interpolation(load_path:str):
+    joints_tmp = np.loadtxt(load_path,delimiter=",")
+    joints = []   
+ 
+    for points in joints_tmp:
+        joints.append(list(points[2::-1])+ list(points[3:6]) +  list(points[29:27:-1])+ list(points[9:5:-1]) + list(points[18:14:-1])
+                      + list(points[22:18:-1]) + list(points[14:9:-1]) + list(points[27:22:-1])  )
+    print(len(joints[0]))
+    return joints
 
 def load_joints_from_motion(hand_load_path:str, arm_load_path:str):
     hand_joints = np.loadtxt(hand_load_path)
@@ -58,7 +67,7 @@ def load_joints_from_motion(hand_load_path:str, arm_load_path:str):
 
 def demo(fix_root_link, balance_passive_force):
     engine = sapien.Engine()
-    
+
     renderer = sapien.SapienRenderer()
     engine.set_renderer(renderer)
 
@@ -118,10 +127,12 @@ def demo(fix_root_link, balance_passive_force):
     mesh_q = get_quaternion_from_euler(0, 0, -math.pi/2)
     mesh.set_pose(sapien.Pose(p=[-1.26,-0.01,0.19], q=mesh_q))
 
-    joints = load_joints_from_motion("config/hand_points.txt", "config/test_ra_points.txt")
+    # joints = load_joints_from_motion("config/hand_points.txt", "config/test_ra_points.txt")
+    joints = load_joints_from_interpolation("config/pose_list.txt")
     #initial pose  
     current_index = 0
-    target_qpos = list(joints[current_index][1:])
+    # target_qpos = list(joints[current_index][1:])
+    target_qpos = list(joints[current_index])
     current_index = current_index + 1
     robot.set_qpos(target_qpos)
     scene.step()
@@ -142,7 +153,8 @@ def demo(fix_root_link, balance_passive_force):
                     #     external= False
                     # )
                     # robot.set_qf(qf) 
-                    target_qpos = list(joints[current_index][1:])
+                    # target_qpos = list(joints[current_index][1:])
+                    target_qpos = list(joints[current_index])
                     current_index = current_index + 1
                     if (current_index >= len(joints)):
                         current_index = 0      
@@ -150,7 +162,7 @@ def demo(fix_root_link, balance_passive_force):
                     # print(robot.get_qpos())
                     if first>30:
                         print(first)
-                        time.sleep(0.01)
+                        time.sleep(0.1)
                 scene.step()
                 
             
