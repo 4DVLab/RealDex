@@ -159,7 +159,7 @@ def get_model_name(bag_folder_path):
 
 
 if __name__ == "__main__":
-    bag_folder_path = "/home/lab4dv/data/bags/sprayer/sprayer_1_20231209"
+    bag_folder_path = "/media/lab4dv/HighSpeed/new_bags/rinse_shine_aid/rinse_shine_aid_1_20240110"
 
     model_name = get_model_name(bag_folder_path)
     icp_result = False
@@ -180,7 +180,7 @@ if __name__ == "__main__":
                               None,
                             icp_result=icp_result,
                             icp_mode_=3,
-                            file_name="tracking_and_icp_mode_3.txt"
+                            file_name="icp_use_pre_frame.txt"
 )
 
 

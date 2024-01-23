@@ -575,7 +575,7 @@ if __name__ == "__main__":
     ros_prefix_path = "/home/lab4dv/data/bags/config_data/"
     configuration_path = "/home/lab4dv/data/bags/config_data"
 
-    bag_folder = "/home/lab4dv/data/bags/sprayer/sprayer_1_20231209"
+    bag_folder = "/home/lab4dv/data/bags/blue_cup/blue_cup_1_20240106"
     # gen_one_stamp_all_tf(bag_folder,1015)
 
     # bag_folder = "/media/tony/T7/camera_data/banana/"
