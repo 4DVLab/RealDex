@@ -5,22 +5,9 @@ import numpy as np
 from bisect import bisect_left
 from tqdm import tqdm, trange
 from utils.global_util import tf_to_mat
+from main import get_model_name
 
 
-def get_model_name(exp_code):
-
-    original = "elephant_watering_can_2_20240110"
-    '''
-    * (_\d+): Matches an underscore followed by one or more digits.
-    * (_\d{8})?: Optionally matches another underscore followed by exactly eight digits.
-        The ? makes this entire group optional.
-    * $: Asserts that this sequence is at the end of the string.
-    '''
-    pattern = r"(_\d+(_\d{8})?)$"
-
-    # Remove the matched pattern from the original string
-    extracted_string = re.sub(pattern, '', original)
-    return extracted_string
 
 def interp_data(seq_data, object_transl_seq, time):
     qpos_seq = seq_data['joint_angle']
@@ -51,7 +38,7 @@ def interp_data(seq_data, object_transl_seq, time):
     
     return ret_dict
 
-def export_joint_angle(base_dir, exp_code, start_id, end_id, seq_dur_time = 30, frequency=100):
+def export_joint_angle(base_dir, exp_code, start_id, end_id, seq_dur_time = 30, frequency=2):
     '''
     seq_dur_time: duration time of the output seq (second)
     frequency: num of sample in each second (Hz)
@@ -64,7 +51,7 @@ def export_joint_angle(base_dir, exp_code, start_id, end_id, seq_dur_time = 30, 
     obj_tracking_path = os.path.join(data_dir, "tracking_result/gt_pose.txt")
     object_poses = np.loadtxt(obj_tracking_path)
     object_poses = np.array([tf_to_mat(tf) for tf in object_poses])
-    object_poses = object_poses[:, :3, -1]
+    object_transl_seq = object_poses[:, :3, -1]
     
     
     time_stamp_list = list(seq_data['joint_angle'].keys())
@@ -76,9 +63,21 @@ def export_joint_angle(base_dir, exp_code, start_id, end_id, seq_dur_time = 30, 
     for id in trange(sample_num):
         time = start_time + (id / sample_num) * (end_time - start_time)
         
-        qpos = interp_data(seq_data, object_poses, time)
+        qpos = interp_data(seq_data, object_transl_seq, time)
         print(time)
         qpos_dict[time] = qpos
+        
+        
+    # for id in trange(start_id, end_id+1):
+    #     time = time_stamp_list[id]
+    #     ret_dict = seq_data['joint_angle'][time]
+    #     obj_transl = object_transl_seq[id]
+    #     transl = seq_data['global_tf'][time]['rh_wrist'][:3, -1]
+        
+    #     ret_dict['rh_wrist_transl'] = transl
+    #     ret_dict['object_transl'] = obj_transl
+    #     qpos_dict[time] = ret_dict
+        
         
     return qpos_dict
 
@@ -89,7 +88,7 @@ if __name__ == '__main__':
     
     
     
-    start, end = 0, 30
+    start, end = 0, 50
     qpos_dict = export_joint_angle(base_dir, exp_code, start_id=start, end_id=end)
     
     out_dir = "/public/home/v-liuym/results/output_for_sim/"

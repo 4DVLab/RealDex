@@ -58,9 +58,6 @@ def main(cfg, result_path):
     """ Trainer """
     trainers = {}
     for key in cfg['models'].keys():
-        print(key)
-        if key == 'affordance_cvae':
-            continue
         net_cfg = compose(f"{cfg['models'][key]['type']}_config")
         print(net_cfg['exp_dir'])
         with open_dict(net_cfg):

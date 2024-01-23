@@ -154,3 +154,11 @@ class RealDexDataset(Dataset):
         
         
         print(f"Split {self.mode}: {self.data['qpos'].shape[0]} pieces of data.")         
+
+
+class RealDexMeshData(Dataset):
+    def __init__(self, cfg, mode):
+        super(RealDexMeshData, self).__init__()
+        self.cfg = cfg
+        self.object_name_list = split_data('object')[mode]
+        
