@@ -28,8 +28,8 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning
   moveit_ros_planning_interface
   moveit_ros_perception
-  rviz_visual_tools
-  moveit_visual_tools
+  # rviz_visual_tools
+  # moveit_visual_tools
   pluginlib
   geometric_shapes
   pcl_ros
