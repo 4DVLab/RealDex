@@ -68,6 +68,7 @@ if __name__ == "__main__":
         trajectory.append(points[mapping_dir[ "rh_THJ2"]])
         trajectory.append(points[mapping_dir[ "rh_THJ1"]]+ const_added*(num/total_num))
         trajectory_list.append(trajectory)
+        num +=1
         # print(len(trajectory))
     print(len(trajectory_list))
     np.savetxt(trajectory_path, trajectory_list)
