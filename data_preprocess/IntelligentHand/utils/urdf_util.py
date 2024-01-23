@@ -139,6 +139,27 @@ def load_hand_info_from_urdf(urdf_path):
     return hand_info
                 
 
+def load_arm_and_hand_info_from_urdf(urdf_path):
+    arm_and_hand_info = {}
+    urdf_tree = ET.parse(urdf_path)
+    root = urdf_tree.getroot()
+    for joint in root.findall('joint'):
+        axis = joint.find('axis')
+        child = joint.find('child')
+        origin = joint.find('origin')
+        if axis is not None:
+            joint_name = joint.get('name')
+            ori_rpy = origin.get('rpy')
+            ori_xyz = origin.get('xyz')
+
+            if joint_name.startswith('rh_') or joint_name.startswith('ra_'):
+                print(joint_name, axis.get('xyz'), child.get('link'))
+                arm_and_hand_info[child.get('link')] = {'joint': joint_name, 
+                                                'axis':axis.get('xyz'),
+                                                'ori_rpy': ori_rpy,
+                                                'ori_xyz': ori_xyz}
+    return arm_and_hand_info
+    
 if __name__ == '__main__':
     urdf_path = "./assets/bimanual_srhand_ur.urdf"
     urdf_tree = ET.parse(urdf_path)
@@ -158,13 +179,17 @@ if __name__ == '__main__':
     for node in out_dict['node_names']:
         if node in parent_dict:
             out_dict['link'].append({'parent': parent_dict[node], 'child': node})
+
+    # for hand only  
+    #out_dict['hand_info'] = load_hand_info_from_urdf(urdf_path)       
             
-    out_dict['hand_info'] = load_hand_info_from_urdf(urdf_path)       
-            
+    # for arm and hand together
+    out_dict["hand_info"] = load_arm_and_hand_info_from_urdf(urdf_path)
     json_string = json.dumps(out_dict, indent=4)
 
-    out_path = "./assets/srhand_ur.json"
-    with open(out_path, 'w') as outfile:
+    hand_out_path = "./assets/srhand_ur.json"
+    arm_and_hand_out_path = "./assets/sr_arm_hand_ur.json"
+    with open(arm_and_hand_out_path, 'w') as outfile:
         outfile.write(json_string)
     print(json_string)
     

@@ -150,8 +150,8 @@ class gen_merge_pcd_ply:
         pcd.transform(self.four_cams_to_world_frame[cam_index])
         pcd = self.filter_pcd(pcd)
         os.makedirs(self.merge_pcd_save_folder / f"cam{cam_index}",exist_ok=True)
-        # o3d.io.write_point_cloud(str(self.merge_pcd_save_folder / f"cam{cam_index}/{time_index}.ply"),
-        #         pcd, write_ascii=False, compressed=False, print_progress=True)
+        o3d.io.write_point_cloud(str(self.merge_pcd_save_folder / f"cam{cam_index}/{time_index}.ply"),
+                pcd, write_ascii=False, compressed=False, print_progress=True)
         with threading.Lock():  # Ensure thread-safe operation on the merge_pcd object
             merge_pcd += pcd
             # merge_pcd.remove_duplicated_points()
@@ -375,7 +375,7 @@ def search_all_folder_gen_pcd(root_folder_path):
 if __name__ == "__main__":
     # search_all_folder_gen_pcd("/media/lab4dv/film/bags")
  
-    search_all_folder_gen_pcd("/home/lab4dv/data/bags/cosmetics")
+    search_all_folder_gen_pcd("/media/lab4dv/HighSpeed/new_bags/strawberry_yogurt/strawberry_yogurt_1_20240110")
 
 
 
