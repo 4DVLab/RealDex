@@ -129,6 +129,7 @@ def demo(fix_root_link, balance_passive_force):
 
     # joints = load_joints_from_motion("config/hand_points.txt", "config/test_ra_points.txt")
     joints = load_joints_from_interpolation("config/pose_list.txt")
+    # joints = load_joints_from_dataset("config/real_pose_list.txt")
     #initial pose  
     current_index = 0
     # target_qpos = list(joints[current_index][1:])
