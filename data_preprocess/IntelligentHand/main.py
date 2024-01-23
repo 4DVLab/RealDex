@@ -163,8 +163,18 @@ class DataProcesser():
         except OSError as error:
             print(f"Error: {error.strerror}")
             
-    def gen_pcd(self, scene_id, cam_index):
-        return self.pcd_generator.gen_pcd(scene_id, cam_index)
+    def gen_pcd(self, scene_id, cam_index=None):
+        out_dir = os.path.join(self.data_dir, "merged_pcd")
+        if cam_index is not None:
+            return self.pcd_generator.gen_pcd(scene_id, cam_index)
+        else:
+            bb_min = np.array([0.8, -0.6, 0.75], np.float64)
+            bb_max = np.array([1.9, 0.5, 1.2], np.float64)
+            
+            return self.pcd_generator.gen_merged_pcd(scene_id, out_dir, 
+                                                     bb_min=bb_min, bb_max=bb_max,
+                                                     export=True)
+        
     
     def gen_object_pcd(self, scene_id):
         out_dir = os.path.join(self.data_dir, "merged_pcd")
@@ -173,7 +183,7 @@ class DataProcesser():
             pcd = o3d.io.read_point_cloud(out_path)
             return pcd
         os.makedirs(out_dir, exist_ok=True)
-        pcd = self.pcd_generator.gen_object_pcd(scene_id, out_dir, export=True)
+        pcd = self.pcd_generator.gen_merged_pcd(scene_id, out_dir, export=True)
         return pcd
         
     def check_sr_valid(self, sr_time):
@@ -373,9 +383,10 @@ class DataProcesser():
             sampled_pts, _ = sample_farthest_points(hand_mesh.verts_padded(), K=POINTS_NUM)
             print(sampled_pts.shape)
             
-            # dist = DataProcesser.point_mesh_face_distance(obj_mesh, sampled_pts)
+            dist = DataProcesser.point_mesh_face_distance(obj_mesh, sampled_pts)
             
             # TODO: filter all  contact mesh
+            
 
             
     
@@ -456,10 +467,8 @@ class DataProcesser():
         full_data = np.load(data_file, allow_pickle=True).item()
         tf_len = len(self.scene_to_mesh)
             
-        obj_tf_mat = np.eye(4)
         # for t in trange(start, end):
-        # for t in trange(tf_len):
-        for t in trange(50, 200):
+        for t in trange(tf_len):
             t = str(t) + ".ply"
             self.export_single_mesh(t, full_data=full_data)
             
@@ -486,7 +495,20 @@ class DataProcesser():
         o3d.io.write_triangle_mesh(os.path.join(out_dir, f"{idx_scene}.ply"), 
                                     self.gen_single_arm_hand(time_sr, out_type='all'))
         
-                
+def get_model_name(exp_code):
+
+    # example: "elephant_watering_can_2_20240110"
+    '''
+    * (_\d+): Matches an underscore followed by one or more digits.
+    * (_\d{8})?: Optionally matches another underscore followed by exactly eight digits.
+        The ? makes this entire group optional.
+    * $: Asserts that this sequence is at the end of the string.
+    '''
+    pattern = r"(_\d+(_\d{8})?)$"
+
+    # Remove the matched pattern from the original string
+    extracted_string = re.sub(pattern, '', exp_code)
+    return extracted_string
 
 def run(data_processer):
     data_processer.gen_object_pcd(0)
@@ -508,12 +530,13 @@ def run_single(model_name, exp_code, idx_scene=None):
     obj_mesh = trimesh.load(obj_path)
     print(data_dir)
     data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
-    data_processer.export_final_data()
+    # data_processer.export_final_data()
     
     # data_processer.gen_all_arm_hand(out_type='both', num_samples=1)
     if idx_scene is None:
         data_processer.export_meshes()
     else:
+        data_processer.gen_pcd(idx_scene, cam_index=None)
         data_processer.export_single_mesh(idx_scene)
     # data_processer.gen_object_pcd(50)
     
@@ -528,18 +551,16 @@ if __name__ == '__main__':
     obj_model_dir = "/storage/group/4dvlab/youzhuo/models"
     
     
-    model_name_list = os.listdir(base_dir)
-    
     # run_single(model_name="duck_toy", exp_code="duck_toy_1_20231207")
     
-    for model_name in model_name_list:
-        path = os.path.join(base_dir, model_name)
-        exp_code_list = os.listdir(path)
-        for exp_code in exp_code_list:
-            subpath = os.path.join(path, exp_code)
-            if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
-                run_single(model_name, exp_code)
-                break
+    exp_code_list = ['mildew_remover_1_20240107']
+    for exp_code in exp_code_list:
+        model_name = get_model_name(exp_code)
+        subpath = os.path.join(base_dir, model_name, exp_code)
+        if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
+            for idx_scene in [80, 260, 310, 380, 1030]:
+                run_single(model_name, exp_code, idx_scene=idx_scene)
+            break
     
     # for model_name in model_name_list:
     #     path = os.path.join(base_dir, model_name)
