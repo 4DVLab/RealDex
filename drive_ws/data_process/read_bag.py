@@ -30,6 +30,8 @@ def read_bag(bag_file:str, topic:str, save_path:str):
 
 if __name__ =="__main__" :
 
-    read_bag("/home/lab4dv/IntelligentHand/drive_ws/bags/test.bag", '/ra_trajectory_controller/command', "/home/lab4dv/IntelligentHand/drive_ws/bags/test_ra_points.txt")
-    read_bag("/home/lab4dv/IntelligentHand/drive_ws/bags/test.bag", '/rh_wr_trajectory_controller/command', "/home/lab4dv/IntelligentHand/drive_ws/bags/test_rh_wr_points.txt" )
-    read_bag("/home/lab4dv/IntelligentHand/drive_ws/bags/test.bag", '/rh_trajectory_controller/command', "/home/lab4dv/IntelligentHand/drive_ws/bags/test_rh_points.txt" )
+    input_bag = "/home/user/IntelligentHand/drive_ws/bags/daishu_broken.bag"
+    output_prefix = "/home/user/IntelligentHand/drive_ws/bags/daishu_broken_"
+    read_bag(input_bag, '/ra_trajectory_controller/command', output_prefix+"ra_points.txt")
+    read_bag(input_bag, '/rh_wr_trajectory_controller/command', output_prefix+"rh_wr_points.txt" )
+    read_bag(input_bag, '/rh_trajectory_controller/command', output_prefix+"rh_points.txt")

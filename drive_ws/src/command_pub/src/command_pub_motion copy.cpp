@@ -68,56 +68,7 @@ using json = nlohmann::json;
   }
   std::cout<<std::endl;
 }
-int readAllCommand(std::string file_path, std::vector<double>& timestamp_vector, std::vector<std::vector<double>>& ra_points_vector,
-std::vector<std::vector<double>>& rh_wr_points_vector, std::vector<std::vector<double>>& rh_points_vector)
-{
-   std::string line;
-    std::ifstream myfile;
-    
-    myfile.open(file_path);
-    
-    int points_num = 0;
 
-    if (myfile.is_open()) {
-        while (getline(myfile, line)) {
-          std::stringstream line_stringstream(line);
-          std::vector<double> ra_points, rh_wr_points, rh_points;
-          std::string one_point;
-          bool if_time = true;
-          while (getline(line_stringstream, one_point, ' '))
-          {
-            if(if_time)
-            {
-              if_time = false;
-              timestamp_vector.push_back(stod(one_point));
-            }
-            else if (ra_points.size()<6)
-            {
-              ra_points.push_back(stod(one_point));
-            }
-            else if(rh_wr_points.size() < 2)
-            {
-              rh_wr_points.push_back(stod(one_point));
-            }
-            else 
-            {
-              rh_points.push_back(stod(one_point));
-            }
-            
-          }
-            ra_points_vector.push_back(ra_points);
-            rh_wr_points_vector.push_back(rh_wr_points);
-            rh_points_vector.push_back(rh_points);
-            points_num++;
-        }
-        myfile.close();
-    }
-    else{
-      ROS_ERROR("%s file do not exist", rh_file_path);
-    }
-
-    return points_num;
-}
 int  readCommand(std::string file_path, std::vector<double>& timestamp_vector, std::vector<std::vector<double>> & points_vector )
 {
    std::string line;
@@ -284,11 +235,8 @@ int main(int argc, char **argv)
     // int ra_points_num=readCommand("/home/user/test_ra_points.txt", ra_timestamp_vector, ra_point_vector);
     // int rh_wr_points_num=readCommand("/home/user/test_rh_wr_points.txt", rh_wr_timestamp_vector, rh_wr_point_vector);
     // int rh_points_num = readCommand("/home/user/test_rh_points.txt", rh_timestamp_vector, rh_point_vector);
-  
-  // int ra_points_num = readCommand("/home/user/IntelligentHand/drive_ws/bags/yibu_broken_ra_points.txt", ra_timestamp_vector, ra_point_vector);
-  // int rh_points_num = readHandMotionCommand("/home/user/IntelligentHand/drive_ws/config/hand_points.txt", rh_timestamp_vector,rh_wr_point_vector, rh_point_vector);
-
-      int points_num = readAllCommand("/home/user/IntelligentHand/drive_ws/config/pose_list_for_real.txt", ra_timestamp_vector, ra_point_vector, rh_wr_point_vector, rh_point_vector);
+  int ra_points_num = readCommand("/home/user/IntelligentHand/drive_ws/bags/yibu_broken_ra_points.txt", ra_timestamp_vector, ra_point_vector);
+  int rh_points_num = readHandMotionCommand("/home/user/IntelligentHand/drive_ws/config/hand_points.txt", rh_timestamp_vector,rh_wr_point_vector, rh_point_vector);
 
   std::cout << ra_points_num <<" "<< rh_points_num<<std::endl;
   // start spin in ROS
@@ -325,34 +273,36 @@ int main(int argc, char **argv)
   }
   
   //storge the nearest index of arm points
-  // std::vector<double> nearest_index;
-  // int rh_prt =0;
-  // for (int ra_prt=0; ra_prt<ra_points_num; ra_prt++)
-  // {
-  //     if(ra_prt<240)
-  //     {
-  //       nearest_index.push_back(0);
-  //     }
-  //     else 
-  //     {
-  //       if (rh_prt < rh_points_num)
-  //       {
-  //         rh_prt++;
-  //       }
-  //         nearest_index.push_back(rh_prt);
-  //     }
-  // }
+  std::vector<double> nearest_index;
+  int rh_prt =0;
+  for (int ra_prt=0; ra_prt<ra_points_num; ra_prt++)
+  {
+      if(ra_prt<240)
+      {
+        nearest_index.push_back(0);
+      }
+      else 
+      {
+        if (rh_prt < rh_points_num)
+        {
+          rh_prt++;
+        }
+          nearest_index.push_back(rh_prt);
+      }
+  }
 
 //   for(int i=0; i<nearest_index.size();i++)
 //   std::cout<<i<<" "<<nearest_index[i]<<std::endl;
 // return 0;
     int ra_seq =1, rh_wr_seq = 1, rh_seq =1;
-    // rh_points_num = nearest_index[ra_points_num - 1];
+    rh_points_num = nearest_index[ra_points_num - 1];
     while(ros::ok())
     {   
       
-        ra_current_points = (ra_current_points + 1) % points_num;
+        ra_current_points = (ra_current_points + 1) % ra_points_num;
+        if(rh_current_points < rh_points_num -1 && rh_current_points < nearest_index[ra_current_points])
         rh_current_points++;
+        if(rh_wr_current_points < rh_points_num-1 && rh_wr_current_points < nearest_index[ra_current_points])
         rh_wr_current_points ++;
 
         // if (ra_current_points == 60)

@@ -14,7 +14,7 @@
 #include <moveit_msgs/AttachedCollisionObject.h>
 #include <moveit_msgs/CollisionObject.h>
 
-#include <moveit_visual_tools/moveit_visual_tools.h>
+// #include <moveit_visual_tools/moveit_visual_tools.h>
 using json = nlohmann::json;
 
 #define LOOP_RATE 50
@@ -45,8 +45,8 @@ using json = nlohmann::json;
   }
   std::cout<<std::endl;
 
-    move_group_interface.setMaxVelocityScalingFactor(0.05);
-    move_group_interface.setMaxAccelerationScalingFactor(0.05);
+    move_group_interface.setMaxVelocityScalingFactor(0.1);
+    move_group_interface.setMaxAccelerationScalingFactor(0.1);
 
     move_group_interface.setJointValueTarget(goal_joint_positions);
 
@@ -92,6 +92,7 @@ int  readCommand(std::string file_path, std::vector<double>& timestamp_vector, s
             {
               if_time = false;
               timestamp_vector.push_back(stod(one_point));
+
             }
             else
             one_points.push_back(stod(one_point));
@@ -191,11 +192,12 @@ int main(int argc, char **argv)
 
   int ra_current_points = 0, rh_wr_current_points = ra_current_points, rh_current_points = 0 ;
 
+  std::string prefix = "/home/user/IntelligentHand/drive_ws/bags/yibu_broken_";
 
     // // road from text
-    int ra_points_num=readCommand("/home/user/test_ra_points.txt", ra_timestamp_vector, ra_point_vector);
-    int rh_wr_points_num=readCommand("/home/user/test_rh_wr_points.txt", rh_wr_timestamp_vector, rh_wr_point_vector);
-    int rh_points_num = readCommand("/home/user/test_rh_points.txt", rh_timestamp_vector, rh_point_vector);
+    int ra_points_num=readCommand(prefix + "ra_points.txt", ra_timestamp_vector, ra_point_vector);
+    int rh_wr_points_num=readCommand(prefix + "rh_wr_points.txt", rh_wr_timestamp_vector, rh_wr_point_vector);
+    int rh_points_num = readCommand(prefix + "rh_points.txt", rh_timestamp_vector, rh_point_vector);
 
   // start spin in ROS
   spinner.start();
