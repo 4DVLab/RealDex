@@ -176,7 +176,7 @@ class DataProcesser():
                                                      export=True)
         
     
-    def gen_object_pcd(self, scene_id):
+    def gen_merged_pcd(self, scene_id):
         out_dir = os.path.join(self.data_dir, "merged_pcd")
         out_path = os.path.join(out_dir, f"{scene_id}.ply")
         if os.path.exists(out_path):
@@ -318,6 +318,25 @@ class DataProcesser():
         
         return out_dict
     
+    def gen_object_pcd(self, scene_id, obj_tf_mat=None):
+        obj_mesh = deepcopy(self.obj_mesh)
+        
+        if obj_tf_mat is not None:
+            obj_mesh.apply_transform(obj_tf_mat)
+        else:
+            data_file = os.path.join(self.data_dir, "final_data.npy")
+            full_data = np.load(data_file, allow_pickle=True).item()
+            obj_tf_mat = np.eye(4)
+            obj_tf_mat[:3, :3] = full_data['object_orient'][scene_id]
+            obj_tf_mat[:3, -1] = full_data['object_transl'][scene_id]
+            obj_mesh.apply_transform(obj_tf_mat)
+            
+        bb_min, bb_max = obj_mesh.bounding_box.bounds
+        
+        obj_pcd = self.gen_merged_pcd(scene_id)
+        obj_pcd = PCDGenerator.crop_pcd(obj_pcd, bb_min, bb_max)          
+        obj_pcd = PCDGenerator.random_subsample(obj_pcd, num_points=7000)
+        return obj_pcd
     
     
     def seg_sequence(self, out_dir):
@@ -331,7 +350,6 @@ class DataProcesser():
         
         global counter
         
-        
         for seg in tqdm(seg_list):
             start, end = seg
             start, end = int(start), int(end)
@@ -343,16 +361,12 @@ class DataProcesser():
             
             obj_tf_mat[:3, :3] = full_data['object_orient'][start]
             obj_tf_mat[:3, -1] = obj_transl[0]
-            obj_mesh = deepcopy(self.obj_mesh)
-            obj_mesh.apply_transform(obj_tf_mat)
-            bb_min, bb_max = obj_mesh.bounding_box.bounds
             
             crop_pcd_path = os.path.join(self.data_dir, "merged_pcd", f"{start}_crop.ply")
             if os.path.exists(crop_pcd_path):
                 obj_pcd = o3d.io.read_point_cloud(crop_pcd_path)
             else:
-                obj_pcd = self.gen_object_pcd(start)
-                obj_pcd = PCDGenerator.crop_pcd(obj_pcd, bb_min, bb_max)          
+                obj_pcd = self.gen_object_pcd(start, obj_tf_mat)         
                 o3d.io.write_point_cloud(crop_pcd_path,obj_pcd)
             obj_pcd = PCDGenerator.random_subsample(obj_pcd, num_points=7000)
             np.savez_compressed(os.path.join(out_dir, f"{counter}.npz"), 
