@@ -318,7 +318,7 @@ class DataProcesser():
         
         return out_dict
     
-    def gen_object_pcd(self, scene_id, obj_tf_mat=None):
+    def get_object_mesh(self, scene_id, obj_tf_mat=None):
         obj_mesh = deepcopy(self.obj_mesh)
         
         if obj_tf_mat is not None:
@@ -330,6 +330,10 @@ class DataProcesser():
             obj_tf_mat[:3, :3] = full_data['object_orient'][scene_id]
             obj_tf_mat[:3, -1] = full_data['object_transl'][scene_id]
             obj_mesh.apply_transform(obj_tf_mat)
+        return obj_mesh
+    
+    def gen_object_pcd(self, scene_id, obj_tf_mat=None):
+        obj_mesh = self.get_object_mesh(scene_id, obj_tf_mat)
             
         bb_min, bb_max = obj_mesh.bounding_box.bounds
         
@@ -380,30 +384,45 @@ class DataProcesser():
                                 )
             counter += 1
     
-    def filter_contact_seq(self, full_data):
-        seg_file = os.path.join(self.data_dir, "segment.txt")
-        if os.path.exists(seg_file):
-            return
-        
-        for time_scene in tqdm(self.scene_to_mesh):
+    def filter_contact_seq(self):
+        device = torch.device("cuda")
+        contact_file = os.path.join(self.data_dir, "contact.txt")
+        if os.path.exists(contact_file):
+            with open(contact_file, 'w') as file:
+                pass
+        batch_size = 32
+        hand_v_list, hand_f_list = [],[]
+        obj_v_list, obj_f_list = [],[]
+        for scene_id, time_scene in enumerate(tqdm(self.scene_to_mesh)):
             time_sr = self.scene_to_mesh[time_scene]
             time_sr = int(time_sr.split('.')[0])
             hand_mesh = self.gen_single_arm_hand(time_sr, out_type='only_hand')
-            hand_verts = torch.tensor(hand_mesh.vertices)
-            hand_faces = torch.tensor(hand_mesh.triangles)
-            hand_mesh = Meshes(verts=[hand_verts], faces=[hand_faces])
+            hand_v_list.append(torch.tensor(np.array(hand_mesh.vertices)))
+            hand_f_list.append(torch.tensor(np.array(hand_mesh.triangles)))
             
-            POINTS_NUM = 1000
-            sampled_pts, _ = sample_farthest_points(hand_mesh.verts_padded(), K=POINTS_NUM)
-            print(sampled_pts.shape)
+            obj_mesh = self.get_object_mesh(scene_id, obj_tf_mat=None)
+            obj_v_list.append(torch.tensor(obj_mesh.vertices).float())
+            obj_f_list.append(torch.tensor(obj_mesh.faces).float())
             
-            dist = DataProcesser.point_mesh_face_distance(obj_mesh, sampled_pts)
+            if scene_id % batch_size == (batch_size-1) or scene_id == len(self.scene_to_mesh)-1:
+                hand_mesh = Meshes(verts=hand_v_list, faces=hand_f_list).to(device)
+                POINTS_NUM = 1000
+                sampled_pts, _ = sample_farthest_points(hand_mesh.verts_padded(), K=POINTS_NUM)
+                # print(sampled_pts.shape, sampled_pts.dtype)
+                sampled_pts = Pointclouds(sampled_pts)
+                obj_mesh = Meshes(verts=obj_v_list, faces=obj_f_list).to(device)
+                dist = DataProcesser.point_mesh_face_distance(obj_mesh, sampled_pts)
+                contact_id = torch.nonzero(dist<1e-3).squeeze()
+                # print(contact_id)
+                contact_id = contact_id.tolist()
+                if len(contact_id) > 0:
+                    with open(contact_file, 'a') as file:
+                        for integer in contact_id:
+                            integer += batch_size * int(scene_id / batch_size)
+                            file.write(str(integer) + '\n')
+                hand_v_list, hand_f_list = [],[]
+                obj_v_list, obj_f_list = [],[]
             
-            # TODO: filter all  contact mesh
-            
-
-            
-    
     @staticmethod
     def point_mesh_face_distance(
         meshes: Meshes,
@@ -449,11 +468,19 @@ class DataProcesser():
         tris_first_idx = meshes.mesh_to_faces_packed_first_idx()
         max_tris = meshes.num_faces_per_mesh().max().item()
 
-        # point to face distance: shape (P,)
+        # point to face distance: shape (P*N,)
         point_to_face = point_face_distance(
             points, points_first_idx, tris, tris_first_idx, max_points, min_triangle_area
         )
-        dist = torch.minimum(point_to_face)
+        last_id = torch.tensor([points.shape[0]], device=points_first_idx.device)
+        ext_idx = torch.cat([
+            points_first_idx, 
+            last_id
+        ])
+        point_to_face = [point_to_face[ext_idx[i]:ext_idx[i+1]] for i in range(N)]
+        dist = [torch.min(p2f) for p2f in point_to_face]
+        dist = torch.stack(dist)
+        # print(dist)
         return dist
         
         
@@ -567,32 +594,34 @@ if __name__ == '__main__':
     
     # run_single(model_name="duck_toy", exp_code="duck_toy_1_20231207")
     
-    exp_code_list = ['mildew_remover_1_20240107']
-    for exp_code in exp_code_list:
-        model_name = get_model_name(exp_code)
-        subpath = os.path.join(base_dir, model_name, exp_code)
-        if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
-            for idx_scene in [80, 260, 310, 380, 1030]:
-                run_single(model_name, exp_code, idx_scene=idx_scene)
-            break
+    # exp_code_list = ['mildew_remover_1_20240107']
+    # for exp_code in exp_code_list:
+    #     model_name = get_model_name(exp_code)
+    #     subpath = os.path.join(base_dir, model_name, exp_code)
+    #     if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
+    #         for idx_scene in [80, 260, 310, 380, 1030]:
+    #             run_single(model_name, exp_code, idx_scene=idx_scene)
+    #         break
     
-    # for model_name in model_name_list:
-    #     path = os.path.join(base_dir, model_name)
-    #     global counter 
-    #     counter = 0
-    #     for exp_code in os.listdir(path):
-    #         subpath = os.path.join(path, exp_code)
-    #         if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
-    #             data_dir = os.path.join(base_dir, model_name, exp_code)
-    #             obj_path = os.path.join(obj_model_dir, f"{model_name}.obj")
-    #             if not os.path.exists(obj_path):
-    #                 print("OBJ NOT EXISTS", obj_path)
-    #                 continue
-    #             obj_mesh = trimesh.load(obj_path)
-    #             print(data_dir)
-    #             data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
-    #             run(data_processer)
-    #             # segment_sequence(data_processer, model_name)
+    model_name_list = os.listdir(base_dir)
+    for model_name in model_name_list:
+        path = os.path.join(base_dir, model_name)
+        global counter 
+        counter = 0
+        for exp_code in os.listdir(path):
+            subpath = os.path.join(path, exp_code)
+            if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
+                data_dir = os.path.join(base_dir, model_name, exp_code)
+                obj_path = os.path.join(obj_model_dir, f"{model_name}.obj")
+                if not os.path.exists(obj_path):
+                    print("OBJ NOT EXISTS", obj_path)
+                    continue
+                obj_mesh = trimesh.load(obj_path)
+                print(data_dir)
+                data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
+                data_processer.filter_contact_seq()
+                # run(data_processer)
+                # segment_sequence(data_processer, model_name)
                 
     
     
