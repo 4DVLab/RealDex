@@ -83,8 +83,6 @@ class DataProcesser():
             self.scene_to_mesh = json.load(open(path))
         else:
             self.time_sync()
-        
-        
 
     def gen_single_arm_hand(self, time, out_type='all'):
         updated_meshes = {}
@@ -326,6 +324,9 @@ class DataProcesser():
         else:
             data_file = os.path.join(self.data_dir, "final_data.npy")
             full_data = np.load(data_file, allow_pickle=True).item()
+            if scene_id >= full_data['object_orient'].shape[0]:
+                return None
+            
             obj_tf_mat = np.eye(4)
             obj_tf_mat[:3, :3] = full_data['object_orient'][scene_id]
             obj_tf_mat[:3, -1] = full_data['object_transl'][scene_id]
@@ -401,6 +402,8 @@ class DataProcesser():
             hand_f_list.append(torch.tensor(np.array(hand_mesh.triangles)))
             
             obj_mesh = self.get_object_mesh(scene_id, obj_tf_mat=None)
+            if obj_mesh is None:
+                break
             obj_v_list.append(torch.tensor(obj_mesh.vertices).float())
             obj_f_list.append(torch.tensor(obj_mesh.faces).float())
             
@@ -412,7 +415,7 @@ class DataProcesser():
                 sampled_pts = Pointclouds(sampled_pts)
                 obj_mesh = Meshes(verts=obj_v_list, faces=obj_f_list).to(device)
                 dist = DataProcesser.point_mesh_face_distance(obj_mesh, sampled_pts)
-                contact_id = torch.nonzero(dist<1e-3).squeeze()
+                contact_id = torch.nonzero(dist<1e-3).reshape(-1)
                 # print(contact_id)
                 contact_id = contact_id.tolist()
                 if len(contact_id) > 0:
@@ -587,24 +590,27 @@ if __name__ == '__main__':
     prefix ="/public/home/v-liuym/data/ShadowHand/description/"
     struct_file = "./assets/srhand_ur.json"
     
-    base_dir = "/public/home/v-liuym/data/IntelligentHand_data/"
+    base_dir = "/storage/group/4dvlab/youzhuo/bags"
     cam_param_dir = "../../calibration_ws/calibration_process/data"
     obj_model_dir = "/storage/group/4dvlab/youzhuo/models"
     
     
     # run_single(model_name="duck_toy", exp_code="duck_toy_1_20231207")
     
-    # exp_code_list = ['mildew_remover_1_20240107']
+    # exp_code_list = ['duck_toy_1_20231207']
     # for exp_code in exp_code_list:
     #     model_name = get_model_name(exp_code)
     #     subpath = os.path.join(base_dir, model_name, exp_code)
     #     if os.path.isdir(subpath) and re.match(rf"{model_name}_\d+", exp_code):
-    #         for idx_scene in [80, 260, 310, 380, 1030]:
+    #         for idx_scene in [60, 260, 310, 380, 1030]:
     #             run_single(model_name, exp_code, idx_scene=idx_scene)
     #         break
     
     model_name_list = os.listdir(base_dir)
+    exclude_list = [] #["body_lotion", "air_duster", "bathroom_cleaner", "beer", "box"]
     for model_name in model_name_list:
+        if model_name in exclude_list:
+            continue
         path = os.path.join(base_dir, model_name)
         global counter 
         counter = 0
@@ -619,8 +625,9 @@ if __name__ == '__main__':
                 obj_mesh = trimesh.load(obj_path)
                 print(data_dir)
                 data_processer = DataProcesser(data_dir, cam_param_dir, obj_mesh)
-                data_processer.filter_contact_seq()
-                # run(data_processer)
+                
+                # data_processer.filter_contact_seq()
+                run(data_processer)
                 # segment_sequence(data_processer, model_name)
                 
     
