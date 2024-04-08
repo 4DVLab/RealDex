@@ -8,7 +8,9 @@ def apply_mosaic(image, bbox, intensity=15):
     # 裁剪人脸区域
     face = image[y:y + h, x:x + w]
     # 降低人脸区域的分辨率
-    face = cv2.resize(face, (w // intensity, h // intensity), interpolation=cv2.INTER_LINEAR)
+    if w < intensity or h < intensity:
+        return image
+    face = cv2.resize(face, (w // intensity + 1, h // intensity + 1), interpolation=cv2.INTER_LINEAR)
     # 放大回原来的尺寸
     face = cv2.resize(face, (w, h), interpolation=cv2.INTER_NEAREST)
     # 替换原图中的人脸区域
@@ -37,7 +39,7 @@ if __name__ == "__main__":
     base_dir = "/storage/group/4dvlab/youzhuo/bags"
     model_name_list = os.listdir(base_dir)
     
-    model_name_list = ["sprayer","duck_toy", "yogurt",
+    model_name_list = ["sprayer", "yogurt",
                        "toilet_cleaning_sprayer", "elephant_watering_can"]
     
     for model_name in model_name_list:
