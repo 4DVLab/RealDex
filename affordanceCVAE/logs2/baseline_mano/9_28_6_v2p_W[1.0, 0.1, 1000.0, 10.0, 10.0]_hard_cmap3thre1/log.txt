@@ -1,2 +1,0 @@
-Namespace(batch_size=1000, condition_size=1024, dataloader_workers=4, decoder_layer_sizes=[1024, 256, 61], encoder_layer_sizes=[1024, 512, 256], epochs=100, figs='figs', latent_size=64, learning_rate=0.0001, loss_type='CD', loss_weight=[1.0, 0.1, 1000.0, 10.0, 10.0], model_type='baseline_mano', obj_inchannel=4, print_every=50, save_interval=5, seed=0, train_mode='TrainTest', use_contactmap='False', use_cuda=1)
-weights for cvae, param, cmap, penetr, consistency loss are [1.0, 0.1, 1000.0, 10.0, 10.0]
