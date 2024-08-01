@@ -13,7 +13,11 @@ python download/download_dataset.py --test
 ```
 If all links are available:
 ```
-python download/download_dataset.py --dest_folder /path/to/destination/folder
+python download/download_dataset.py --dest_folder /path/to/zipped-data
+```
+Unzip the files:
+```
+python download/unzip_data.py --data_folder /path/to/zipped-data --dest_folder /path/to/data
 ```
 
 ## Installation
