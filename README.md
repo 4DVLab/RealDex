@@ -20,8 +20,6 @@ Unzip the files:
 python download/unzip_data.py --data_folder /path/to/zipped-data --dest_folder /path/to/data
 ```
 
-## Installation
-
 ## data preprocess
 Generate point clouds from RGBD images
 ```bash
@@ -29,3 +27,20 @@ cd ./data_preprocess
 python gen_pcd.py
 ```
 
+## Installation
+
+## Training for grasp pose generation
+```commandline
+python ./network/train.py --config-name cm_net_config \
+                          --exp-dir ./runs/cm_net_train
+
+python ./network/train.py --config-name cvae_config \
+                          --exp-dir ./runs/cvae_train
+```
+
+
+## Acknowledgement
+We have intensively borrow codes from the following repositories. Many thanks to the authors for sharing their codes.
+- [Unidexgrasp](https://github.com/PKU-EPIC/UniDexGrasp.git)
+- [GOAL](https://github.com/otaheri/GOAL.git)
+- [GraspTTA](https://github.com/hwjiang1510/GraspTTA.git)
