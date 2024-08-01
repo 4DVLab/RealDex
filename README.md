@@ -31,6 +31,8 @@ python gen_pcd.py
 
 ## Training for grasp pose generation
 ```commandline
+cd dexgrasp_generation/
+
 python ./network/train.py --config-name cm_net_config \
                           --exp-dir ./runs/cm_net_train
 
