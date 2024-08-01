@@ -1,0 +1,322 @@
+{
+    "node_names": [
+        "ra_base_link",
+        "ra_base_link_inertia",
+        "ra_shoulder_link",
+        "ra_upper_arm_link",
+        "ra_forearm_link",
+        "ra_wrist_1_link",
+        "ra_wrist_2_link",
+        "ra_wrist_3_link",
+        "ra_flange",
+        "rh_forearm",
+        "rh_wrist",
+        "rh_palm",
+        "rh_ffknuckle",
+        "rh_ffproximal",
+        "rh_ffmiddle",
+        "rh_ffdistal",
+        "rh_mfknuckle",
+        "rh_mfproximal",
+        "rh_mfmiddle",
+        "rh_mfdistal",
+        "rh_rfknuckle",
+        "rh_rfproximal",
+        "rh_rfmiddle",
+        "rh_rfdistal",
+        "rh_lfmetacarpal",
+        "rh_lfknuckle",
+        "rh_lfproximal",
+        "rh_lfmiddle",
+        "rh_lfdistal",
+        "rh_thbase",
+        "rh_thproximal",
+        "rh_thhub",
+        "rh_thmiddle",
+        "rh_thdistal"
+    ],
+    "link": [
+        {
+            "parent": "world",
+            "child": "ra_base_link"
+        },
+        {
+            "parent": "ra_base_link",
+            "child": "ra_base_link_inertia"
+        },
+        {
+            "parent": "ra_base_link_inertia",
+            "child": "ra_shoulder_link"
+        },
+        {
+            "parent": "ra_shoulder_link",
+            "child": "ra_upper_arm_link"
+        },
+        {
+            "parent": "ra_upper_arm_link",
+            "child": "ra_forearm_link"
+        },
+        {
+            "parent": "ra_forearm_link",
+            "child": "ra_wrist_1_link"
+        },
+        {
+            "parent": "ra_wrist_1_link",
+            "child": "ra_wrist_2_link"
+        },
+        {
+            "parent": "ra_wrist_2_link",
+            "child": "ra_wrist_3_link"
+        },
+        {
+            "parent": "ra_wrist_3_link",
+            "child": "ra_flange"
+        },
+        {
+            "parent": "ra_flange",
+            "child": "rh_forearm"
+        },
+        {
+            "parent": "rh_forearm",
+            "child": "rh_wrist"
+        },
+        {
+            "parent": "rh_wrist",
+            "child": "rh_palm"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_ffknuckle"
+        },
+        {
+            "parent": "rh_ffknuckle",
+            "child": "rh_ffproximal"
+        },
+        {
+            "parent": "rh_ffproximal",
+            "child": "rh_ffmiddle"
+        },
+        {
+            "parent": "rh_ffmiddle",
+            "child": "rh_ffdistal"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_mfknuckle"
+        },
+        {
+            "parent": "rh_mfknuckle",
+            "child": "rh_mfproximal"
+        },
+        {
+            "parent": "rh_mfproximal",
+            "child": "rh_mfmiddle"
+        },
+        {
+            "parent": "rh_mfmiddle",
+            "child": "rh_mfdistal"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_rfknuckle"
+        },
+        {
+            "parent": "rh_rfknuckle",
+            "child": "rh_rfproximal"
+        },
+        {
+            "parent": "rh_rfproximal",
+            "child": "rh_rfmiddle"
+        },
+        {
+            "parent": "rh_rfmiddle",
+            "child": "rh_rfdistal"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_lfmetacarpal"
+        },
+        {
+            "parent": "rh_lfmetacarpal",
+            "child": "rh_lfknuckle"
+        },
+        {
+            "parent": "rh_lfknuckle",
+            "child": "rh_lfproximal"
+        },
+        {
+            "parent": "rh_lfproximal",
+            "child": "rh_lfmiddle"
+        },
+        {
+            "parent": "rh_lfmiddle",
+            "child": "rh_lfdistal"
+        },
+        {
+            "parent": "rh_palm",
+            "child": "rh_thbase"
+        },
+        {
+            "parent": "rh_thbase",
+            "child": "rh_thproximal"
+        },
+        {
+            "parent": "rh_thproximal",
+            "child": "rh_thhub"
+        },
+        {
+            "parent": "rh_thhub",
+            "child": "rh_thmiddle"
+        },
+        {
+            "parent": "rh_thmiddle",
+            "child": "rh_thdistal"
+        }
+    ],
+    "hand_info": {
+        "rh_wrist": {
+            "joint": "rh_WRJ2",
+            "axis": "0 1 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 -0.010 0.21301"
+        },
+        "rh_palm": {
+            "joint": "rh_WRJ1",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.034"
+        },
+        "rh_ffknuckle": {
+            "joint": "rh_FFJ4",
+            "axis": "0 -1 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0.033 0 0.095"
+        },
+        "rh_ffproximal": {
+            "joint": "rh_FFJ3",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0"
+        },
+        "rh_ffmiddle": {
+            "joint": "rh_FFJ2",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.045"
+        },
+        "rh_ffdistal": {
+            "joint": "rh_FFJ1",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.025"
+        },
+        "rh_mfknuckle": {
+            "joint": "rh_MFJ4",
+            "axis": "0 -1 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0.011 0 0.099"
+        },
+        "rh_mfproximal": {
+            "joint": "rh_MFJ3",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0"
+        },
+        "rh_mfmiddle": {
+            "joint": "rh_MFJ2",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.045"
+        },
+        "rh_mfdistal": {
+            "joint": "rh_MFJ1",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.025"
+        },
+        "rh_rfknuckle": {
+            "joint": "rh_RFJ4",
+            "axis": "0 1 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "-0.011 0 0.095"
+        },
+        "rh_rfproximal": {
+            "joint": "rh_RFJ3",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0"
+        },
+        "rh_rfmiddle": {
+            "joint": "rh_RFJ2",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.045"
+        },
+        "rh_rfdistal": {
+            "joint": "rh_RFJ1",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.025"
+        },
+        "rh_lfmetacarpal": {
+            "joint": "rh_LFJ5",
+            "axis": "0.573576436 0 0.819152044",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "-0.033 0 0.02071"
+        },
+        "rh_lfknuckle": {
+            "joint": "rh_LFJ4",
+            "axis": "0 1 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.06579"
+        },
+        "rh_lfproximal": {
+            "joint": "rh_LFJ3",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0"
+        },
+        "rh_lfmiddle": {
+            "joint": "rh_LFJ2",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.045"
+        },
+        "rh_lfdistal": {
+            "joint": "rh_LFJ1",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.025"
+        },
+        "rh_thbase": {
+            "joint": "rh_THJ5",
+            "axis": "0 0 -1",
+            "ori_rpy": "0 0.7853981633974483 0.0",
+            "ori_xyz": "0.034 -0.00858 0.029"
+        },
+        "rh_thproximal": {
+            "joint": "rh_THJ4",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0"
+        },
+        "rh_thhub": {
+            "joint": "rh_THJ3",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0.038"
+        },
+        "rh_thmiddle": {
+            "joint": "rh_THJ2",
+            "axis": "0 -1 0",
+            "ori_rpy": "0 0 0",
+            "ori_xyz": "0 0 0"
+        },
+        "rh_thdistal": {
+            "joint": "rh_THJ1",
+            "axis": "1 0 0",
+            "ori_rpy": "0 0 -1.5707963267948966",
+            "ori_xyz": "0 0 0.032"
+        }
+    }
+}

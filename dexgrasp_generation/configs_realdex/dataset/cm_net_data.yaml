@@ -1,0 +1,19 @@
+root_path: "/storage/group/4dvlab/yumeng/IntelligentHand/"
+# Comment the line below to train on all categories. (i.e., do not specify the categories)
+# categories: ["bottle"]
+dataset_dir: "collected_data"
+
+data_info_path: "/public/home/v-liuym/projects/IntelligentHand/dexgrasp_generation/assets/RealDexData"
+
+
+##### DFCData #####
+num_obj_points: 1024
+num_hand_points: 1024
+
+# shadow_hand_mesh_dir: "shadow_urdf/sr_grasp_description/meshes"
+# shadow_urdf_path: "shadow_urdf/sr_grasp_description/urdf/shadowhand.urdf"
+shadow_hand_mesh_dir: "mjcf/meshes"
+shadow_urdf_path: "mjcf/shadow_hand.xml"
+
+perturb: True
+fps: True
