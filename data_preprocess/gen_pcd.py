@@ -19,10 +19,6 @@ def update(*a):
     return
 
 if __name__ == '__main__':
-    urdf_path = "../../data_process/bimanual_srhand_ur.urdf"
-    prefix ="/public/home/v-liuym/data/ShadowHand/description/"
-    struct_file = "./assets/srhand_ur.json"
-    
     base_dir = "/public/home/v-liuym/data/IntelligentHand_data/"
     model_name = "crisps"
     exp_code = "crisps_4"
@@ -31,7 +27,7 @@ if __name__ == '__main__':
     time_stamp_file = os.path.join(data_dir, "rgbimage_timestamp.txt")
     time_stamp_list = np.loadtxt(time_stamp_file)
     
-    cam_param_dir = "../../calibration_ws/calibration_process/data"
+    cam_param_dir = "../calibration_data/"
     pcd_generator = PCDGenerator(data_dir, cam_param_dir)
     
     cams_time = pcd_generator.gen_cams_time_stamp()
