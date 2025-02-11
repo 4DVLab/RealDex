@@ -3,6 +3,7 @@ This repository is for RealDex dataset and the code for IJCAI 2024 paper [RealDe
 ![teaser](./images/teaser.png)
 
 ## Dataset
+You can download object models from this link: https://drive.google.com/file/d/1u4q9N_q-pgEYfyzr94vPk4YWkcx8vggh/view?usp=sharing
 ```
 pip install gdown
 pip install requests
